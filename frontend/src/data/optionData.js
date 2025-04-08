@@ -28,6 +28,11 @@ const optionsData = [
     link: "/admin/request",
   },
   {
+    Icon: FaUsersCog,
+    title: "  Requests on Review",
+    link: "/admin/requests-in-progress",
+  },
+  {
     Icon: FaUsers,
     title: "User Management",
     link: "/admin/usersdata",
@@ -43,21 +48,13 @@ const optionsData = [
         link: "/admin/external-user",
       },
       {
-        title: "Requests",
-        link: "/admin/user/request",
-      },
-      {
      
         title: "User Analytics",
         link: "/admin/user/summary",
       },
     ],
   },
-  {
-    Icon: FaUsersCog,
-    title: "User on Review",
-    link: "/admin/in-progress",
-  },
+  
   {
     Icon: FaHandshake,
     title: "Partners",
@@ -65,22 +62,22 @@ const optionsData = [
     dropdown: [
       {
         Icon: FaUsersCog,
-        title: "Strategic Partner",
+        title: "Strategic ",
         link: "/admin/partners/strategic",
       },
       {
         Icon: FaUsersCog,
-        title: "Operational Partner",
+        title: "Operational ",
         link: "/admin/partners/operational",
       },
       {
         Icon: FaUsersCog,
-        title: "Project Partner",
+        title: "Project ",
         link: "/admin/partners/project",
       },
       {
         Icon: FaUsersCog,
-        title: "Tactical Partner",
+        title: "Tactical ",
         link: "/admin/partners/tactical",
       },
     ],
@@ -105,28 +102,29 @@ const optionsData = [
   //   title: "Tactical Partner",
   //   link: "/admin/partner/tactical",
   // },
-  {
-    Icon: FaPen,
-    title: "Blogs-post",
-    link: "/admin/blogs-post",
-  },
+  // {
+  //   Icon: FaPen,
+  //   title: "Blogs-post",
+  //   link: "/admin/blogs-post",
+  // },
   {
     Icon: MdFeedback,
     title: "View-feedbacks",
     link: "/admin/view-feedbacks",
   },
-  {
-    Icon: IoMdNotifications,
-    badge: Badge,
-    title: "Notifications",
-    link: "/admin/notifications",
-    notifs: 3,
-  },
-  {
-    Icon: FiSettings,
-    title: "Settings",
-    link: "/admin/settings",
-  },
+
+  // {
+  //   Icon: IoMdNotifications,
+  //   badge: Badge,
+  //   title: "Notifications",
+  //   link: "/admin/notifications",
+  //   notifs: 3,
+  // },
+  // {
+  //   Icon: FiSettings,
+  //   title: "Settings",
+  //   link: "/admin/settings",
+  // },
 ];
 
 export default optionsData;

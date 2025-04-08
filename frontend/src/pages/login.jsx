@@ -23,6 +23,8 @@ function Login() {
       navigate("/admin");
 
       console.log("Logged in admin:", res.data.data.admin);
+      localStorage.setItem('token', res.data.token);
+     
 
       // You can now redirect or store user info if needed
     } catch (err) {

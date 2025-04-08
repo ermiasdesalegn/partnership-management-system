@@ -6,10 +6,14 @@ import RouteConfig from "./router/RouteConfig";
 function App() {
   return (
     <BrowserRouter>
-      {/* <AuthProvider> */}
+   
+      
+
         <RouteConfig />
-      {/* </AuthProvider> */}
-    // </BrowserRouter>
+   
+   
+     </BrowserRouter>
+    
   );
 }
 

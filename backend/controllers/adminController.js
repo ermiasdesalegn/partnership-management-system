@@ -2,8 +2,10 @@ import Admin from "../models/Admin.js";
 import jwt from "jsonwebtoken";
 import { promisify } from "util";
 import bcrypt from "bcryptjs";
-
+import { protectAdmin,restrictToAdmin } from "../middleware/authMiddleware.js";
 // Generate token
+import User from "../models/User.js";
+import Request from "../models/Request.js";
 const signToken = (id) => {
   if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET missing");
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -11,6 +13,106 @@ const signToken = (id) => {
   });
 };
 
+export const getMe = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.admin.id);
+    if (!admin) {
+      return res.status(404).json({ status: "fail", message: "Admin not found" });
+    }
+    
+    res.status(200).json({
+      status: "success",
+      data: { admin }
+    });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+// Update current admin profile
+export const updateMe = async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+    
+    const admin = await Admin.findByIdAndUpdate(
+      req.admin.id,
+      { name, email, phone },
+      { new: true, runValidators: true }
+    );
+    
+    res.status(200).json({
+      status: "success",
+      data: { admin }
+    });
+  } catch (err) {
+    res.status(400).json({ status: "fail", message: err.message });
+  }
+};
+// Update password
+export const updateMyPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    
+    // 1) Get admin from collection
+    const admin = await Admin.findById(req.admin.id).select("+password");
+    
+    // 2) Check if current password is correct
+    if (!(await admin.correctPassword(currentPassword))) {
+      return res.status(401).json({ status: "fail", message: "Your current password is wrong" });
+    }
+    
+    // 3) If so, update password
+    admin.password = newPassword;
+    admin.passwordConfirm = confirmPassword;
+    await admin.save();
+    
+    // 4) Log admin in, send JWT
+    createSendToken(admin, 200, res);
+  } catch (err) {
+    res.status(400).json({ status: "fail", message: err.message });
+  }
+};
+// Upload profile photo
+export const uploadProfilePhoto = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ status: "fail", message: "Please upload a file" });
+    }
+    
+    const admin = await Admin.findByIdAndUpdate(
+      req.admin.id,
+      { profilePhoto: req.file.path },
+      { new: true }
+    );
+    
+    res.status(200).json({
+      status: "success",
+      data: { admin }
+    });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+// Upload cover photo
+export const uploadCoverPhoto = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ status: "fail", message: "Please upload a file" });
+    }
+    
+    const admin = await Admin.findByIdAndUpdate(
+      req.admin.id,
+      { coverPhoto: req.file.path },
+      { new: true }
+    );
+    
+    res.status(200).json({
+      status: "success",
+      data: { admin }
+    });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
 // Send token as cookie
 const createSendToken = (admin, statusCode, res) => {
   const token = signToken(admin._id);
@@ -20,7 +122,6 @@ const createSendToken = (admin, statusCode, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
   };
-
   res.cookie("jwt", token, cookieOptions);
   admin.password = undefined;
 
@@ -30,39 +131,6 @@ const createSendToken = (admin, statusCode, res) => {
     data: { admin },
   });
 };
-
-// Middleware: Protect route
-export const protect = async (req, res, next) => {
-  try {
-    let token = req.cookies.jwt || (req.headers.authorization?.startsWith("Bearer") && req.headers.authorization.split(" ")[1]);
-    if (!token) throw new Error("You are not logged in");
-
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-    const currentAdmin = await Admin.findById(decoded.id);
-    if (!currentAdmin) throw new Error("Admin no longer exists");
-
-    if (currentAdmin.changedPasswordAfter(decoded.iat)) {
-      throw new Error("Password changed recently. Please login again.");
-    }
-
-    req.admin = currentAdmin;
-    next();
-  } catch (err) {
-    res.status(401).json({ status: "fail", message: err.message });
-  }
-};
-export const restrictTo = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.admin.role)) {
-      return res.status(403).json({
-        status: "fail",
-        message: "You do not have permission to perform this action",
-      });
-    }
-    next();
-  };
-};
-
 // Signup (Only by general-director)
 export const signup = async (req, res) => {
   try {
@@ -72,7 +140,6 @@ export const signup = async (req, res) => {
         message: "Only general director can create new admins",
       });
     }
-
     const newAdmin = await Admin.create({
       name: req.body.name,
       email: req.body.email,
@@ -86,7 +153,6 @@ export const signup = async (req, res) => {
     res.status(400).json({ status: "fail", message: err.message });
   }
 };
-
 // Login
 export const login = async (req, res) => {
   try {
@@ -106,8 +172,20 @@ export const login = async (req, res) => {
     res.status(401).json({ status: "fail", message: err.message });
   }
 };
+// Logout
+export const logout = (req, res) => {
+  res.cookie("jwt", "", {
+    httpOnly: true,
+    expires: new Date(0), // expires immediately
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax",
+  });
 
-// Get all admins (only general-director)
+  res.status(200).json({ status: "success", message: "Logged out successfully" });
+};
+
+
+
 export const getAllAdmins = async (req, res) => {
   try {
     if (req.admin.role !== "general-director") {
@@ -125,50 +203,249 @@ export const getAllAdmins = async (req, res) => {
   }
 };
 
-// Send to law department (partnership-division only)
-export const sendToLawDepartment = async (req, res) => {
-  try {
-    if (req.admin.role !== "partnership-division") {
-      return res.status(403).json({ status: "fail", message: "Not allowed" });
+  /**
+   * Get all requests in the system
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  export const getAllRequests = async (req, res) => {
+    try {
+      const requests = await Request.find().populate("userRef");
+      res.status(200).json({
+        success: true,
+        count: requests.length,
+        data: requests,
+      });
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        error: "Server Error",
+      });
     }
+  };
+  
+  // Get all users (both internal and external)
+ export const getAllUsers = async (req, res) => {
+  try {
+    console.log('Attempting to fetch users...'); // Debug log
 
-    const request = {
-      from: req.admin._id,
-      to: req.body.lawDepartmentAdminId,
-      content: req.body.content,
-      status: "pending",
-    };
+    // Aggregate query to get users along with the number of requests and company name
+    const users = await User.aggregate([
+      {
+        $lookup: {
+          from: "requests", // Name of the collection in MongoDB (requests)
+          localField: "_id", // Field to match in User collection
+          foreignField: "userRef", // Field to match in Request collection
+          as: "userRequests", // Alias for the joined requests
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          type: 1,
+          companyName: 1, // Ensure this is projected
+          requestCount: { $size: "$userRequests" }, // Count the number of requests for each user
+        },
+      },
+    ]);
 
+    console.log('Users found:', users.length); // Debug log
     res.status(200).json({
-      status: "success",
-      message: "Request sent to law department",
-      data: { request },
+      success: true,
+      count: users.length,
+      data: users,
     });
   } catch (err) {
-    res.status(400).json({ status: "fail", message: err.message });
+    console.error('Error in getAllUsers:', err); // Detailed error log
+    res.status(500).json({
+      success: false,
+      error: err.message, // Send actual error message
+    });
   }
 };
+
+  
+  // Get all external users
+  export const getAllExternalUsers = async (req, res) => {
+    try {
+      const users = await User.find({ type: "external" });
+      res.status(200).json({
+        success: true,
+        count: users.length,
+        data: users,
+      });
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        error: "Server Error",
+      });
+    }
+  };
+  
+  // Get all internal users
+  export const getAllInternalUsers = async (req, res) => {
+    try {
+      const users = await User.find({ type: "internal" });
+      res.status(200).json({
+        success: true,
+        count: users.length,
+        data: users,
+      });
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        error: "Server Error",
+      });
+    }
+  };
+  
+  // Get requests for a specific internal user
+  export const getInternalUserRequests = async (req, res) => {
+    try {
+      const { userId } = req.params;
+  
+      // Check user exists and is internal
+      const user = await User.findOne({ _id: userId, type: "internal" });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: "Internal user not found",
+        });
+      }
+  
+      const requests = await Request.find({ userRef: userId });
+      res.status(200).json({
+        success: true,
+        count: requests.length,
+        data: requests,
+      });
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        error: "Server Error",
+      });
+    }
+  };
+  
+  // Get requests for a specific external user
+  export const getExternalUserRequests = async (req, res) => {
+    try {
+      const { userId } = req.params;
+  
+      // Check user exists and is external
+      const user = await User.findOne({ _id: userId, type: "external" });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: "External user not found",
+        });
+      }
+  
+      const requests = await Request.find({ userRef: userId });
+      res.status(200).json({
+        success: true,
+        count: requests.length,
+        data: requests,
+      });
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        error: "Server Error",
+      });
+    }
+  };
+
+  export const sendToLawDepartment = async (req, res) => {
+    try {
+      const { requestId } = req.params;
+      
+      // Verify the admin is from partnership-division
+      if (req.admin.role !== 'partnership-division') {
+        return res.status(403).json({
+          success: false,
+          error: 'Only partnership-division admins can send requests to law department'
+        });
+      }
+  
+      // Update the request
+      const updatedRequest = await Request.findByIdAndUpdate(
+        requestId,
+        { 
+          $set: { 
+            lawRelated: true,
+            status: 'In Review',
+            lastReviewedBy: req.admin._id 
+          }
+        },
+        { new: true, runValidators: true }
+      ).populate('userRef', 'name email');
+  
+      if (!updatedRequest) {
+        return res.status(404).json({
+          success: false,
+          error: 'Request not found'
+        });
+      }
+  
+      res.status(200).json({
+        success: true,
+        data: updatedRequest
+      });
+  
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        error: 'Server Error'
+      });
+    }
+  };
+
+
+// Send to law department (partnership-division only)
+// export const sendToLawDepartment = async (req, res) => {
+//   try {
+//     if (req.admin.role !== "partnership-division") {
+//       return res.status(403).json({ status: "fail", message: "Not allowed" });
+//     }
+
+//     const request = {
+//       from: req.admin._id,
+//       to: req.body.lawDepartmentAdminId,
+//       content: req.body.content,
+//       status: "pending",
+//     };
+
+//     res.status(200).json({
+//       status: "success",
+//       message: "Request sent to law department",
+//       data: { request },
+//     });
+//   } catch (err) {
+//     res.status(400).json({ status: "fail", message: err.message });
+//   }
+// };
 
 // Review request (law-department only)
-export const reviewRequest = async (req, res) => {
-  try {
-    if (req.admin.role !== "law-department") {
-      return res.status(403).json({ status: "fail", message: "Access denied" });
-    }
+// export const reviewRequest = async (req, res) => {
+//   try {
+//     if (req.admin.role !== "law-department") {
+//       return res.status(403).json({ status: "fail", message: "Access denied" });
+//     }
 
-    const request = {
-      id: req.params.requestId,
-      reviewedBy: req.admin._id,
-      decision: req.body.decision,
-      comments: req.body.comments,
-    };
+//     const request = {
+//       id: req.params.requestId,
+//       reviewedBy: req.admin._id,
+//       decision: req.body.decision,
+//       comments: req.body.comments,
+//     };
 
-    res.status(200).json({
-      status: "success",
-      message: "Request reviewed successfully",
-      data: { request },
-    });
-  } catch (err) {
-    res.status(400).json({ status: "fail", message: err.message });
-  }
-};
+//     res.status(200).json({
+//       status: "success",
+//       message: "Request reviewed successfully",
+//       data: { request },
+//     });
+//   } catch (err) {
+//     res.status(400).json({ status: "fail", message: err.message });
+//   }
+// };

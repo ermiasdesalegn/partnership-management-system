@@ -10,7 +10,7 @@
 //   },
 //   address: { type: String, required: true },
 //   areaOfCooperation: { type: String, required: true },
-//   partnershipType: {
+//   partnershipType: {Zdex3es443w
 //     type: String,
 //     enum: ["Project", "Operational", "Strategic"],
 //     required: true,
@@ -49,133 +49,63 @@
 // export { Request, validateRequest };
 
 
-import mongoose from "mongoose";
-import Joi from "joi";
+// models/Request.js
 
-const PartnershipSchema = new mongoose.Schema({
-  // Common Fields
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  type: { type: String, enum: ["internal", "external"], required: true },
-  status: { 
-    type: String, 
-    enum: ["Draft", "Submitted", "In-Review", "Approved", "Rejected"],
-    default: "Draft"
+
+
+
+
+
+
+
+import mongoose from "mongoose";
+
+const RequestSchema = new mongoose.Schema({
+  userRef: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
   },
-  partnershipLevel: {
+  type: {
     type: String,
-    enum: ["Strategic", "Tactical", "Operational", "Project"]
+    enum: ["internal", "external"],
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ["Pending", "In Review", "Approved", "Disapproved"],
+    default: "Pending"
   },
   frameworkType: {
     type: String,
-    enum: ["MOU", "NDA", "MOA", "Contract", "Other"]
+    enum: ["MOU", "MOA", "Contract", "Other"]
   },
-  createdAt: { type: Date, default: Date.now },
-
-  // External Partner Specific
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  lastReviewedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin"
+  },
   companyDetails: {
     name: String,
-    type: { type: String, enum: ["Government", "Private", "Non-Government", "Other"] },
-    email: String,
-    phone: String,
     address: String,
-    registrationDoc: String // File path
-  },
-
-  // Internal Partner Specific
-  internalRequest: {
-    purpose: String,
-    partnerName: String,
-    partnerEmail: String,
-    partnerPhone: String,
-    partnerAddress: String,
-    cooperationArea: {
+    type: {
       type: String,
-      enum: [
-        "Cybersecurity Research & Development",
-        "Cybersecurity Products & Services",
-        "Cybersecurity Capacity Building",
-        "Policy & Legal Framework",
-        "Standards Development",
-        "Other"
-      ]
+      enum: ["Government", "Private", "Non-Government", "Other"]
     }
   },
-
-  // Framework Details (Common)
-  frameworkDetails: {
-    objective: String,
-    areas: {
-      insa: [String],
-      partner: [String]
-    },
-    effectiveDate: Date,
-    duration: String,
-    terminationClauses: String,
-    correspondence: {
-      name: String,
-      phone: String,
-      email: String
-    },
-    status: {
-      type: String,
-      enum: ["Draft", "Approved", "Implemented", "Not Implemented"]
-    }
-  }
+  lawRelated: {
+    type: Boolean,
+    default: false
+  },
+  department: String,
+  companyStatus: {
+    type: String,
+    enum: ["Draft", "Email Sent", "Reviewed", "Approved", "Rejected"]
+  },
+  duration: String // optional duration field from your notes
 });
 
-// Validation schemas
-const externalRequestSchema = Joi.object({
-  type: Joi.string().valid("external").required(), // 👈 Add this
-  companyDetails: Joi.object({
-    name: Joi.string().required(),
-    type: Joi.string().valid("Government", "Private", "Non-Government", "Other").required(),
-    email: Joi.string().email().required(),
-    phone: Joi.string().pattern(/^9\d{8}$/).required(),
-    address: Joi.string().required(),
-    registrationDoc: Joi.string().required()
-  }).required(),
-  partnershipLevel: Joi.string().valid("Strategic", "Tactical", "Operational", "Project").required(),
-  frameworkType: Joi.string().valid("MOU", "NDA", "MOA", "Contract", "Other").required(),
-  frameworkDetails: Joi.object({
-    objective: Joi.string().required(),
-    areas: Joi.object({
-      insa: Joi.array().items(Joi.string()).min(1).required(), // 👈 Add .required()
-      partner: Joi.array().items(Joi.string()).min(1).required()
-    }).required(),
-    effectiveDate: Joi.date().required(),
-    duration: Joi.string().required(),
-    terminationClauses: Joi.string().required(),
-    correspondence: Joi.object({
-      name: Joi.string().required(),
-      phone: Joi.string().required(),
-      email: Joi.string().email().required()
-    }).required()
-  }).required()
-});
-
-const internalRequestSchema = Joi.object({
-  type: Joi.string().valid("internal").required(), // 👈 Add this
-  internalRequest: Joi.object({
-    purpose: Joi.string().required(),
-    partnerName: Joi.string().required(),
-    partnerEmail: Joi.string().email().required(),
-    partnerPhone: Joi.string().pattern(/^9\d{8}$/).required(),
-    partnerAddress: Joi.string().required(),
-    cooperationArea: Joi.string().valid(
-      "Cybersecurity Research & Development",
-      "Cybersecurity Products & Services",
-      "Cybersecurity Capacity Building",
-      "Policy & Legal Framework",
-      "Standards Development",
-      "Other"
-    )
-  }).required(),
-  frameworkType: Joi.string().valid("MOU", "NDA", "MOA", "Contract", "Other").required(),
-  partnershipLevel: Joi.string().valid("Strategic", "Tactical", "Operational", "Project").required()
-});
-
-
-
-const Request = mongoose.model("Request", PartnershipSchema);
-
-export { Request, externalRequestSchema, internalRequestSchema };
+export default mongoose.model("Request", RequestSchema);

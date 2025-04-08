@@ -8,7 +8,8 @@ import {
 } from "react-icons/fa"; // Relevant icons for PMS
 import SimpleLineChart from "./Graph";
 import TickPlacementBars from "./Bar";
-
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 // Updated static data for PMS-related cards
 const statisticsCardsData = [
   {
@@ -58,6 +59,17 @@ const statisticsCardsData = [
 ];
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const handleLogout = async () => {
+    try {
+      await axios.get("http://localhost:5000/api/v1/admin/logout", {
+        withCredentials: true,
+      });
+      navigate("/"); // 👈 redirects user after logout
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
   return (
     <div className="py-1 px-2 mt-15">
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
@@ -82,6 +94,7 @@ const AdminDashboard = () => {
         <SimpleLineChart />
         <TickPlacementBars />
       </div>
+      <button className="" onClick={handleLogout}>Logout</button>
     </div>
   );
 };

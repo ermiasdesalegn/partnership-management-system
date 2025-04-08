@@ -20,10 +20,10 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use("/api/v1/admin", adminRouter);
 // app.use("/api/v1/user", userRouter);
 // app.use("/api/v1/requests", requestRouter);
 // app.use("/api/v1/support", supportRouter);
 // app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/admin", adminRouter);
 
 export default app;

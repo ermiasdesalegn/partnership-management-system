@@ -34,6 +34,7 @@ export const createFirstAdmin = async (req, res, next) => {
 };
 
 
+
 // Modified register controller
 export const registerUser = async (req, res, next) => {
   const { role, company, department } = req.body;
@@ -92,3 +93,5 @@ export const loginUser = async (req, res, next) => {
     role: user.role
   });
 };
+
+

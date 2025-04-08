@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { promisify } from "util";
 // import User from "../models/User.js";
 import AppError from "../utils/appError.js";
+import Admin from "../models/Admin.js";
 
 export const protect = catchAsync(async (req, res, next) => {
   let token;
@@ -43,6 +44,36 @@ export const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return next(new AppError("Unauthorized access", 403));
+    }
+    next();
+  };
+};
+
+// Middleware: Protect route
+export const protectAdmin = async (req, res, next) => {
+  try {
+    let token = req.cookies.jwt || (req.headers.authorization?.startsWith("Bearer") && req.headers.authorization.split(" ")[1]);
+    if (!token) throw new Error("You are not logged in");
+
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    const currentAdmin = await Admin.findById(decoded.id);
+    if (!currentAdmin) throw new Error("Admin no longer exists");
+
+   
+
+    req.admin = currentAdmin;
+    next();
+  } catch (err) {
+    res.status(401).json({ status: "fail", message: err.message });
+  }
+};
+export const restrictToAdmin = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.admin.role)) {
+      return res.status(403).json({
+        status: "fail",
+        message: "You do not have permission to perform this action",
+      });
     }
     next();
   };

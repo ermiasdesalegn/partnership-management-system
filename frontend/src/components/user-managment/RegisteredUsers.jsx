@@ -3,42 +3,31 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const RegisteredUsers = () => {
-  const [admins, setAdmins] = useState([]);
-  const [regularUsers, setRegularUsers] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchUsersWithRequests = async () => {
       const token = localStorage.getItem("token");
-      
       if (!token) {
         setError("Authentication required. Redirecting to login...");
         setTimeout(() => navigate("/login"), 1500);
         return;
       }
-    
+
       try {
-        const response = await axios.get("http://localhost:5000/api/v1/user", {
-          headers: { 
+        const response = await axios.get("http://localhost:5000/api/v1/admin/users", {
+          headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
-          withCredentials: true
+          withCredentials: true,
         });
-        
-        // Separate admins from regular users
-        const allUsers = response.data.data.users;
-        const adminUsers = allUsers.filter(user => 
-          ['general-director', 'partnership-division'].includes(user.role)
-        );
-        const otherUsers = allUsers.filter(user => 
-          !['general-director', 'partnership-division'].includes(user.role)
-        );
-        
-        setAdmins(adminUsers);
-        setRegularUsers(otherUsers);
+
+        // Now we have user data with requestCount
+        setUsers(response.data.data);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch users");
         if (err.response?.status === 401) {
@@ -50,85 +39,8 @@ const RegisteredUsers = () => {
       }
     };
 
-    fetchUsers();
+    fetchUsersWithRequests();
   }, [navigate]);
-
-  const getRoleBadge = (role) => {
-    const roleClasses = {
-      "general-director": "bg-purple-100 text-purple-800",
-      "partnership-division": "bg-blue-100 text-blue-800",
-      "law-department": "bg-indigo-100 text-indigo-800",
-      "internal": "bg-green-100 text-green-800",
-      "external": "bg-yellow-100 text-yellow-800",
-    };
-    
-    return (
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${roleClasses[role] || 'bg-gray-100'}`}>
-        {role.replace(/-/g, ' ')}
-      </span>
-    );
-  };
-
-  const renderUserDetails = (user) => {
-    return (
-      <div className="text-sm text-gray-600 mt-1">
-        {user.department && <p>Department: {user.department}</p>}
-        {user.company && (
-          <>
-            <p>Company: {user.company.name}</p>
-            <p>Type: {user.company.type}</p>
-          </>
-        )}
-      </div>
-    );
-  };
-
-  const renderUserTable = (users, title) => (
-    <div className="mb-8">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr key={user._id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
-                      {user.name.charAt(0)}
-                    </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                      {renderUserDetails(user)}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{user.email}</div>
-                  {user.company?.phone && (
-                    <div className="text-sm text-gray-500">{user.company.phone}</div>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {getRoleBadge(user.role)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(user.createdAt).toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
 
   if (loading) {
     return (
@@ -144,7 +56,11 @@ const RegisteredUsers = () => {
         <div className="flex">
           <div className="flex-shrink-0">
             <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
             </svg>
           </div>
           <div className="ml-3">
@@ -156,23 +72,51 @@ const RegisteredUsers = () => {
   }
 
   return (
-    <div className="container  sm:px-6 lg:px-4 py-4">
+    <div className="container sm:px-6 lg:px-4 py-4">
       <div className="bg-white shadow-md rounded-lg overflow-hidden p-6">
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800">User Management</h2>
-          <p className="mt-1 text-sm text-gray-600">View and manage all registered users</p>
+          <h2 className="text-2xl font-semibold text-gray-800">Registered Users</h2>
+          <p className="mt-1 text-sm text-gray-600">List of registered users and their request counts</p>
         </div>
-        
-        {admins.length > 0 && renderUserTable(admins, "Administrators")}
-        {regularUsers.length > 0 && renderUserTable(regularUsers, "Regular Users")}
-        
-        {admins.length === 0 && regularUsers.length === 0 && (
-          <div className="bg-gray-50 p-6 rounded-lg text-center">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Number of Requests</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {users.map((user) => (
+                <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-sm text-gray-900">{user.name}</td>
+                  <td className="px-6 py-4 text-sm text-gray-700">{user.email}</td>
+                  <td className="px-6 py-4 text-sm text-gray-700">{user.requestCount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {users.length === 0 && (
+          <div className="bg-gray-50 p-6 rounded-lg text-center mt-6">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9.75 17L7 14.25M7 14.25L4.25 17M7 14.25v6.75M17 6.75L19.75 9.5M19.75 9.5L17 12.25M19.75 9.5H13"
+              />
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
-            <p className="mt-1 text-sm text-gray-500">There are currently no registered users in the system.</p>
+            <p className="mt-1 text-sm text-gray-500">There are no registered users yet.</p>
           </div>
         )}
       </div>
