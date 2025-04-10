@@ -11,11 +11,15 @@ import InProgress from "../components/inProgress/Index";
 import ProgressDetail from "../components/inProgress/ProgressDetail";
 import { Route } from "react-router";
 import RegisteredUsers from "../components/user-managment/RegisteredUsers";
-
+import ToBeReviewed from "../components/view-request/ToBeReviewed";
+import RequestDetail from "../components/view-request/RequestDetail";
 const AdminRoute = [
   <Route key={"admin"} path="/admin" element={<AdminLayout />}>
     <Route index element={<AdminDashboard />} />
     <Route path="request" element={<ReqTableData />} />
+    <Route path="requests-in-progress" element={<ToBeReviewed />} />
+    <Route path="requests-in-progress/request/:id" element={<RequestDetail />} />
+
     <Route path="external-user" element={<RegisteredUsers />} />
     <Route path="in-progress" element={<InProgress />} />
     <Route path="in-progress/:id" element={<ProgressDetail />} />

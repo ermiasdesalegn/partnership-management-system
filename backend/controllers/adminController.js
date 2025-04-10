@@ -1,11 +1,13 @@
 import Admin from "../models/Admin.js";
+import User from "../models/User.js";
+import Request from "../models/Request.js";
 import jwt from "jsonwebtoken";
 import { promisify } from "util";
 import bcrypt from "bcryptjs";
+import catchAsync from "../utils/catchAsync.js";
+import AppError from "../utils/appError.js";
 import { protectAdmin,restrictToAdmin } from "../middleware/authMiddleware.js";
 // Generate token
-import User from "../models/User.js";
-import Request from "../models/Request.js";
 const signToken = (id) => {
   if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET missing");
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -131,7 +133,8 @@ const createSendToken = (admin, statusCode, res) => {
     data: { admin },
   });
 };
-// Signup (Only by general-director)
+
+
 export const signup = async (req, res) => {
   try {
     if (req.admin?.role !== "general-director") {
@@ -183,9 +186,6 @@ export const logout = (req, res) => {
 
   res.status(200).json({ status: "success", message: "Logged out successfully" });
 };
-
-
-
 export const getAllAdmins = async (req, res) => {
   try {
     if (req.admin.role !== "general-director") {
@@ -300,6 +300,63 @@ export const getAllAdmins = async (req, res) => {
     }
   };
   
+  export const getRequestsByRole = catchAsync(async (req, res, next) => {
+    const role = req.admin.role;
+    console.log("Admin Role:", req.admin.role);
+
+    if (!["partnership-division", "law-department", "general-director"].includes(role)) {
+      return next(new AppError("Invalid role for request access", 403));
+    }
+    let requests;
+    switch (role) {
+      case "partnership-division":
+        requests = await Request.find({ currentStage: "partnership-division" }).populate("userRef");
+        break;
+      case "law-department":
+        requests = await Request.find({ currentStage: "law-department" }).populate("userRef");
+        break;
+      case "general-director":
+        requests = await Request.find({ currentStage: "general-director" }).populate("userRef");
+        break;
+      default:
+        return next(new AppError("Role not found", 403));
+    }
+  
+    if (!requests || requests.length === 0) {
+      return res.status(404).json({
+        status: "fail",
+        message: `No requests found for the ${role}`,
+      });
+    }
+  
+    res.status(200).json({
+      status: "success",
+      message: `${role} requests retrieved successfully`,
+      data: requests,
+    });
+  });
+  export const getSingleRequestInRoleList = catchAsync(async (req, res, next) => {
+    const adminRole = req.admin.role;
+    const requestId = req.params.id;
+  
+    // Fetch the request
+    const request = await Request.findById(requestId).populate("userRef");
+  
+    if (!request) {
+      return next(new AppError("Request not found", 404));
+    }
+  
+    // Check if the currentStage of the request matches the role of the admin
+    if (request.currentStage !== adminRole) {
+      return next(new AppError("Unauthorized access to this request", 403));
+    }
+  
+    res.status(200).json({
+      status: "success",
+      data: request,
+    });
+  });
+
   // Get requests for a specific internal user
   export const getInternalUserRequests = async (req, res) => {
     try {
@@ -356,50 +413,7 @@ export const getAllAdmins = async (req, res) => {
     }
   };
 
-  export const sendToLawDepartment = async (req, res) => {
-    try {
-      const { requestId } = req.params;
-      
-      // Verify the admin is from partnership-division
-      if (req.admin.role !== 'partnership-division') {
-        return res.status(403).json({
-          success: false,
-          error: 'Only partnership-division admins can send requests to law department'
-        });
-      }
   
-      // Update the request
-      const updatedRequest = await Request.findByIdAndUpdate(
-        requestId,
-        { 
-          $set: { 
-            lawRelated: true,
-            status: 'In Review',
-            lastReviewedBy: req.admin._id 
-          }
-        },
-        { new: true, runValidators: true }
-      ).populate('userRef', 'name email');
-  
-      if (!updatedRequest) {
-        return res.status(404).json({
-          success: false,
-          error: 'Request not found'
-        });
-      }
-  
-      res.status(200).json({
-        success: true,
-        data: updatedRequest
-      });
-  
-    } catch (err) {
-      res.status(500).json({
-        success: false,
-        error: 'Server Error'
-      });
-    }
-  };
 
 
 // Send to law department (partnership-division only)

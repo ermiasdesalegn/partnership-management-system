@@ -15,10 +15,18 @@ import {
   getAllInternalUsers,
   getInternalUserRequests,
   getExternalUserRequests,
-  sendToLawDepartment
+  getRequestsByRole,
+  getSingleRequestInRoleList
+  
   // sendToLawDepartment,
   // reviewRequest,
 } from "../controllers/adminController.js";
+
+import {forwardToGeneralDirector} from "../controllers/forwardToGeneralDirector.js"
+import {generalDirectorDecision,getRequestsForGeneralDirector} from "../controllers/generalDirectorDecision.js"
+import {lawDepartmentReviewRequest,getLawRelatedRequests} from "../controllers/lawDepartmentReviewRequest.js"
+import {partnershipReviewRequest,getPartnershipReviewedRequests,getApprovedRequestsForPartnershipDivision,getDisapprovedRequestsForLawDepartment,getPendingRequests} from "../controllers/partnershipReviewRequest.js"
+// import {getRequestsByRole} from "../controllers/requestController.js"
 // import { sendToLawDepartment } from "../controllers/requestController.js";
 import { protectAdmin, restrictToAdmin } from "../middleware/authMiddleware.js";
 import upload from "../utils/upload.js";
@@ -47,15 +55,65 @@ router.get("/", restrictToAdmin("general-director"), getAllAdmins);
 const pdAndGdRoles = ["partnership-division", "general-director"];
 
 router.get("/requests", restrictToAdmin(...pdAndGdRoles), getAllRequests);
+router.get("/requestsRelated", restrictToAdmin("partnership-division", "law-department", "general-director"), getRequestsByRole);
+router.get("/requests/:id", protectAdmin, restrictToAdmin("partnership-division", "law-department", "general-director"), getSingleRequestInRoleList);
+
 router.get("/users", restrictToAdmin(...pdAndGdRoles), getAllUsers);
 router.get("/users/external", restrictToAdmin(...pdAndGdRoles), getAllExternalUsers);
 router.get("/users/internal", restrictToAdmin(...pdAndGdRoles), getAllInternalUsers);
 router.get("/users/internal/:userId/requests", restrictToAdmin(...pdAndGdRoles), getInternalUserRequests);
 router.get("/users/external/:userId/requests", restrictToAdmin(...pdAndGdRoles), getExternalUserRequests);
-router.patch('/:requestId/send-to-law', 
-  restrictToAdmin('partnership-division'), 
-  sendToLawDepartment
+router.post(
+  "/review/partnership",
+  protectAdmin,
+  restrictToAdmin("partnership-division"),
+  partnershipReviewRequest
 );
+
+// Law department reviews law-related requests
+router.post(
+  "/review/law",
+  protectAdmin,
+  restrictToAdmin("law-department"),
+  lawDepartmentReviewRequest
+);
+
+// Partnership Division forwards to General Director (after law review)
+router.post(
+  "/forward/general-director",
+  protectAdmin,
+  restrictToAdmin("partnership-division"),
+  forwardToGeneralDirector
+);
+
+// General Director final decision
+router.post(
+  "/review/general-director",
+  protectAdmin,
+  restrictToAdmin("general-director"),
+  generalDirectorDecision
+);
+router.get("/law-requests", protectAdmin , restrictToAdmin("law-department"), getLawRelatedRequests);
+// Partnership Division: Get pending requests to review
+router.get("/pending-requests", protectAdmin, restrictToAdmin("partnership-division"), getPendingRequests);
+
+// General Director: Get requests for review by the General Director
+router.get("/general-director-requests", protectAdmin, restrictToAdmin("general-director"), getRequestsForGeneralDirector);
+
+// Partnership Division: Get approved requests after general director's approval
+router.get("/approved-requests", protectAdmin, restrictToAdmin("partnership-division" ), getApprovedRequestsForPartnershipDivision);
+
+// Law Department: Get disapproved requests
+router.get("/disapproved-requests", protectAdmin, restrictToAdmin("law-department"), getDisapprovedRequestsForLawDepartment);
+
+// Get all requests reviewed by partnership division (regardless of current stage)
+router.get(
+  "/partnership-reviewed",
+  protectAdmin,
+  restrictToAdmin("partnership-division"),
+  getPartnershipReviewedRequests
+);
+
 // Optional future routes:
 // router.post("/send-to-law", restrictToAdmin("partnership-division"), sendToLawDepartment);
 // router.post("/review-request/:requestId", restrictToAdmin("law-department"), reviewRequest);

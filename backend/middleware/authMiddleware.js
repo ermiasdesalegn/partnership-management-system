@@ -4,6 +4,7 @@ import { promisify } from "util";
 // import User from "../models/User.js";
 import AppError from "../utils/appError.js";
 import Admin from "../models/Admin.js";
+import User from "../models/User.js";
 
 export const protect = catchAsync(async (req, res, next) => {
   let token;
