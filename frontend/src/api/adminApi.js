@@ -92,3 +92,12 @@ export const submitReviewDecision = async ({ role, requestId, decision }) => {
 
   return res.data;
 };
+
+export const fetchReviewedRequests = async () => {
+  const token = localStorage.getItem("token");
+  const res = await axios.get("http://localhost:5000/api/v1/admin/my-reviewed-requests", {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true,
+  });
+  return res.data.data;
+};

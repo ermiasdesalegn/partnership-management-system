@@ -13,6 +13,7 @@ import { Route } from "react-router";
 import RegisteredUsers from "../components/user-managment/RegisteredUsers";
 import ToBeReviewed from "../components/view-request/ToBeReviewed";
 import RequestDetail from "../components/view-request/RequestDetail";
+import ReviewedByYou from "../components/view-request/ReviewedByYou";
 const AdminRoute = [
   <Route key={"admin"} path="/admin" element={<AdminLayout />}>
     <Route index element={<AdminDashboard />} />
@@ -28,6 +29,7 @@ const AdminRoute = [
     <Route path="Blogs-post" element={<BlogForm />} />
     <Route path="View-feedbacks" element={<Feedbacks />} />
     <Route path="partners/*" element={<PartnerReports />} />
+    <Route path="reviewed-requests" element={<ReviewedByYou />} />
     <Route path="external-user" element={<RegisteredUsers/>}/>
   </Route>,
 ];

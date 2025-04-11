@@ -29,8 +29,13 @@ const optionsData = [
   },
   {
     Icon: FaUsersCog,
-    title: "  Requests on your Review",
+    title: "  Requests for you",
     link: "/admin/requests-in-progress",
+  },
+  {
+    Icon: FaUsersCog,
+    title: "Reviewed Requests",
+    link: "/admin/reviewed-requests",
   },
   {
     Icon: FaUsers,

@@ -14,16 +14,15 @@ const fetchRequestById = async (id) => {
   return res.data.data;
 };
 
-const submitDecision = async ({ id, decision, currentStage, isLawRelated }) => {
+const submitDecision = async ({ id, decision, currentStage, isLawRelated, message }) => {
   const token = localStorage.getItem("token");
-  // Determine the endpoint based on current stage
   const endpoint = currentStage === "partnership-division"
     ? "admin/review/partnership"
     : "admin/review/general-director";
 
   const payload = currentStage === "partnership-division"
-    ? { requestId: id, decision, isLawRelated }
-    : { requestId: id, decision };
+    ? { requestId: id, decision, isLawRelated, message }
+    : { requestId: id, decision, message };
 
   const res = await axios.post(
     `http://localhost:5000/api/v1/${endpoint}`,
@@ -41,8 +40,9 @@ const RequestDetail = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [decisionType, setDecisionType] = useState("approve"); // 'approve' or 'disapprove'
+  const [decisionType, setDecisionType] = useState("approve");
   const [isLawRelated, setIsLawRelated] = useState(false);
+  const [message, setMessage] = useState("");
 
   const { data: req, isLoading, error } = useQuery({
     queryKey: ["singleRequest", id],
@@ -55,7 +55,8 @@ const RequestDetail = () => {
         id,
         decision,
         currentStage: req?.currentStage,
-        isLawRelated: req?.currentStage === "partnership-division" ? isLawRelated : undefined
+        isLawRelated: req?.currentStage === "partnership-division" ? isLawRelated : undefined,
+        message,
       }),
     onSuccess: () => {
       setIsModalOpen(false);
@@ -68,43 +69,38 @@ const RequestDetail = () => {
       setTimeout(() => navigate(-1), 1500);
     },
     onError: (error) => {
-      toast.error(
-        `Action failed: ${error.response?.data?.message || error.message}`
-      );
+      toast.error(`Action failed: ${error.response?.data?.message || error.message}`);
     },
   });
 
-  if (isLoading) return <div className="text-center p-8">Loading...</div>;
-  if (error) return <div className="text-red-600 p-8">Error: {error.message}</div>;
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 flex justify-center items-center bg-white z-50">
+    <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-500"></div>
+  </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen flex justify-center items-center bg-gray-100">
+        <p className="text-red-500 text-lg">Error: {error.message}</p>
+      </div>
+    );
+  }
 
   const handleDecision = () => {
     decisionMutation.mutate({ decision: decisionType });
   };
 
-  const getModalTitle = () => {
-    if (req.currentStage === "partnership-division") {
-      return "Partnership Division Decision";
-    }
-    return "General Director Decision";
-  };
-
   return (
     <div className="w-full min-h-screen bg-gray-100 px-10 py-8">
-      <ToastContainer 
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      
+      <ToastContainer />
+
       <div className="max-w-6xl mx-auto bg-white shadow-xl rounded-2xl p-10">
         <h1 className="text-3xl font-extrabold text-blue-700 mb-6">Request Detail</h1>
 
+        {/* Basic Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <p><span className="font-semibold">Company Name:</span> {req.companyDetails?.name}</p>
@@ -112,33 +108,38 @@ const RequestDetail = () => {
             <p><span className="font-semibold">Status:</span> {req.status}</p>
             <p><span className="font-semibold">Current Stage:</span> {req.currentStage}</p>
           </div>
-
           <div>
             <p><span className="font-semibold">Requested By:</span> {req.userRef?.name}</p>
             <p><span className="font-semibold">User Email:</span> {req.userRef?.email}</p>
             {req.currentStage === "partnership-division" && (
-              <p><span className="font-semibold">Law Related:</span> {req.isLawRelated ? "Yes" : "No"}</p>
+              <p><span className="font-semibold">Law Related:</span> {req.lawRelated ? "Yes" : "No"}</p>
             )}
           </div>
         </div>
 
+        {/* Description */}
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-2">Description</h2>
           <p className="text-gray-700">{req.description || "No description provided."}</p>
         </div>
 
+        {/* Timeline */}
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-2">Activity Timeline</h2>
           <ul className="space-y-2">
-            {req.activityTimeline?.map((activity, index) => (
-              <li key={index} className="bg-gray-200 p-4 rounded-md">
-                <p className="text-sm text-gray-500">{activity.date}</p>
-                <p>{activity.action}</p>
+            {req.approvals?.map((item, idx) => (
+              <li key={idx} className="bg-gray-200 p-4 rounded-md">
+                <p className="text-sm text-gray-500">
+                  {new Date(item.date).toLocaleString()} – {item.stage}
+                </p>
+                <p className="font-semibold capitalize">{item.decision}</p>
+                {item.message && <p className="text-gray-700 mt-1">"{item.message}"</p>}
               </li>
             ))}
           </ul>
         </div>
 
+        {/* Action Buttons */}
         <div className="mt-8 flex gap-4">
           <button
             onClick={() => {
@@ -148,9 +149,7 @@ const RequestDetail = () => {
             className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
             disabled={decisionMutation.isLoading}
           >
-            {decisionMutation.isLoading && decisionType === "approve" 
-              ? "Processing..." 
-              : "Approve Request"}
+            {decisionMutation.isLoading && decisionType === "approve" ? "Processing..." : "Approve Request"}
           </button>
           <button
             onClick={() => {
@@ -160,21 +159,20 @@ const RequestDetail = () => {
             className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
             disabled={decisionMutation.isLoading}
           >
-            {decisionMutation.isLoading && decisionType === "disapprove" 
-              ? "Processing..." 
-              : "Disapprove Request"}
+            {decisionMutation.isLoading && decisionType === "disapprove" ? "Processing..." : "Disapprove Request"}
           </button>
         </div>
       </div>
 
-      {/* Decision Modal */}
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-700 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
             <h2 className="text-xl font-semibold mb-4">
-              {getModalTitle()} - {decisionType === "approve" ? "Approve" : "Disapprove"}
+              {req.currentStage === "partnership-division" ? "Partnership Division" : "General Director"} – {decisionType}
             </h2>
-            
+
+            {/* Law related toggle */}
             {req.currentStage === "partnership-division" && decisionType === "approve" && (
               <div className="mb-4">
                 <label className="flex items-center space-x-2">
@@ -188,6 +186,18 @@ const RequestDetail = () => {
                 </label>
               </div>
             )}
+
+            {/* Message input */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Message (optional)</label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                rows={3}
+                placeholder="Write your message..."
+              />
+            </div>
 
             <p className="mb-4">Are you sure you want to {decisionType} this request?</p>
 
@@ -206,7 +216,7 @@ const RequestDetail = () => {
                 }`}
                 disabled={decisionMutation.isLoading}
               >
-                Confirm {decisionType === "approve" ? "Approval" : "Disapproval"}
+                Confirm {decisionType}
               </button>
             </div>
           </div>

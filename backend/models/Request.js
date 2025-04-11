@@ -49,7 +49,7 @@ const RequestSchema = new mongoose.Schema({
     {
       stage: String,
       approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
-      decision: String, // "approve" or "disapprove"
+      decision: String, 
       message: String,
       date: { type: Date, default: Date.now },
     },

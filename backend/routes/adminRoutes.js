@@ -16,7 +16,8 @@ import {
   getInternalUserRequests,
   getExternalUserRequests,
   getRequestsByRole,
-  getSingleRequestInRoleList
+  getSingleRequestInRoleList,
+  getReviewedRequestsByAdmin,
   
   // sendToLawDepartment,
   // reviewRequest,
@@ -96,6 +97,7 @@ router.post(
 router.get("/law-requests", protectAdmin , restrictToAdmin("law-department"), getLawRelatedRequests);
 // Partnership Division: Get pending requests to review
 router.get("/pending-requests", protectAdmin, restrictToAdmin("partnership-division"), getPendingRequests);
+router.get('/my-reviewed-requests', protectAdmin, restrictToAdmin('partnership-division', 'law-department', 'general-director'), getReviewedRequestsByAdmin);
 
 // General Director: Get requests for review by the General Director
 router.get("/general-director-requests", protectAdmin, restrictToAdmin("general-director"), getRequestsForGeneralDirector);
