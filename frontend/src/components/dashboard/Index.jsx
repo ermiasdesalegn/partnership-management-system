@@ -65,7 +65,7 @@ const AdminDashboard = () => {
       await axios.get("http://localhost:5000/api/v1/admin/logout", {
         withCredentials: true,
       });
-      navigate("/"); // 👈 redirects user after logout
+      navigate("/admin/login"); // 👈 redirects user after logout
     } catch (error) {
       console.error("Logout failed:", error);
     }

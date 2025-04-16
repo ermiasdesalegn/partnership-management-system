@@ -68,6 +68,8 @@ export const protectAdmin = async (req, res, next) => {
     res.status(401).json({ status: "fail", message: err.message });
   }
 };
+
+
 export const restrictToAdmin = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.admin.role)) {

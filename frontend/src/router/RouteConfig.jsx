@@ -1,18 +1,21 @@
-import { Route, Routes } from "react-router";
-// import MainLayout from "../../layouts/MainLayout";
-import AdminRoute from './AdminRoute'
-import Login from '../pages/login'
-import AdminDashboard from "../components/dashboard/Index";
+import { Route, Routes, Navigate } from "react-router-dom";
+import AdminRoute from './AdminRoute';
+import Login from '../pages/login';
+
 const RouteConfig = () => {
   return (
     <Routes>
-      {/* Public Routes (Visible to Everyone) */}
-      <Route path="/" element={<Login />}>
-      <Route path="/admin" element={<AdminDashboard/>}/>
-
-      </Route>
-     {AdminRoute.map((route) => route)}
-
+      {/* Redirect /login to /admin/login */}
+      <Route path="/login" element={<Navigate to="/admin/login" replace />} />
+      
+      {/* Main login route */}
+      <Route path="/admin/login" element={<Login />} />
+      
+      {/* Admin Routes */}
+      {AdminRoute.map((route) => route)}
+      
+      {/* Redirect from root to login */}
+      <Route path="/" element={<Navigate to="/admin/login" replace />} />
     </Routes>
   );
 };

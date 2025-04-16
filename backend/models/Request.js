@@ -45,12 +45,32 @@ const RequestSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  attachments: [
+    {
+      path: String,
+      originalName: String,
+      uploadedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: 'attachments.uploaderModel'
+      },
+      uploaderModel: {
+        type: String,
+        enum: ['User', 'Admin']
+      },
+      description: String,
+      uploadedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }
+  ],
   approvals: [
     {
       stage: String,
       approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
       decision: String, 
       message: String,
+      attachments: [String],
       date: { type: Date, default: Date.now },
     },
   ],

@@ -1,54 +1,53 @@
 import Admin from "../models/Admin.js";
 import User from "../models/User.js";
 import Request from "../models/Request.js";
-
-
 export const partnershipReviewRequest = async (req, res) => {
-  const { requestId, decision, isLawRelated, message } = req.body;
-
   try {
+    const { requestId, decision, message, isLawRelated, frameworkType } = req.body;
+    const admin = req.admin;
+
     const request = await Request.findById(requestId);
-    
-    // Validate request state
-    if (!request || !["Pending", "pending"].includes(request.status) || request.currentStage !== "partnership-division") {
-      return res.status(400).json({ message: "Request not ready for partnership review" });
+    if (!request) return res.status(404).json({ message: "Request not found" });
+
+    if (request.currentStage !== admin.role) {
+      return res.status(403).json({ message: "Unauthorized access to this request" });
     }
 
-    // Record decision
-    request.approvals.push({
-      stage: "partnership-division",
-      approvedBy: req.admin._id,
+    const approval = {
+      stage: admin.role,
+      approvedBy: admin._id,
       decision,
       message,
-    });
+      date: new Date()
+    };
+
+    if (req.file) {
+      approval.attachments = [`uploads/${req.file.filename}`];
+    }
+
+    request.approvals.push(approval);
 
     if (decision === "approve") {
+      const isLaw = isLawRelated === "true" || isLawRelated === true;
       request.status = "In Review";
-      request.isLawRelated = isLawRelated;
-      request.currentStage = isLawRelated ? "law-department" : "general-director";
+      request.lawRelated = isLaw;
+      request.frameworkType = frameworkType;
+      request.currentStage = isLaw ? "law-department" : "general-director";
     } else {
       request.status = "Disapproved";
     }
 
+    request.lastReviewedBy = admin._id;
+
     await request.save();
-    res.status(200).json(request);
+
+    const populated = await Request.findById(request._id).populate("approvals.approvedBy", "name email role");
+    res.status(200).json(populated);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Review Error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

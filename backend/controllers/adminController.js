@@ -417,30 +417,32 @@ export const getAllAdmins = async (req, res) => {
 
 
 
-export const getReviewedRequestsByAdmin = async (req, res) => {
-  try {
-    const adminId = req.admin._id;
-
-    const reviewedRequests = await Request.find({
-      approvals: {
-        $elemMatch: {
-          approvedBy: adminId,
-          decision: { $in: ['approve', 'disapprove'] },
+  export const getReviewedRequestsByAdmin = async (req, res) => {
+    try {
+      const adminId = req.admin._id;
+  
+      const reviewedRequests = await Request.find({
+        approvals: {
+          $elemMatch: {
+            approvedBy: adminId,
+            decision: { $in: ['approve', 'disapprove'] },
+          },
         },
-      },
-    })
-    .populate("userRef", "name email")
-    .select("-__v");
-
-    res.status(200).json({
-      status: "success",
-      results: reviewedRequests.length,
-      data: reviewedRequests,
-    });
-  } catch (err) {
-    res.status(500).json({ status: "fail", message: err.message });
-  }
-};
+      })
+        .populate("userRef", "name email")
+        .populate("approvals.approvedBy", "name") // ✅ Populate admin names
+        .select("-__v");
+  
+      res.status(200).json({
+        status: "success",
+        results: reviewedRequests.length,
+        data: reviewedRequests,
+      });
+    } catch (err) {
+      res.status(500).json({ status: "fail", message: err.message });
+    }
+  };
+  
 
 
   

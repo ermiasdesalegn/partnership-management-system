@@ -35,11 +35,11 @@ export const createFirstAdmin = async (req, res, next) => {
 
 
 
-// Modified register controller
+
 export const registerUser = async (req, res, next) => {
   const { role, company, department } = req.body;
 
-  // Prevent unauthorized admin registration
+
   if (["partnership-division", "general-director"].includes(role)) {
     return next(new AppError("Admin registration not allowed", 403));
   }
