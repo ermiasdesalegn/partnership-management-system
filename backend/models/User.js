@@ -1,84 +1,5 @@
-// // models/User.js
-// import mongoose from "mongoose";
-// import validator from "validator";
-// import bcrypt from "bcryptjs";
 
-// const UserSchema = new mongoose.Schema({
-//   name: {
-//     type: String,
-//     required: [true, "Please enter your name"]
-//   },
-//   email: {
-//     type: String,
-//     required: [true, "Please enter your email"],
-//     unique: true,
-//     lowercase: true,
-//     validate: [validator.isEmail, "Please provide a valid email"]
-//   },
-//   password: {
-//     type: String,
-//     required: [true, "Please enter your password"],
-//     minlength: 8,
-//     select: false
-//   },
-//   role: {
-//     type: String,
-//     enum: ["external", "internal"],
-//     default: "external"
-//   },
-//   company: {
-//     name: String,
-//     type: {
-//       type: String,
-//       enum: ["Government", "Private", "Non-Government", "Other"]
-//     },
-//     address: String,
-//     phone: {
-//       type: String,
-//       validate: {
-//         validator: v => validator.isMobilePhone(v, "any"),
-//         message: "Invalid phone number"
-//       }
-//     }
-//   },
-//   department: {
-//     type: String,
-//     required: function () {
-//       return this.role === "internal";
-//     }
-//   },
-//   createdAt: {
-//     type: Date,
-//     default: Date.now
-//   }
-// });
-
-// UserSchema.pre("save", async function (next) {
-//   if (!this.isModified("password")) return next();
-//   this.password = await bcrypt.hash(this.password, 12);
-//   next();
-// });
-
-// UserSchema.methods.correctPassword = async function (candidatePassword) {
-//   return await bcrypt.compare(candidatePassword, this.password);
-// };
-
-// export default mongoose.model("User", UserSchema);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import bcrypt from 'bcrypt';
 
 import mongoose from "mongoose";
 import validator from "validator";
@@ -101,6 +22,12 @@ const userSchema = new mongoose.Schema({
     minlength: 8,
     select: false
   },
+  role: {
+    type: String,
+    enum: ["external", "internal", "partnership-division", "general-director"],
+    default: "external"
+  },
+  department: String,
   company: {
     name: String,
     address: String,
@@ -114,6 +41,15 @@ const userSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  next();
+});
 
+// Add password verification method
+userSchema.methods.correctPassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 const User = mongoose.model("User", userSchema);
 export default User;

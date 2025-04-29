@@ -1,25 +1,32 @@
+// routes/userRoutes.js
 import express from "express";
-import {
-  registerUser,
+import { 
+  registerUser, 
   loginUser,
-} from "../controllers/authController.js";
-// import {addFeedbackAttachment, addRequestAttachment} from "../controllers/requestController.js"
-// import {forwardToGeneralDirector} from "../controllers/forwardToGeneralDirector.js"
-// import {generalDirectorDecision,getRequestsForGeneralDirector} from "../controllers/generalDirectorDecision.js"
-// import {lawDepartmentReviewRequest,getLawRelatedRequests} from "../controllers/lawDepartmentReviewRequest.js"
-// import {partnershipReviewRequest,getPartnershipReviewedRequests,getApprovedRequestsForPartnershipDivision,getDisapprovedRequestsForLawDepartment,getPendingRequests} from "../controllers/partnershipReviewRequest.js"
-// import {getRequestsByRole} from "../controllers/requestController.js"
-// import { sendToLawDepartment } from "../controllers/requestController.js";
-import { protect, restrictTo } from "../middleware/authMiddleware.js";
-// import {upload} from "../middleware/upload.js";
+  createRequest,
+  // logout,
+  getMe,
+  // updateMe,
+  // updateMyPassword,
+  // deleteMe,
+  getRequestStatus,
+  getRequestById
+} from "../controllers/userController.js";
+import { protect } from "../middleware/authMiddleware.js";
+import upload from "../middleware/upload.js";    
 
 const router = express.Router();
 
 // Public routes
-router.post("/login",  loginUser);
 router.post("/signup", registerUser);
-router.use(protect);
+router.post("/login", loginUser);
+// router.get("/logout", logout);
 
-// Protected routes (require JWT token)
+// Protected routes
+router.use(protect);
+router.get("/me", getMe);
+router.post("/requests", upload.array('files'), createRequest);
+router.get("/requests/status", getRequestStatus);
+router.get("/requests/:id", getRequestById);
 
 export default router;

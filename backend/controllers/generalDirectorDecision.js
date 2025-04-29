@@ -1,6 +1,7 @@
 import Admin from "../models/Admin.js";
 import User from "../models/User.js";
 import Request from "../models/Request.js";
+import Partner from "../models/Partners.js";
 
 export const generalDirectorDecision = async (req, res) => {
   const { requestId, decision, message } = req.body;
@@ -8,18 +9,46 @@ export const generalDirectorDecision = async (req, res) => {
   try {
     const request = await Request.findById(requestId);
     
-    // Validate request state
-    if (!request || request.currentStage !== "general-director") {
+    if (!request) {
+      return res.status(400).json({ message: "Request not found" });
+    }
+    if (typeof request.currentStage !== "string" || request.currentStage.trim() !== "general-director") {
       return res.status(400).json({ message: "Request not ready for general director review" });
     }
 
+    // If already approved, block further approval
+    if (request.status === "Approved") {
+      return res.status(400).json({ message: "This request has already been approved." });
+    }
+
+    // If this admin has already approved before
+    const alreadyApprovedByThisAdmin = request.approvals.some(
+      a => a.stage === "general-director" && String(a.approvedBy) === String(req.admin._id)
+    );
+    if (alreadyApprovedByThisAdmin) {
+      return res.status(400).json({ message: "You have already approved this request as general director." });
+    }
+
+    // If any other admin has already approved as general director
+    const alreadyApprovedByAnotherAdmin = request.approvals.some(
+      a => a.stage === "general-director"
+    );
+    if (alreadyApprovedByAnotherAdmin) {
+      return res.status(400).json({ message: "This request has already been approved by another general director." });
+    }
+
     // Record decision
-    request.approvals.push({
+    const approval = {
       stage: "general-director",
       approvedBy: req.admin._id,
       decision,
       message,
-    });
+      date: new Date()
+    };
+    if (req.file) {
+      approval.attachments = [`uploads/${req.file.filename}`];
+    }
+    request.approvals.push(approval);
 
     // Check if all required approvals are given
     const requiredApprovals = request.isLawRelated ? 3 : 2; // 3 if law-related, 2 if not
@@ -27,6 +56,30 @@ export const generalDirectorDecision = async (req, res) => {
 
     if (decision === "approve" && approvedStages >= requiredApprovals) {
       request.status = "Approved";
+      // Automatically create a Partner record
+      await Partner.create({
+        requestRef: request._id,
+        companyName: request.companyDetails?.name,
+        companyEmail: request.companyDetails?.email,
+        companyType: request.companyDetails?.type,
+        companyAddress: request.companyDetails?.address,
+        frameworkType: request.frameworkType,
+        duration: request.duration,
+        status: "Active",
+        requestAttachments: request.attachments || [],
+        approvalAttachments: request.approvals.flatMap(a => {
+          if (!a.attachments) return [];
+          if (Array.isArray(a.attachments)) {
+            return a.attachments.map(path => ({
+              path,
+              approvedBy: a.approvedBy,
+              stage: a.stage,
+              date: a.date || null
+            }));
+          }
+          return [];
+        })
+      });
     } else if (decision === "disapprove") {
       request.status = "Disapproved";
     }

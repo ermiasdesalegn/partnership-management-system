@@ -20,6 +20,7 @@ const __dirname = path.dirname(__filename);
 
 // Add this before your routes
 app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/api/v1/files', express.static(path.join(__dirname, 'public/uploads')));
 app.use(
   cors({
     origin: "http://localhost:5173",

@@ -12,8 +12,8 @@ const RequestTable = () => {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 flex justify-center items-center bg-white z-50">
-        <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-500"></div>
+      <div className="min-h-screen w-full bg-gradient-to-br from-white via-[#3c8dbc]/5 to-[#3c8dbc]/10 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-[#3c8dbc]" />
       </div>
     );
   }
@@ -35,7 +35,7 @@ const RequestTable = () => {
     <div className="w-full min-h-screen px-8 py-10 bg-gray-100">
       <div className="w-full bg-white shadow-lg rounded-lg p-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-blue-800">Partnership Requests</h2>
+          <h2 className="text-3xl font-bold text-[#3c8dbc]">Partnership Requests</h2>
           <p className="mt-1 text-sm text-gray-600">List of all pending, reviewed, and approved requests</p>
         </div>
 
@@ -61,7 +61,7 @@ const RequestTable = () => {
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
-                <tr className="bg-gradient-to-r from-blue-500 to-blue-700 text-white">
+                <tr className="bg-[#3c8dbc] text-white">
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Company Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
@@ -82,7 +82,7 @@ const RequestTable = () => {
                             ? "bg-yellow-100 text-yellow-800"
                             : req.status === "disapproved"
                             ? "bg-red-100 text-red-800"
-                            : "bg-gray-200 text-gray-800"
+                            : "bg-[#3c8dbc]/10 text-[#3c8dbc]"
                         }`}
                       >
                         {req.status}

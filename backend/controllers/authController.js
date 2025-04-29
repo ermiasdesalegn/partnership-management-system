@@ -1,65 +1,30 @@
-import User from "../models/User.js";
-import AppError from "../utils/appError.js";
-import { signToken } from "../utils/authHelpers.js";
-import bcrypt from "bcryptjs";
-
-
-export const createFirstAdmin = async (req, res, next) => {
-  try {
-    // Check if any admin exists
-    const existingAdmin = await User.findOne({ 
-      role: { $in: ["partnership-division", "general-director"] } 
-    });
-
-    if (existingAdmin) {
-      return next(new AppError("Admin user already exists", 400));
-    }
-    const admin = await User.create({
-      name: "System Admin",
-      email: "admin@insa.com",
-      password: "09090909",
-      role: "general-director",
-      department: "Administration"
-    });
-
-    admin.password = undefined;
-
-    res.status(201).json({
-      status: "success",
-      data: { admin }
-    });
-  } catch (error) {
-    next(new AppError("Error creating admin user", 500));
-  }
-};
-
-
-
-
 export const registerUser = async (req, res, next) => {
-  const { role, company, department } = req.body;
+  const { companyName, department, ...rest } = req.body;
+  const role = rest.role || "external";
 
-
+  // Block admin role registration
   if (["partnership-division", "general-director"].includes(role)) {
     return next(new AppError("Admin registration not allowed", 403));
   }
 
-  // Existing validation
-  if (role === "external" && !company) {
-    return next(new AppError("Company details required for external users", 400));
+  // Validate required fields
+  if (role === "external" && !companyName) {
+    return next(new AppError("Company name required for external users", 400));
   }
-  
   if (role === "internal" && !department) {
     return next(new AppError("Department required for internal users", 400));
   }
 
   try {
     const newUser = await User.create({
-      ...req.body,
-      role: role || "external"
+      ...rest,
+      role,
+      company: role === "external" ? { name: companyName } : undefined,
+      department: role === "internal" ? department : undefined
     });
 
     const token = signToken(newUser._id);
+    newUser.password = undefined;
 
     res.status(201).json({
       status: "success",
@@ -67,10 +32,12 @@ export const registerUser = async (req, res, next) => {
       data: { user: newUser }
     });
   } catch (error) {
-    next(new AppError("Registration failed", 400));
+    if (error.code === 11000) {
+      return next(new AppError("Email already exists", 400));
+    }
+    next(new AppError(error.message || "Registration failed", 400));
   }
 };
-
 
 export const loginUser = async (req, res, next) => {
   const { email, password } = req.body;
@@ -90,8 +57,11 @@ export const loginUser = async (req, res, next) => {
   res.status(200).json({
     status: "success",
     token,
-    role: user.role
+    data: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    }
   });
 };
-
-

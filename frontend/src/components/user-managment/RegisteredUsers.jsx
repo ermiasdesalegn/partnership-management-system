@@ -44,8 +44,8 @@ const RegisteredUsers = () => {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
-        <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-500" />
+      <div className="min-h-screen w-full bg-gradient-to-br from-white via-[#3c8dbc]/5 to-[#3c8dbc]/10 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-[#3c8dbc]" />
       </div>
     );
   }
@@ -73,27 +73,27 @@ const RegisteredUsers = () => {
 
   return (
     <div className="container sm:px-6 lg:px-4 py-4">
-      <div className="bg-white shadow-md rounded-lg overflow-hidden p-6">
+      <div className="bg-white shadow-lg rounded-lg overflow-hidden p-6">
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800">Registered Users</h2>
+          <h2 className="text-2xl font-semibold text-[#3c8dbc]">Registered Users</h2>
           <p className="mt-1 text-sm text-gray-600">List of registered users and their request counts</p>
         </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-[#3c8dbc]">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Number of Requests</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Name</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Email</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">Number of Requests</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                <tr key={user._id} className="hover:bg-[#3c8dbc]/5 transition-colors">
                   <td className="px-6 py-4 text-sm text-gray-900">{user.name}</td>
                   <td className="px-6 py-4 text-sm text-gray-700">{user.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{user.requestCount}</td>
+                  <td className="px-6 py-4 text-sm text-[#3c8dbc] font-medium">{user.requestCount}</td>
                 </tr>
               ))}
             </tbody>
@@ -101,9 +101,9 @@ const RegisteredUsers = () => {
         </div>
 
         {users.length === 0 && (
-          <div className="bg-gray-50 p-6 rounded-lg text-center mt-6">
+          <div className="bg-[#3c8dbc]/5 p-8 rounded-lg text-center mt-6">
             <svg
-              className="mx-auto h-12 w-12 text-gray-400"
+              className="mx-auto h-12 w-12 text-[#3c8dbc]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -115,7 +115,7 @@ const RegisteredUsers = () => {
                 d="M9.75 17L7 14.25M7 14.25L4.25 17M7 14.25v6.75M17 6.75L19.75 9.5M19.75 9.5L17 12.25M19.75 9.5H13"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
+            <h3 className="mt-2 text-sm font-medium text-[#3c8dbc]">No users found</h3>
             <p className="mt-1 text-sm text-gray-500">There are no registered users yet.</p>
           </div>
         )}

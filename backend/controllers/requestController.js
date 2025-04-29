@@ -3,6 +3,48 @@ import catchAsync from "../utils/catchAsync.js";
 import Admin from "../models/Admin.js"; 
 // import Request from "../models/Request.js";
 import User from "../models/User.js";
+
+
+export const createRequest = catchAsync(async (req, res, next) => {
+  // Validate required fields
+  if (!req.body.companyDetails || !req.body.frameworkType) {
+    return next(new AppError('Missing required fields', 400));
+  }
+
+  // Parse company details
+  const companyDetails = JSON.parse(req.body.companyDetails);
+
+  // Create new request
+  const newRequest = await Request.create({
+    userRef: req.user.id,
+    type: "external",
+    status: "Pending",
+    currentStage: "partnership-division",
+    frameworkType: req.body.frameworkType,
+    duration: req.body.duration,
+    companyDetails: {
+      ...companyDetails,
+      // Ensure enum values match
+      type: companyDetails.type in ["Government", "Private", "Non-Government", "Other"] 
+        ? companyDetails.type 
+        : "Other"
+    },
+    attachments: req.files.map(file => ({
+      path: file.path.replace(/\\/g, '/'),
+      originalName: file.originalname,
+      uploadedBy: req.user.id,
+      uploaderModel: 'User'
+    }))
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      request: newRequest
+    }
+  });
+});
+
 export const reviewRequest = catchAsync(async (req, res, next) => {
   const request = await Request.findById(req.params.id);
   if (!request) return next(new AppError("Request not found", 404));

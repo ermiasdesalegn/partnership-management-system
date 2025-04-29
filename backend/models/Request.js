@@ -33,14 +33,24 @@ const RequestSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Admin"
   },
-  companyDetails: {
-    name: String,
-    address: String,
-    type: {
-      type: String,
-      enum: ["Government", "Private", "Non-Government", "Other"]
+  // In Request model
+companyDetails: {
+  name: { type: String, required: [true, 'Company name is required'] },
+  address: String,
+  type: {
+    type: String,
+    enum: ["Government", "Private", "Non-Government", "Other"],
+    required: [true, 'Company type is required']
+  },
+  email: {
+    type: String,
+    validate: {
+      validator: (v) => /\S+@\S+\.\S+/.test(v),
+      message: 'Invalid email format'
     }
   },
+  phone: String
+},
   lawRelated: {
     type: Boolean,
     default: false

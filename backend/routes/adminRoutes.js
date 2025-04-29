@@ -30,7 +30,7 @@ import {partnershipReviewRequest,getPartnershipReviewedRequests,getApprovedReque
 // import {getRequestsByRole} from "../controllers/requestController.js"
 // import { sendToLawDepartment } from "../controllers/requestController.js";
 import { protectAdmin, restrictToAdmin } from "../middleware/authMiddleware.js";
-import {upload} from "../middleware/upload.js";
+import  upload  from "../middleware/upload.js";   
 
 const router = express.Router();
 
@@ -93,6 +93,7 @@ router.post(
   "/review/general-director",
   protectAdmin,
   restrictToAdmin("general-director"),
+  upload.none(),
   generalDirectorDecision
 );
 router.get("/law-requests", protectAdmin , restrictToAdmin("law-department"), getLawRelatedRequests);

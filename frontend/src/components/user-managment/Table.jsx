@@ -2,12 +2,12 @@ import PropTypes from "prop-types";
 
 const Table = ({ headers, rows }) => {
   return (
-    <div className='overflow-x-auto shadow-md sm:rounded-lg'>
-      <table className='min-w-full text-sm text-left text-gray-900 dark:text-gray-700'>
-        <thead className='text-xs text-gray-900 uppercase bg-gray-400'>
+    <div className='overflow-x-auto shadow-lg rounded-lg'>
+      <table className='min-w-full text-sm text-left text-gray-900'>
+        <thead className='text-xs text-white uppercase bg-[#3c8dbc]'>
           <tr>
             {headers.map((header, index) => (
-              <th key={index} className='px-6 py-3'>
+              <th key={index} className='px-6 py-4 font-semibold'>
                 {header}
               </th>
             ))}
@@ -15,7 +15,7 @@ const Table = ({ headers, rows }) => {
         </thead>
         <tbody>
           {rows.map((row, rowIndex) => (
-            <tr key={rowIndex} className='bg-gray-100 border-b hover:bg-gray-200'>
+            <tr key={rowIndex} className='bg-white border-b hover:bg-[#3c8dbc]/5 transition-colors'>
               {row.map((cell, cellIndex) => (
                 <td key={cellIndex} className='px-6 py-4'>
                   {cell}
@@ -35,7 +35,7 @@ const Table = ({ headers, rows }) => {
           <li>
             <a
               href='#'
-              className='flex items-center justify-center px-3 h-8 leading-tight text-gray-700 bg-white border border-gray-300 rounded-s-lg  hover:bg-gray-400 hover:text-gray-700 dark:hover:text-white'
+              className='flex items-center justify-center px-3 h-8 leading-tight text-[#3c8dbc] bg-white border border-[#3c8dbc] rounded-s-lg hover:bg-[#3c8dbc] hover:text-white transition-colors'
             >
               Previous
             </a>
@@ -44,7 +44,7 @@ const Table = ({ headers, rows }) => {
             <li key={page}>
               <a
                 href='#'
-                className='flex items-center justify-center px-3 h-8 leading-tight text-gray-700 bg-white border border-gray-300 hover:bg-gray-400 hover:text-gray-700 dark:hover:text-white'
+                className='flex items-center justify-center px-3 h-8 leading-tight text-[#3c8dbc] bg-white border border-[#3c8dbc] hover:bg-[#3c8dbc] hover:text-white transition-colors'
               >
                 {page}
               </a>
@@ -53,7 +53,7 @@ const Table = ({ headers, rows }) => {
           <li>
             <a
               href='#'
-              className='flex items-center justify-center px-3 h-8 leading-tight text-gray-700 bg-white border border-gray-300 rounded-e-lg hover:text-gray-700 hover:bg-gray-400 dark:hover:text-white'
+              className='flex items-center justify-center px-3 h-8 leading-tight text-[#3c8dbc] bg-white border border-[#3c8dbc] rounded-e-lg hover:bg-[#3c8dbc] hover:text-white transition-colors'
             >
               Next
             </a>

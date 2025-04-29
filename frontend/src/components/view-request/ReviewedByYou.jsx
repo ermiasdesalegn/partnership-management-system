@@ -61,8 +61,8 @@ const ReviewedByYou = () => {
 
   if (isLoading)
     return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-500"></div>
+      <div className="min-h-screen w-full bg-gradient-to-br from-white via-[#3c8dbc]/5 to-[#3c8dbc]/10 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-[#3c8dbc]" />
       </div>
     );
 
@@ -106,8 +106,8 @@ const ReviewedByYou = () => {
                 {/* Header */}
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <FaBuilding className="text-blue-600" />
+                    <div className="p-2 bg-[#3c8dbc]/10 rounded-full">
+                      <FaBuilding className="text-[#3c8dbc]" />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">
@@ -139,9 +139,9 @@ const ReviewedByYou = () => {
 
                 {/* Your Message */}
                 {myApproval.message && (
-                  <div className="bg-blue-50 p-3 rounded-md mb-4">
-                    <h4 className="text-sm font-medium text-blue-800">Your Comment</h4>
-                    <p className="mt-1 text-sm text-blue-700">{myApproval.message}</p>
+                  <div className="bg-[#3c8dbc]/10 p-3 rounded-md mb-4">
+                    <h4 className="text-sm font-medium text-[#3c8dbc]">Your Comment</h4>
+                    <p className="mt-1 text-sm text-[#3c8dbc]/80">{myApproval.message}</p>
                   </div>
                 )}
 
@@ -149,7 +149,7 @@ const ReviewedByYou = () => {
                 {req.frameworkType && (
                   <div className="mb-4">
                     <p className="text-sm text-gray-500 mb-1">Framework Type:</p>
-                    <span className="inline-block bg-indigo-100 text-indigo-800 text-xs font-medium px-2 py-1 rounded-full">
+                    <span className="inline-block bg-[#3c8dbc]/10 text-[#3c8dbc] text-xs font-medium px-2 py-1 rounded-full">
                       {req.frameworkType.toUpperCase()}
                     </span>
                   </div>
@@ -170,7 +170,7 @@ const ReviewedByYou = () => {
                               target="_blank"
                               rel="noopener noreferrer"
                               download
-                              className="hover:text-blue-700"
+                              className="text-[#3c8dbc] hover:text-[#2c6a8f]"
                             >
                               {filename}
                             </a>

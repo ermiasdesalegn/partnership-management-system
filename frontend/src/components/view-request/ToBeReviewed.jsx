@@ -13,8 +13,8 @@ const ToBeReviewed = () => {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
-        <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-500" />
+      <div className="min-h-screen w-full bg-gradient-to-br from-white via-[#3c8dbc]/5 to-[#3c8dbc]/10 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-[#3c8dbc]" />
       </div>
     );
   }
@@ -29,7 +29,7 @@ const ToBeReviewed = () => {
       return (
         <div className="w-full px-8 py-10">
           <div className="w-full bg-white shadow-xl rounded-lg p-8">
-            <h2 className="text-3xl font-bold text-blue-700 mb-6">Requests to be Reviewed</h2>
+            <h2 className="text-3xl font-bold text-[#3c8dbc] mb-6">Requests to be Reviewed</h2>
             <div className="text-center text-gray-500 text-lg">
               {backendMessage}
             </div>
@@ -53,13 +53,13 @@ const ToBeReviewed = () => {
   return (
     <div className="w-full min-h-screen px-8 py-10 bg-gray-100">
       <div className="w-full bg-white shadow-xl rounded-lg p-8 overflow-x-auto">
-        <h2 className="text-3xl font-bold text-blue-700 mb-6">Requests to be Reviewed</h2>
+        <h2 className="text-3xl font-bold text-[#3c8dbc] mb-6">Requests to be Reviewed</h2>
 
         {requests.length === 0 ? (
           <div className="text-center text-gray-500 text-lg">No requests found.</div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-blue-600 text-white">
+            <thead className="bg-[#3c8dbc] text-white">
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Company</th>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Email</th>
@@ -82,7 +82,7 @@ const ToBeReviewed = () => {
                           ? "bg-yellow-100 text-yellow-800"
                           : req.status === "Disapproved"
                           ? "bg-red-100 text-red-800"
-                          : "bg-gray-100 text-gray-800"
+                          : "bg-[#3c8dbc]/10 text-[#3c8dbc]"
                       }`}
                     >
                       {req.status}
@@ -95,7 +95,7 @@ const ToBeReviewed = () => {
                   <td className="px-6 py-4">
                     <button
                       onClick={() => navigate(`/admin/requests-in-progress/request/${req._id}`)}
-                      className="text-blue-600 hover:text-blue-900 underline text-sm"
+                      className="text-[#3c8dbc] hover:text-[#2c6a8f] underline text-sm"
                     >
                       View Details
                     </button>
