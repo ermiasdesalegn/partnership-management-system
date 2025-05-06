@@ -1,4 +1,3 @@
-
 export const fetchAdminUsers = async () => {
     const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:5000/api/v1/admin/users', {
@@ -12,16 +11,26 @@ export const fetchAdminUsers = async () => {
     return res.json();
   };
   
-  export const fetchAdminRequests = async () => {
-    const token = localStorage.getItem('token');
-    const res = await fetch('http://localhost:5000/api/v1/admin/requests', {
+  export const fetchAdminRequests = async (filters = {}) => {
+    const token = localStorage.getItem("token");
+    const queryParams = new URLSearchParams();
+    
+    if (filters.type) {
+      queryParams.append('type', filters.type);
+    }
+    if (filters.department) {
+      queryParams.append('department', filters.department);
+    }
+
+    const url = `http://localhost:5000/api/v1/admin/requests?${queryParams.toString()}`;
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
   
-    if (!res.ok) throw new Error('Failed to fetch requests');
-    return res.json();
+    if (!response.ok) throw new Error('Failed to fetch requests');
+    return response.json();
   };
   
   // api/adminApi.js

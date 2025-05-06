@@ -135,26 +135,54 @@ const createSendToken = (admin, statusCode, res) => {
   });
 };
 
-
 export const signup = async (req, res) => {
   try {
-    if (req.admin?.role !== "general-director") {
-      return res.status(403).json({
+    const { name, email, password, role, department } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({
         status: "fail",
-        message: "Only general director can create new admins",
+        message: "Please provide name, email and password"
       });
     }
-    const newAdmin = await Admin.create({
-      name: req.body.name,
-      email: req.body.email,
-      password: req.body.password,
-      role: req.body.role,
-      department: req.body.department,
-    });
 
+    // Check if this is the first admin being created
+    const adminCount = await Admin.countDocuments();
+    
+    let adminData = {
+      name,
+      email,
+      password,
+      department: department || "Administration"
+    };
+
+    // If this is the first admin, make them super-admin
+    if (adminCount === 0) {
+      adminData.role = "super-admin";
+    } else {
+      // For subsequent admins, require super-admin role and valid role
+      if (!role || !["partnership-division", "law-department", "general-director", "super-admin"].includes(role)) {
+        return res.status(400).json({
+          status: "fail",
+          message: "Please provide a valid role"
+        });
+      }
+      adminData.role = role;
+    }
+
+    const newAdmin = await Admin.create(adminData);
     createSendToken(newAdmin, 201, res);
   } catch (err) {
-    res.status(400).json({ status: "fail", message: err.message });
+    if (err.code === 11000) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Email already exists"
+      });
+    }
+    res.status(500).json({
+      status: "error",
+      message: err.message
+    });
   }
 };
 // Login
@@ -211,11 +239,35 @@ export const getAllAdmins = async (req, res) => {
    */
   export const getAllRequests = async (req, res) => {
     try {
-      const requests = await Request.find().populate("userRef");
+      const { type, department } = req.query;
+      
+      // Build the query
+      let query = {};
+      if (type) {
+        query.type = type;
+      }
+      
+      // Fetch requests with populated user information
+      const requests = await Request.find(query)
+        .populate({
+          path: 'userRef',
+          select: 'name email role department'
+        })
+        .sort({ createdAt: -1 });
+
+      // If department filter is provided, filter the results
+      let filteredRequests = requests;
+      if (department) {
+        filteredRequests = requests.filter(request => 
+          request.userRef?.role === 'internal' && 
+          request.userRef?.department === department
+        );
+      }
+
       res.status(200).json({
         success: true,
-        count: requests.length,
-        data: requests,
+        count: filteredRequests.length,
+        data: filteredRequests,
       });
     } catch (err) {
       res.status(500).json({
@@ -340,8 +392,13 @@ export const getAllAdmins = async (req, res) => {
     const adminRole = req.admin.role;
     const requestId = req.params.id;
   
-    // Fetch the request
-    const request = await Request.findById(requestId).populate("userRef");
+    // Fetch the request with populated user and admin details
+    const request = await Request.findById(requestId)
+      .populate("userRef")
+      .populate({
+        path: "approvals.approvedBy",
+        select: "name email role"
+      });
   
     if (!request) {
       return next(new AppError("Request not found", 404));
@@ -350,6 +407,21 @@ export const getAllAdmins = async (req, res) => {
     // Check if the currentStage of the request matches the role of the admin
     if (request.currentStage !== adminRole) {
       return next(new AppError("Unauthorized access to this request", 403));
+    }
+
+    // Transform file paths to be relative to uploads directory
+    if (request.attachments) {
+      request.attachments = request.attachments.map(attachment => ({
+        ...attachment.toObject(),
+        path: attachment.path.split('uploads/').pop()
+      }));
+    }
+
+    if (request.approvals) {
+      request.approvals = request.approvals.map(approval => ({
+        ...approval.toObject(),
+        attachments: approval.attachments?.map(file => file.split('uploads/').pop())
+      }));
     }
   
     res.status(200).json({
@@ -443,55 +515,3 @@ export const getAllAdmins = async (req, res) => {
     }
   };
   
-
-
-  
-
-
-// Send to law department (partnership-division only)
-// export const sendToLawDepartment = async (req, res) => {
-//   try {
-//     if (req.admin.role !== "partnership-division") {
-//       return res.status(403).json({ status: "fail", message: "Not allowed" });
-//     }
-
-//     const request = {
-//       from: req.admin._id,
-//       to: req.body.lawDepartmentAdminId,
-//       content: req.body.content,
-//       status: "pending",
-//     };
-
-//     res.status(200).json({
-//       status: "success",
-//       message: "Request sent to law department",
-//       data: { request },
-//     });
-//   } catch (err) {
-//     res.status(400).json({ status: "fail", message: err.message });
-//   }
-// };
-
-// Review request (law-department only)
-// export const reviewRequest = async (req, res) => {
-//   try {
-//     if (req.admin.role !== "law-department") {
-//       return res.status(403).json({ status: "fail", message: "Access denied" });
-//     }
-
-//     const request = {
-//       id: req.params.requestId,
-//       reviewedBy: req.admin._id,
-//       decision: req.body.decision,
-//       comments: req.body.comments,
-//     };
-
-//     res.status(200).json({
-//       status: "success",
-//       message: "Request reviewed successfully",
-//       data: { request },
-//     });
-//   } catch (err) {
-//     res.status(400).json({ status: "fail", message: err.message });
-//   }
-// };

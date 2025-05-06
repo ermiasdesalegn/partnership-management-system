@@ -3,6 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import RouteConfig from "./router/RouteConfig";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import AdminSetupPassword from './pages/AdminSetupPassword';
 
 function App() {
   return (

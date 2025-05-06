@@ -1,5 +1,4 @@
-
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 import mongoose from "mongoose";
 import validator from "validator";
@@ -24,7 +23,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["external", "internal", "partnership-division", "general-director"],
+    enum: ["external", "internal"],
     default: "external"
   },
   department: String,
@@ -36,20 +35,32 @@ const userSchema = new mongoose.Schema({
       enum: ["Government", "Private", "Non-Government", "Other"]
     }
   },
+  isPasswordTemporary: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
+
+// Only hash the password if it has been modified
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
+  
+  try {
+    this.password = await bcrypt.hash(this.password, 12);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Add password verification method
 userSchema.methods.correctPassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
+
 const User = mongoose.model("User", userSchema);
 export default User;

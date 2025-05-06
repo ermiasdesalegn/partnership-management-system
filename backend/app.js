@@ -8,6 +8,8 @@ import userRouter from "./routes/userRoutes.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import superAdminRoutes from './routes/superAdminRoutes.js';
+import internalUserRoutes from './routes/internalUserRoutes.js';
 
 dotenv.config();
 
@@ -29,7 +31,9 @@ app.use(
 );
 
 // Routes
+app.use("/api/v1/internal", internalUserRoutes);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/user", userRouter);
+app.use('/api/v1/super-admin', superAdminRoutes);
 
 export default app;

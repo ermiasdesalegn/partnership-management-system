@@ -3,6 +3,7 @@ import catchAsync from "../utils/catchAsync.js";
 import Admin from "../models/Admin.js"; 
 // import Request from "../models/Request.js";
 import User from "../models/User.js";
+import AppError from '../utils/appError.js';
 
 
 export const createRequest = catchAsync(async (req, res, next) => {
@@ -14,10 +15,16 @@ export const createRequest = catchAsync(async (req, res, next) => {
   // Parse company details
   const companyDetails = JSON.parse(req.body.companyDetails);
 
+  // Get user's role from the authenticated user
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
   // Create new request
   const newRequest = await Request.create({
     userRef: req.user.id,
-    type: "external",
+    type: user.role === 'internal' ? 'internal' : 'external', // Set type based on user's role
     status: "Pending",
     currentStage: "partnership-division",
     frameworkType: req.body.frameworkType,
@@ -121,6 +128,26 @@ export const addFeedbackAttachment = catchAsync(async (req, res, next) => {
     data: {
       approval,
       attachmentPath: req.file.path.replace(/\\/g, '/')
+    }
+  });
+});
+
+export const getRequestById = catchAsync(async (req, res, next) => {
+  const request = await Request.findById(req.params.id);
+
+  if (!request) {
+    return next(new AppError('No request found with that ID', 404));
+  }
+
+  // Check if the request belongs to the authenticated user
+  if (request.userRef.toString() !== req.user.id) {
+    return next(new AppError('You are not authorized to view this request', 403));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      request
     }
   });
 });

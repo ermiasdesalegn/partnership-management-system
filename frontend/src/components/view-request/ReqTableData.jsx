@@ -1,14 +1,37 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAdminRequests } from "../../api/adminApi";
+import {
+  FaBuilding,
+  FaUser,
+  FaFilter,
+  FaExternalLinkAlt,
+  FaUserTie,
+} from "react-icons/fa";
 
 const RequestTable = () => {
+  const [filters, setFilters] = useState({
+    type: "",
+    department: "",
+  });
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["adminRequests"],
-    queryFn: fetchAdminRequests,
+    queryKey: ["adminRequests", filters],
+    queryFn: () => fetchAdminRequests({
+      type: filters.type || undefined,
+      department: filters.department || undefined
+    }),
   });
 
   const requests = data?.data || [];
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   if (isLoading) {
     return (
@@ -39,6 +62,39 @@ const RequestTable = () => {
           <p className="mt-1 text-sm text-gray-600">List of all pending, reviewed, and approved requests</p>
         </div>
 
+        {/* Filters */}
+        <div className="mb-6 flex gap-4 items-center">
+          <div className="flex items-center space-x-2">
+            <FaFilter className="text-[#3c8dbc]" />
+            <select
+              name="type"
+              value={filters.type}
+              onChange={handleFilterChange}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3c8dbc]"
+            >
+              <option value="">All Types</option>
+              <option value="internal">Internal</option>
+              <option value="external">External</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <FaUserTie className="text-[#3c8dbc]" />
+            <select
+              name="department"
+              value={filters.department}
+              onChange={handleFilterChange}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3c8dbc]"
+            >
+              <option value="">All Departments</option>
+              <option value="IT">IT</option>
+              <option value="HR">HR</option>
+              <option value="Finance">Finance</option>
+              <option value="Operations">Operations</option>
+              {/* Add more departments as needed */}
+            </select>
+          </div>
+        </div>
+
         {requests.length === 0 ? (
           <div className="bg-gray-50 p-6 rounded-lg text-center mt-6">
             <svg
@@ -64,6 +120,8 @@ const RequestTable = () => {
                 <tr className="bg-[#3c8dbc] text-white">
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Company Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Department</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Requested By</th>
                 </tr>
@@ -74,13 +132,30 @@ const RequestTable = () => {
                     <td className="px-6 py-4 text-sm text-gray-900">{req.companyDetails?.name || "—"}</td>
                     <td className="px-6 py-4 text-sm text-gray-700">{req.companyDetails?.email || "—"}</td>
                     <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        req.type === 'internal' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {req.type === 'internal' ? (
+                          <FaUser className="mr-1" />
+                        ) : (
+                          <FaExternalLinkAlt className="mr-1" />
+                        )}
+                        {req.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {req.userRef?.department || "—"}
+                    </td>
+                    <td className="px-6 py-4">
                       <span
                         className={`px-3 py-1 inline-flex text-xs font-medium rounded-full ${
-                          req.status === "approved"
+                          req.status === "Approved"
                             ? "bg-green-100 text-green-800"
-                            : req.status === "in review"
+                            : req.status === "In Review"
                             ? "bg-yellow-100 text-yellow-800"
-                            : req.status === "disapproved"
+                            : req.status === "Disapproved"
                             ? "bg-red-100 text-red-800"
                             : "bg-[#3c8dbc]/10 text-[#3c8dbc]"
                         }`}

@@ -22,15 +22,20 @@ const AdminSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["partnership-division", "law-department", "general-director"],
+    enum: ["partnership-division", "law-department", "general-director", "super-admin"],
     required: true
   },
   department: {
-    type: String
+    type: String,
+    default: null
   },
   isActive: {
     type: Boolean,
     default: true
+  },
+  isPasswordTemporary: {
+    type: Boolean,
+    default: false
   },
   lastLoggedIn: {
     type: Date

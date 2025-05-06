@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -254,21 +254,81 @@ const RequestDetail = () => {
                             {attachment.originalName}
                           </p>
                           <p className="text-xs text-gray-500">
-                            Uploaded by: {attachment.uploaderModel === 'User' ? req.userRef?.name : 'Admin'}
+                            {attachment.uploadedBy?.name || "Unknown"} • {new Date(attachment.uploadedAt).toLocaleDateString()}
                           </p>
                         </div>
-                      </div>
-                      <div className="mt-2">
                         <a
-                          href={`http://localhost:5000/api/v1/files/${attachment.path.split('/uploads/').pop()}`}
+                          href={`http://localhost:5000/api/v1/files/${attachment.path}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          className="p-2 text-gray-400 hover:text-gray-600"
                         >
-                          <FaDownload className="mr-1.5" />
-                          Download
+                          <FaDownload />
                         </a>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Approval History Section */}
+            {req.approvals && req.approvals.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-3">Approval History</h2>
+                <div className="space-y-4">
+                  {req.approvals.map((approval, index) => (
+                    <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {approval.approvedBy?.name}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {approval.approvedBy?.email} • {approval.approvedBy?.role} • {new Date(approval.date).toLocaleString()}
+                          </p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          approval.decision === "approve" 
+                            ? "bg-green-100 text-green-800" 
+                            : "bg-red-100 text-red-800"
+                        }`}>
+                          {approval.decision === "approve" ? "Approved" : "Disapproved"}
+                        </span>
+                      </div>
+                      
+                      {approval.message && (
+                        <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                          <p className="text-gray-700">{approval.message}</p>
+                        </div>
+                      )}
+
+                      {approval.attachments && approval.attachments.length > 0 && (
+                        <div className="mt-3">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Attached Files:</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {approval.attachments.map((file, fileIndex) => {
+                              const fileName = file.split('/').pop();
+                              return (
+                                <div key={fileIndex} className="flex items-center space-x-2 bg-gray-50 p-2 rounded">
+                                  {getFileIcon(fileName)}
+                                  <span className="text-sm text-gray-600 truncate">
+                                    {fileName}
+                                  </span>
+                                  <a
+                                    href={`http://localhost:5000/api/v1/files/${file}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ml-auto text-gray-400 hover:text-gray-600"
+                                  >
+                                    <FaDownload />
+                                  </a>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -289,7 +349,7 @@ const RequestDetail = () => {
                           })}
                         </p>
                         <p className="font-semibold text-blue-600 capitalize">
-                          {approval.decision} by {approval.approvedBy?.name || 'Admin'}
+                          {approval.decision} by {approval.approvedBy?.name}
                         </p>
                         <span className="text-sm text-gray-600">{approval.stage}</span>
                       </div>

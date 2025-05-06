@@ -18,10 +18,10 @@ export const registerUser = async (req, res) => {
     const { name, email, password, companyName } = req.body;
 
     // Validate required fields
-    if (!name || !email || !password || !companyName) {
+    if (!name || !email || !password) {
       return res.status(400).json({
         status: "fail",
-        message: "Please provide name, email, password, and company name"
+        message: "Please provide name, email, and password"
       });
     }
 
@@ -30,7 +30,7 @@ export const registerUser = async (req, res) => {
       email,
       password,
       role: "external",
-      company: { name: companyName }
+      company: companyName ? { name: companyName } : undefined
     });
 
     const token = signToken(newUser._id);

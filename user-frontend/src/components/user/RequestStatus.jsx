@@ -16,7 +16,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 const RequestStatus = () => {
-  const [request, setRequest] = useState(null);
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -37,10 +37,13 @@ const RequestStatus = () => {
           }
         });
 
-        if (response.data.status === 'success' && response.data.data.request) {
-          setRequest(response.data.data.request);
+        if (response.data.status === 'success') {
+          setRequests(response.data.data.requests || []);
+          if (response.data.data.requests.length === 0) {
+            setError('No requests found');
+          }
         } else {
-          setError('No request found');
+          setError('No requests found');
         }
       } catch (error) {
         console.error('Error fetching request status:', error);
@@ -125,135 +128,139 @@ const RequestStatus = () => {
             <ArrowLeftIcon className="h-5 w-5 mr-2" />
             Back to Dashboard
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Request Details</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Your Requests</h1>
         </div>
 
-        {/* Status Card */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Request Status</p>
-              <h3 className="text-2xl font-bold text-gray-900 mt-1">
-                {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-              </h3>
-            </div>
-            {getStatusIcon(request.status)}
-          </div>
-          <div className="mt-4">
-            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.status)}`}>
-              {request.status}
-            </span>
-          </div>
-        </div>
-
-        {/* Details Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Timeline */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Timeline</h2>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <CalendarIcon className="h-6 w-6 text-[#3c8dbc]" />
+        {requests.map((request) => (
+          <div key={request._id} className="mb-8">
+            {/* Status Card */}
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">Submitted</p>
-                  <p className="text-sm text-gray-600">
-                    {new Date(request.createdAt).toLocaleDateString()}
-                  </p>
+                  <p className="text-sm text-gray-600">Request Status</p>
+                  <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                    {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                  </h3>
                 </div>
+                {getStatusIcon(request.status)}
               </div>
-              <div className="flex items-center space-x-4">
-                <ClockIcon className="h-6 w-6 text-[#3c8dbc]" />
-                <div>
-                  <p className="font-medium text-gray-900">Last Updated</p>
-                  <p className="text-sm text-gray-600">
-                    {request?.updatedAt ? new Date(request.updatedAt).toLocaleString() : 'Not available'}
-                  </p>
-                </div>
+              <div className="mt-4">
+                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.status)}`}>
+                  {request.status}
+                </span>
               </div>
             </div>
-          </div>
 
-          {/* Framework Details */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Framework Details</h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600">Type</p>
-                <p className="font-medium text-gray-900">{request.frameworkType}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Duration</p>
-                <p className="font-medium text-gray-900">{request.duration}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Company Information */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <BuildingOfficeIcon className="h-6 w-6 mr-2 text-[#3c8dbc]" />
-            Company Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Company Name</p>
-              <p className="font-medium text-gray-900">{request.companyDetails?.name}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Company Type</p>
-              <p className="font-medium text-gray-900">{request.companyDetails?.type}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Email</p>
-              <p className="font-medium text-gray-900">{request.companyDetails?.email}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Address</p>
-              <p className="font-medium text-gray-900">{request.companyDetails?.address}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Attachments */}
-        {request.attachments && request.attachments.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <DocumentIcon className="h-6 w-6 mr-2 text-[#3c8dbc]" />
-              Attached Documents
-            </h2>
-            <div className="space-y-4">
-              {request.attachments.map((file, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            {/* Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Timeline */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Timeline</h2>
+                <div className="space-y-4">
                   <div className="flex items-center space-x-4">
-                    <DocumentIcon className="h-8 w-8 text-[#3c8dbc]" />
+                    <CalendarIcon className="h-6 w-6 text-[#3c8dbc]" />
                     <div>
-                      <p className="font-medium text-gray-900">{file.originalName}</p>
+                      <p className="font-medium text-gray-900">Submitted</p>
                       <p className="text-sm text-gray-600">
-                        Uploaded on {new Date(file.createdAt).toLocaleDateString()}
+                        {new Date(request.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      const link = document.createElement('a');
-                      const fileName = file.path.split('/').pop();
-                      link.href = `http://localhost:5000/public/uploads/${fileName}`;
-                      link.download = file.originalName;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    }}
-                    className="p-2 text-[#3c8dbc] hover:text-[#2c6a8f] transition-colors duration-200"
-                    title="Download file"
-                  >
-                    <ArrowDownTrayIcon className="h-5 w-5" />
-                  </button>
+                  <div className="flex items-center space-x-4">
+                    <ClockIcon className="h-6 w-6 text-[#3c8dbc]" />
+                    <div>
+                      <p className="font-medium text-gray-900">Last Updated</p>
+                      <p className="text-sm text-gray-600">
+                        {request?.updatedAt ? new Date(request.updatedAt).toLocaleString() : 'Not available'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Framework Details */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Framework Details</h2>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Type</p>
+                    <p className="font-medium text-gray-900">{request.frameworkType}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Duration</p>
+                    <p className="font-medium text-gray-900">{request.duration}</p>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            {/* Company Information */}
+            <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <BuildingOfficeIcon className="h-6 w-6 mr-2 text-[#3c8dbc]" />
+                Company Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Company Name</p>
+                  <p className="font-medium text-gray-900">{request.companyDetails?.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Company Type</p>
+                  <p className="font-medium text-gray-900">{request.companyDetails?.type}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Email</p>
+                  <p className="font-medium text-gray-900">{request.companyDetails?.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Address</p>
+                  <p className="font-medium text-gray-900">{request.companyDetails?.address}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Attachments */}
+            {request.attachments && request.attachments.length > 0 && (
+              <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <DocumentIcon className="h-6 w-6 mr-2 text-[#3c8dbc]" />
+                  Attached Documents
+                </h2>
+                <div className="space-y-4">
+                  {request.attachments.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <DocumentIcon className="h-8 w-8 text-[#3c8dbc]" />
+                        <div>
+                          <p className="font-medium text-gray-900">{file.originalName}</p>
+                          <p className="text-sm text-gray-600">
+                            Uploaded on {new Date(file.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          const fileName = file.path.split('/').pop();
+                          link.href = `http://localhost:5000/public/uploads/${fileName}`;
+                          link.download = file.originalName;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
+                        className="p-2 text-[#3c8dbc] hover:text-[#2c6a8f] transition-colors duration-200"
+                        title="Download file"
+                      >
+                        <ArrowDownTrayIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        ))}
       </div>
     </motion.div>
   );

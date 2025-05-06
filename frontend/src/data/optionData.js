@@ -67,6 +67,11 @@ const optionsData = [
     dropdown: [
       {
         Icon: FaUsersCog,
+        title: "All Partners",
+        link: "/admin/partners",
+      },
+      {
+        Icon: FaUsersCog,
         title: "Strategic ",
         link: "/admin/partners/strategic",
       },
