@@ -8,7 +8,10 @@ import {
   addRequestAttachment,
   addApprovalAttachment,
   removeRequestAttachment,
-  removeApprovalAttachment
+  removeApprovalAttachment,
+  markPartnerAsSigned,
+  getSignedPartners,
+  getUnsignedPartners
 } from "../controllers/partnerController.js";
 import { protectAdmin, restrictToAdmin } from "../middleware/authMiddleware.js";
 import upload from "../utils/upload.js";
@@ -26,10 +29,18 @@ router.route("/")
   .get(getAllPartners)
   .post(createPartner);
 
+router.route("/signed")
+  .get(getSignedPartners);
+
+router.route("/unsigned")
+  .get(getUnsignedPartners);
+
 router.route("/:id")
   .get(getPartner)
   .patch(updatePartner)
   .delete(deletePartner);
+
+router.patch("/:id/sign", markPartnerAsSigned);
 
 // Attachment routes
 router.post("/:id/request-attachments", upload.single("file"), addRequestAttachment);

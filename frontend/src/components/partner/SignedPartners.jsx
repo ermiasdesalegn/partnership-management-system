@@ -2,22 +2,22 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FaBuilding, FaEnvelope, FaFileAlt, FaEye, FaCheckCircle, FaClock } from "react-icons/fa";
+import { FaBuilding, FaEnvelope, FaFileAlt, FaEye, FaCheckCircle } from "react-icons/fa";
 
-const fetchPartners = async () => {
+const fetchSignedPartners = async () => {
   const token = localStorage.getItem("token");
-  const res = await axios.get("http://localhost:5000/api/v1/partners", {
+  const res = await axios.get("http://localhost:5000/api/v1/partners/signed", {
     headers: { Authorization: `Bearer ${token}` },
     withCredentials: true
   });
   return res.data.data;
 };
 
-const PartnerReports = () => {
+const SignedPartners = () => {
   const navigate = useNavigate();
   const { data: partners, isLoading, error } = useQuery({
-    queryKey: ["partners"],
-    queryFn: fetchPartners
+    queryKey: ["signedPartners"],
+    queryFn: fetchSignedPartners
   });
 
   if (isLoading) {
@@ -48,28 +48,8 @@ const PartnerReports = () => {
       <div className="w-full max-w-7xl mx-auto">
         <div className="bg-white shadow-xl rounded-lg p-8">
           <div className="mb-8">
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-3xl font-bold text-[#3c8dbc]">Partnership Reports</h2>
-                <p className="mt-1 text-sm text-gray-600">List of all active and inactive partnerships</p>
-              </div>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => navigate('/admin/partners/signed')}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
-                >
-                  <FaCheckCircle className="mr-2" />
-                  View Signed Partners
-                </button>
-                <button
-                  onClick={() => navigate('/admin/partners/unsigned')}
-                  className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center"
-                >
-                  <FaClock className="mr-2" />
-                  View Unsigned Partners
-                </button>
-              </div>
-            </div>
+            <h2 className="text-3xl font-bold text-[#3c8dbc]">Signed Partnerships</h2>
+            <p className="mt-1 text-sm text-gray-600">List of all signed partnerships</p>
           </div>
 
           {partners.length === 0 ? (
@@ -87,8 +67,8 @@ const PartnerReports = () => {
                   d="M9.75 17L7 14.25M7 14.25L4.25 17M7 14.25v6.75M17 6.75L19.75 9.5M19.75 9.5L17 12.25M19.75 9.5H13"
                 />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No partnerships found</h3>
-              <p className="mt-1 text-sm text-gray-500">There are currently no active partnerships.</p>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No signed partnerships found</h3>
+              <p className="mt-1 text-sm text-gray-500">There are currently no signed partnerships.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -98,9 +78,8 @@ const PartnerReports = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Company</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Type</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Framework</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Signing Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Attachments</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Signed By</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Signed Date</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -125,35 +104,11 @@ const PartnerReports = () => {
                           {partner.frameworkType}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          partner.status === "Active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}>
-                          {partner.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          partner.isSigned
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
-                          {partner.isSigned ? "Signed" : "Pending Signature"}
-                        </span>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {partner.signedBy?.name || "Unknown"}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        <div className="flex items-center space-x-2">
-                          <span className="flex items-center">
-                            <FaFileAlt className="mr-1" />
-                            {partner.requestAttachments?.length || 0} Request
-                          </span>
-                          <span className="flex items-center">
-                            <FaFileAlt className="mr-1" />
-                            {partner.approvalAttachments?.length || 0} Approval
-                          </span>
-                        </div>
+                        {new Date(partner.signedAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <button
@@ -176,4 +131,4 @@ const PartnerReports = () => {
   );
 };
 
-export default PartnerReports;
+export default SignedPartners; 

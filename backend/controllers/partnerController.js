@@ -185,4 +185,77 @@ export const removeApprovalAttachment = catchAsync(async (req, res, next) => {
     status: "success",
     data: partner
   });
+});
+
+// Mark partner as signed
+export const markPartnerAsSigned = catchAsync(async (req, res, next) => {
+  const partner = await Partner.findByIdAndUpdate(
+    req.params.id,
+    { 
+      isSigned: true,
+      signedAt: new Date(),
+      signedBy: req.admin._id
+    },
+    { new: true, runValidators: true }
+  ).populate("requestRef")
+   .populate("requestAttachments.uploadedBy")
+   .populate("approvalAttachments.uploadedBy")
+   .populate("signedBy", "name email role");
+
+  if (!partner) {
+    return next(new AppError("No partner found with that ID", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: partner
+  });
+});
+
+// Get signed partners
+export const getSignedPartners = catchAsync(async (req, res, next) => {
+  try {
+    const partners = await Partner.find({
+      isSigned: true
+    })
+      .populate("requestRef")
+      .populate("requestAttachments.uploadedBy")
+      .populate("approvalAttachments.uploadedBy")
+      .populate("signedBy")
+      .sort({ signedAt: -1 });
+
+    res.status(200).json({
+      status: "success",
+      data: partners
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: "fail",
+      message: err.message
+    });
+  }
+});
+
+// Get unsigned partners
+export const getUnsignedPartners = catchAsync(async (req, res, next) => {
+  try {
+    const partners = await Partner.find({
+      isSigned: false,
+      status: "Active"
+    })
+      .populate("requestRef")
+      .populate("requestAttachments.uploadedBy")
+      .populate("approvalAttachments.uploadedBy")
+      .sort({ approvedAt: -1 });
+
+    res.status(200).json({
+      status: "success",
+      data: partners
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: "fail",
+      message: err.message
+    });
+  }
 }); 

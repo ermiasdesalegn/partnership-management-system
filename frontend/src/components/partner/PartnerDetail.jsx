@@ -101,6 +101,25 @@ const PartnerDetail = () => {
     }
   };
 
+  const handleSignPartner = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.patch(
+        `http://localhost:5000/api/v1/partners/${id}/sign`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true
+        }
+      );
+
+      toast.success("Partner marked as signed successfully");
+      queryClient.invalidateQueries(["partnerDetail", id]);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error marking partner as signed");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="w-full min-h-screen px-8 py-10 bg-gradient-to-br from-white via-[#3c8dbc]/5 to-[#3c8dbc]/10 flex items-center justify-center">
@@ -143,7 +162,7 @@ const PartnerDetail = () => {
                 </span>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right space-y-2">
               <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
                 partner.status === "Active" 
                   ? "bg-green-100 text-green-800" 
@@ -152,6 +171,21 @@ const PartnerDetail = () => {
                 {partner.status === "Active" ? <FaCheckCircle className="mr-2" /> : <FaTimesCircle className="mr-2" />}
                 {partner.status}
               </span>
+              {!partner.isSigned && (
+                <button
+                  onClick={handleSignPartner}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <FaCheckCircle className="mr-2" />
+                  Mark as Signed
+                </button>
+              )}
+              {partner.isSigned && (
+                <div className="text-sm text-gray-600">
+                  <p>Signed by: {partner.signedBy?.name}</p>
+                  <p>Signed on: {new Date(partner.signedAt).toLocaleDateString()}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

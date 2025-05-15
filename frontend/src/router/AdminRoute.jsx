@@ -15,6 +15,8 @@ import RegisteredUsers from "../components/user-managment/RegisteredUsers";
 import ToBeReviewed from "../components/view-request/ToBeReviewed";
 import RequestDetail from "../components/view-request/RequestDetail";
 import ReviewedByYou from "../components/view-request/ReviewedByYou";
+import SignedPartners from "../components/partner/SignedPartners";
+import UnsignedPartners from "../components/partner/UnsignedPartners";
 
 const AdminRoute = [
   <Route key={"admin"} path="/admin" element={<AdminLayout />}>
@@ -31,6 +33,8 @@ const AdminRoute = [
     <Route path="View-feedbacks" element={<Feedbacks />} />
     <Route path="partners" element={<PartnerReports />} />
     <Route path="partners/:id" element={<PartnerDetail />} />
+    <Route path="partners/signed" element={<SignedPartners />} />
+    <Route path="partners/unsigned" element={<UnsignedPartners />} />
     <Route path="reviewed-requests" element={<ReviewedByYou />} />
     <Route path="external-user" element={<RegisteredUsers/>}/>
   </Route>,

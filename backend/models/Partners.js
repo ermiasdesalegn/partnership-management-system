@@ -32,6 +32,17 @@ const PartnerSchema = new mongoose.Schema({
     type: String,
     default: "Active"
   },
+  isSigned: {
+    type: Boolean,
+    default: false
+  },
+  signedAt: {
+    type: Date
+  },
+  signedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin"
+  },
   requestAttachments: [
     {
       path: String,

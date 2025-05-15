@@ -6,6 +6,8 @@ import "react-toastify/dist/ReactToastify.css";
 import AdminSetupPassword from './pages/AdminSetupPassword';
 import PartnerReports from "./components/partner/partner";
 import PartnerDetail from "./components/partner/PartnerDetail";
+import SignedPartners from "./components/partner/SignedPartners";
+import UnsignedPartners from "./components/partner/UnsignedPartners";
 
 function App() {
   return (
