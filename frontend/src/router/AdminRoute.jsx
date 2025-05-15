@@ -7,6 +7,7 @@ import Feedbacks from "../components/feedbacks/Feedbacks";
 import AdminProfile from "../components/profile/Profile";
 import AdminNotification from "../components/notification/Index";
 import PartnerReports from "../components/partner/partner";
+import PartnerDetail from "../components/partner/PartnerDetail";
 import InProgress from "../components/inProgress/Index";
 import ProgressDetail from "../components/inProgress/ProgressDetail";
 import { Route } from "react-router";
@@ -14,13 +15,13 @@ import RegisteredUsers from "../components/user-managment/RegisteredUsers";
 import ToBeReviewed from "../components/view-request/ToBeReviewed";
 import RequestDetail from "../components/view-request/RequestDetail";
 import ReviewedByYou from "../components/view-request/ReviewedByYou";
+
 const AdminRoute = [
   <Route key={"admin"} path="/admin" element={<AdminLayout />}>
     <Route index element={<AdminDashboard />} />
     <Route path="request" element={<ReqTableData />} />
     <Route path="requests-in-progress" element={<ToBeReviewed />} />
     <Route path="requests-in-progress/request/:id" element={<RequestDetail />} />
-
     <Route path="external-user" element={<RegisteredUsers />} />
     <Route path="in-progress" element={<InProgress />} />
     <Route path="in-progress/:id" element={<ProgressDetail />} />
@@ -28,7 +29,8 @@ const AdminRoute = [
     <Route path="profile" element={<AdminProfile />} />
     <Route path="Blogs-post" element={<BlogForm />} />
     <Route path="View-feedbacks" element={<Feedbacks />} />
-    <Route path="partners/*" element={<PartnerReports />} />
+    <Route path="partners" element={<PartnerReports />} />
+    <Route path="partners/:id" element={<PartnerDetail />} />
     <Route path="reviewed-requests" element={<ReviewedByYou />} />
     <Route path="external-user" element={<RegisteredUsers/>}/>
   </Route>,

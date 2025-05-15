@@ -242,8 +242,10 @@ const RequestStatus = () => {
                       <button
                         onClick={() => {
                           const link = document.createElement('a');
-                          const fileName = file.path.split('/').pop();
-                          link.href = `http://localhost:5000/public/uploads/${fileName}`;
+                          const fileName = file.path.includes('/') || file.path.includes('\\') 
+                            ? file.path.split(/[/\\]/).pop() 
+                            : file.path;
+                          link.href = `http://localhost:5000/api/v1/files/${fileName}`;
                           link.download = file.originalName;
                           document.body.appendChild(link);
                           link.click();

@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import Request from "../models/Request.js";
 export const partnershipReviewRequest = async (req, res) => {
   try {
-    const { requestId, decision, message, isLawRelated, frameworkType } = req.body;
+    const { requestId, decision, message, feedbackMessage, isLawRelated, frameworkType, duration } = req.body;
     const admin = req.admin;
 
     const request = await Request.findById(requestId);
@@ -13,17 +13,18 @@ export const partnershipReviewRequest = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized access to this request" });
     }
 
+    // Support multiple file fields: attachments (admin), feedbackAttachments (user)
+    // Store just the filename, not the full path
     const approval = {
       stage: admin.role,
       approvedBy: admin._id,
       decision,
       message,
+      feedbackMessage,
+      attachments: req.files?.attachments?.map(f => f.filename) || [],
+      feedbackAttachments: req.files?.feedbackAttachments?.map(f => f.filename) || [],
       date: new Date()
     };
-
-    if (req.file) {
-      approval.attachments = [`uploads/${req.file.filename}`];
-    }
 
     request.approvals.push(approval);
 
@@ -32,6 +33,7 @@ export const partnershipReviewRequest = async (req, res) => {
       request.status = "In Review";
       request.lawRelated = isLaw;
       request.frameworkType = frameworkType;
+      request.duration = duration;
       request.currentStage = isLaw ? "law-department" : "general-director";
     } else {
       request.status = "Disapproved";

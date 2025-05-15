@@ -11,6 +11,7 @@ import {
   FaInfoCircle,
   FaPaperclip,
   FaUserShield,
+  FaDownload,
 } from "react-icons/fa";
 
 const BACKEND_BASE_URL = "http://localhost:5000";
@@ -137,11 +138,29 @@ const ReviewedByYou = () => {
                   </div>
                 </div>
 
-                {/* Your Message */}
+                {/* Your Admin Message */}
                 {myApproval.message && (
-                  <div className="bg-[#3c8dbc]/10 p-3 rounded-md mb-4">
-                    <h4 className="text-sm font-medium text-[#3c8dbc]">Your Comment</h4>
-                    <p className="mt-1 text-sm text-[#3c8dbc]/80">{myApproval.message}</p>
+                  <div className="bg-blue-50 p-3 rounded-md mb-4 border border-blue-100">
+                    <h4 className="text-sm font-medium text-blue-800 flex items-center">
+                      <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs mr-2">
+                        ADMIN ONLY
+                      </span>
+                      Internal Notes
+                    </h4>
+                    <p className="mt-1 text-sm text-gray-700">{myApproval.message}</p>
+                  </div>
+                )}
+
+                {/* Your Feedback Message (visible to user) */}
+                {myApproval.feedbackMessage && (
+                  <div className="bg-green-50 p-3 rounded-md mb-4 border border-green-100">
+                    <h4 className="text-sm font-medium text-green-800 flex items-center">
+                      <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs mr-2">
+                        USER VISIBLE
+                      </span>
+                      Feedback to Requester
+                    </h4>
+                    <p className="mt-1 text-sm text-gray-700">{myApproval.feedbackMessage}</p>
                   </div>
                 )}
 
@@ -155,24 +174,64 @@ const ReviewedByYou = () => {
                   </div>
                 )}
 
-                {/* Attached Files */}
+                {/* Admin-only Attachments */}
                 {myApproval.attachments && myApproval.attachments.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500 mb-1">Attached Files:</p>
-                    <ul className="space-y-1 text-sm text-blue-600 underline">
+                  <div className="mb-4 bg-blue-50 p-3 rounded-md border border-blue-100">
+                    <p className="text-sm font-medium text-blue-800 flex items-center mb-2">
+                      <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs mr-2">
+                        ADMIN ONLY
+                      </span>
+                      Internal Attachments:
+                    </p>
+                    <ul className="space-y-1 text-sm">
                       {myApproval.attachments.map((filename, idx) => {
-                        const fileUrl = `${BACKEND_BASE_URL}/public/${filename}`;
+                        const fileUrl = `${BACKEND_BASE_URL}/api/v1/files/${filename}`;
+                        const displayName = typeof filename === 'string' ? filename.split('/').pop() : filename;
                         return (
-                          <li key={idx} className="flex items-center space-x-2">
-                            <FaPaperclip className="text-gray-500" />
+                          <li key={idx} className="flex items-center bg-white p-2 rounded">
+                            <FaPaperclip className="text-blue-500 mr-2" />
+                            <span className="text-gray-600 flex-1 truncate">{displayName}</span>
                             <a
                               href={fileUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               download
-                              className="text-[#3c8dbc] hover:text-[#2c6a8f]"
+                              className="text-blue-600 hover:text-blue-800 ml-2"
                             >
-                              {filename}
+                              <FaDownload />
+                            </a>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+
+                {/* User Feedback Attachments */}
+                {myApproval.feedbackAttachments && myApproval.feedbackAttachments.length > 0 && (
+                  <div className="mb-4 bg-green-50 p-3 rounded-md border border-green-100">
+                    <p className="text-sm font-medium text-green-800 flex items-center mb-2">
+                      <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs mr-2">
+                        USER VISIBLE
+                      </span>
+                      Feedback Attachments:
+                    </p>
+                    <ul className="space-y-1 text-sm">
+                      {myApproval.feedbackAttachments.map((filename, idx) => {
+                        const fileUrl = `${BACKEND_BASE_URL}/api/v1/files/${filename}`;
+                        const displayName = typeof filename === 'string' ? filename.split('/').pop() : filename;
+                        return (
+                          <li key={idx} className="flex items-center bg-white p-2 rounded">
+                            <FaPaperclip className="text-green-500 mr-2" />
+                            <span className="text-gray-600 flex-1 truncate">{displayName}</span>
+                            <a
+                              href={fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download
+                              className="text-green-600 hover:text-green-800 ml-2"
+                            >
+                              <FaDownload />
                             </a>
                           </li>
                         );
@@ -197,8 +256,63 @@ const ReviewedByYou = () => {
                                 </span>{" "}
                                 — <span className="capitalize">{approval.decision}</span>
                               </p>
+                              
+                              {/* Admin Message */}
                               {approval.message && (
-                                <p className="text-gray-600 mt-1">💬 {approval.message}</p>
+                                <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-100">
+                                  <div className="flex items-center mb-1">
+                                    <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded text-xs">
+                                      ADMIN ONLY
+                                    </span>
+                                  </div>
+                                  <p className="text-gray-700 text-xs">{approval.message}</p>
+                                  
+                                  {/* Admin Attachments */}
+                                  {approval.attachments && approval.attachments.length > 0 && (
+                                    <div className="mt-1 pt-1 border-t border-blue-100">
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {approval.attachments.map((file, fileIdx) => {
+                                          const fileName = typeof file === 'string' ? file.split('/').pop() : 'file';
+                                          return (
+                                            <span key={fileIdx} className="inline-flex items-center bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded">
+                                              <FaPaperclip className="mr-1" size={10} />
+                                              {fileName.length > 15 ? fileName.substring(0, 12) + '...' : fileName}
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {/* User Feedback Message */}
+                              {approval.feedbackMessage && (
+                                <div className="mt-2 p-2 bg-green-50 rounded border border-green-100">
+                                  <div className="flex items-center mb-1">
+                                    <span className="bg-green-100 text-green-800 px-1.5 py-0.5 rounded text-xs">
+                                      USER FEEDBACK
+                                    </span>
+                                  </div>
+                                  <p className="text-gray-700 text-xs">{approval.feedbackMessage}</p>
+                                  
+                                  {/* Feedback Attachments */}
+                                  {approval.feedbackAttachments && approval.feedbackAttachments.length > 0 && (
+                                    <div className="mt-1 pt-1 border-t border-green-100">
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {approval.feedbackAttachments.map((file, fileIdx) => {
+                                          const fileName = typeof file === 'string' ? file.split('/').pop() : 'file';
+                                          return (
+                                            <span key={fileIdx} className="inline-flex items-center bg-green-100 text-green-800 text-xs px-1.5 py-0.5 rounded">
+                                              <FaPaperclip className="mr-1" size={10} />
+                                              {fileName.length > 15 ? fileName.substring(0, 12) + '...' : fileName}
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
                             <div className="text-xs text-gray-500 text-right">

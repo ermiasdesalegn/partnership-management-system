@@ -4,11 +4,33 @@ import Admin from "../models/Admin.js";
 // import Request from "../models/Request.js";
 import User from "../models/User.js";
 import AppError from '../utils/appError.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, '../public/uploads');
+
+// Utility function to delete file
+const deleteFile = (filePath) => {
+  try {
+    // Handle both full paths and just filenames
+    const fullPath = filePath.includes(path.sep) 
+      ? filePath 
+      : path.join(uploadsDir, filePath);
+      
+    if (fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
+    }
+  } catch (err) {
+    console.error(`Error deleting file ${filePath}:`, err);
+  }
+};
 
 export const createRequest = catchAsync(async (req, res, next) => {
   // Validate required fields
-  if (!req.body.companyDetails || !req.body.frameworkType) {
+  if (!req.body.companyDetails) {
     return next(new AppError('Missing required fields', 400));
   }
 
@@ -21,14 +43,12 @@ export const createRequest = catchAsync(async (req, res, next) => {
     return next(new AppError('User not found', 404));
   }
 
-  // Create new request
+  // Create new request with files - using just the filename, not full path
   const newRequest = await Request.create({
     userRef: req.user.id,
     type: user.role === 'internal' ? 'internal' : 'external', // Set type based on user's role
     status: "Pending",
     currentStage: "partnership-division",
-    frameworkType: req.body.frameworkType,
-    duration: req.body.duration,
     companyDetails: {
       ...companyDetails,
       // Ensure enum values match
@@ -36,12 +56,12 @@ export const createRequest = catchAsync(async (req, res, next) => {
         ? companyDetails.type 
         : "Other"
     },
-    attachments: req.files.map(file => ({
-      path: file.path.replace(/\\/g, '/'),
+    attachments: req.files ? req.files.map(file => ({
+      path: file.filename, // Just store the filename
       originalName: file.originalname,
       uploadedBy: req.user.id,
       uploaderModel: 'User'
-    }))
+    })) : []
   });
 
   res.status(201).json({
@@ -76,16 +96,21 @@ export const addRequestAttachment = catchAsync(async (req, res, next) => {
 
   const request = await Request.findById(req.params.requestId);
   if (!request) {
-    // Clean up the uploaded file if request not found
-    deleteFile(req.file.path);
+    // Clean up the uploaded file if it exists
+    if (req.file) {
+      deleteFile(req.file.path);
+    }
     return next(new AppError('Request not found', 404));
   }
 
   const uploaderId = req.user?._id || req.admin?._id;
   const uploaderModel = req.user ? 'User' : 'Admin';
 
+  // Store just the filename in the database
+  const filename = req.file.filename;
+  
   request.attachments.push({
-    path: req.file.path.replace(/\\/g, '/'),
+    path: filename, // Just store the filename
     originalName: req.file.originalname,
     uploadedBy: uploaderId,
     uploaderModel,
@@ -110,24 +135,31 @@ export const addFeedbackAttachment = catchAsync(async (req, res, next) => {
 
   const request = await Request.findById(req.params.requestId);
   if (!request) {
-    deleteFile(req.file.path);
+    if (req.file) {
+      deleteFile(req.file.path);
+    }
     return next(new AppError('Request not found', 404));
   }
 
   const approval = request.approvals.id(req.params.approvalId);
   if (!approval) {
-    deleteFile(req.file.path);
+    if (req.file) {
+      deleteFile(req.file.path);
+    }
     return next(new AppError('Approval record not found', 404));
   }
 
-  approval.attachments.push(req.file.path.replace(/\\/g, '/'));
+  // Store just the filename
+  const filename = req.file.filename;
+  
+  approval.attachments.push(filename);
   await request.save();
 
   res.status(200).json({
     status: 'success',
     data: {
       approval,
-      attachmentPath: req.file.path.replace(/\\/g, '/')
+      attachmentPath: filename
     }
   });
 });

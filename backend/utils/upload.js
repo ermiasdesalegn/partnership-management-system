@@ -2,21 +2,36 @@
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const baseUploadsDir = path.join(__dirname, '../public/uploads');
+
+// Ensure uploads directories exist
+if (!fs.existsSync(baseUploadsDir)) {
+  fs.mkdirSync(baseUploadsDir, { recursive: true });
+}
+if (!fs.existsSync(path.join(baseUploadsDir, 'feedback'))) {
+  fs.mkdirSync(path.join(baseUploadsDir, 'feedback'), { recursive: true });
+}
+if (!fs.existsSync(path.join(baseUploadsDir, 'requests'))) {
+  fs.mkdirSync(path.join(baseUploadsDir, 'requests'), { recursive: true });
+}
 
 // Configure storage
-// Update storage configuration for better organization
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const path = req.baseUrl.includes('approvals') 
-      ? 'feedback' 
-      : 'requests';
-    cb(null, `public/uploads/${path}`);
+    const uploadPath = req.baseUrl.includes('approvals') 
+      ? path.join(baseUploadsDir, 'feedback')
+      : path.join(baseUploadsDir, 'requests');
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+    // Generate unique filename
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    // Store just the filename with extension
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
 
@@ -37,7 +52,6 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Initialize multer
-// In utils/upload.js
 const upload = multer({
   storage,
   fileFilter,

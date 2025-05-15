@@ -4,6 +4,8 @@ import RouteConfig from "./router/RouteConfig";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminSetupPassword from './pages/AdminSetupPassword';
+import PartnerReports from "./components/partner/partner";
+import PartnerDetail from "./components/partner/PartnerDetail";
 
 function App() {
   return (

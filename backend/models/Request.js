@@ -42,7 +42,7 @@ companyDetails: {
     enum: ["Government", "Private", "Non-Government", "Other"],
     required: [true, 'Company type is required']
   },
-  email: {
+    email: {
     type: String,
     validate: {
       validator: (v) => /\S+@\S+\.\S+/.test(v),
@@ -78,9 +78,11 @@ companyDetails: {
     {
       stage: String,
       approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
-      decision: String, 
+      decision: String,
       message: String,
       attachments: [String],
+      feedbackMessage: String,
+      feedbackAttachments: [String],
       date: { type: Date, default: Date.now },
     },
   ],

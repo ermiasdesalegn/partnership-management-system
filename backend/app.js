@@ -10,6 +10,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import superAdminRoutes from './routes/superAdminRoutes.js';
 import internalUserRoutes from './routes/internalUserRoutes.js';
+import partnerRoutes from './routes/partnerRoutes.js';
 
 dotenv.config();
 
@@ -35,5 +36,6 @@ app.use("/api/v1/internal", internalUserRoutes);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/user", userRouter);
 app.use('/api/v1/super-admin', superAdminRoutes);
+app.use('/api/v1/partners', partnerRoutes);
 
 export default app;

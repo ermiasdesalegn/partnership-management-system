@@ -65,7 +65,10 @@ router.post(
   "/review/partnership",
   protectAdmin,
   restrictToAdmin("partnership-division"),
-  upload.single("attachment"),
+  upload.fields([
+    { name: "attachments", maxCount: 5 },
+    { name: "feedbackAttachments", maxCount: 5 }
+  ]),
   partnershipReviewRequest
 );
 
@@ -74,6 +77,10 @@ router.post(
   "/review/law",
   protectAdmin,
   restrictToAdmin("law-department"),
+  upload.fields([
+    { name: "attachments", maxCount: 5 },
+    { name: "feedbackAttachments", maxCount: 5 }
+  ]),
   lawDepartmentReviewRequest
 );
 
@@ -90,7 +97,10 @@ router.post(
   "/review/general-director",
   protectAdmin,
   restrictToAdmin("general-director"),
-  upload.none(),
+  upload.fields([
+    { name: "attachments", maxCount: 5 },
+    { name: "feedbackAttachments", maxCount: 5 }
+  ]),
   generalDirectorDecision
 );
 

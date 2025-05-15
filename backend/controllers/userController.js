@@ -218,12 +218,18 @@ export const deleteMe = async (req, res) => {
 
 export const createRequest = catchAsync(async (req, res, next) => {
   // Validate required fields
-  if (!req.body.companyDetails || !req.body.frameworkType) {
+  if (!req.body.companyDetails) {
     return next(new AppError('Missing required fields', 400));
   }
 
   // Parse company details
   const companyDetails = JSON.parse(req.body.companyDetails);
+
+  // Get user details from the authenticated user
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
 
   // Create new request
   const newRequest = await Request.create({
@@ -231,8 +237,6 @@ export const createRequest = catchAsync(async (req, res, next) => {
     type: "external",
     status: "Pending",
     currentStage: "partnership-division",
-    frameworkType: req.body.frameworkType,
-    duration: req.body.duration,
     companyDetails: {
       ...companyDetails,
       // Ensure enum values match

@@ -4,7 +4,7 @@ import Request from "../models/Request.js";
 import Partner from "../models/Partners.js";
 
 export const generalDirectorDecision = async (req, res) => {
-  const { requestId, decision, message } = req.body;
+  const { requestId, decision, message, feedbackMessage } = req.body;
 
   try {
     const request = await Request.findById(requestId);
@@ -43,11 +43,11 @@ export const generalDirectorDecision = async (req, res) => {
       approvedBy: req.admin._id,
       decision,
       message,
+      feedbackMessage,
+      attachments: req.files?.attachments?.map(f => f.path) || [],
+      feedbackAttachments: req.files?.feedbackAttachments?.map(f => f.path) || [],
       date: new Date()
     };
-    if (req.file) {
-      approval.attachments = [`uploads/${req.file.filename}`];
-    }
     request.approvals.push(approval);
 
     // Check if all required approvals are given

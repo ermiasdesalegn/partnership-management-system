@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import Request from "../models/Request.js";
 
 export const lawDepartmentReviewRequest = async (req, res) => {
-  const { requestId, decision, message } = req.body;
+  const { requestId, decision, message, feedbackMessage } = req.body;
 
   try {
     const request = await Request.findById(requestId);
@@ -19,6 +19,10 @@ export const lawDepartmentReviewRequest = async (req, res) => {
       approvedBy: req.admin._id,
       decision,
       message,
+      feedbackMessage,
+      attachments: req.files?.attachments?.map(f => f.path) || [],
+      feedbackAttachments: req.files?.feedbackAttachments?.map(f => f.path) || [],
+      date: new Date()
     });
 
     if (decision === "approve") {
