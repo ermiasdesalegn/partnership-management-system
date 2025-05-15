@@ -144,44 +144,44 @@ const PartnerDetail = () => {
   }
 
   return (
-    <div className="w-full min-h-screen px-8 py-10 bg-gray-100">
-      <div className="w-full max-w-7xl mx-auto">
+    <div className="w-full min-h-screen px-4 py-6 bg-gray-100">
+      <div className="w-full max-w-6xl mx-auto">
         {/* Header Section */}
-        <div className="bg-white shadow-xl rounded-lg p-8 mb-8">
+        <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-[#3c8dbc] mb-2">{partner.companyName}</h1>
-              <div className="flex items-center space-x-4 text-gray-600">
+              <h1 className="text-2xl font-bold text-[#3c8dbc] mb-1">{partner.companyName}</h1>
+              <div className="flex items-center space-x-3 text-gray-600 text-sm">
                 <span className="flex items-center">
-                  <FaBuilding className="mr-2" />
+                  <FaBuilding className="mr-1" />
                   {partner.companyType}
                 </span>
                 <span className="flex items-center">
-                  <FaEnvelope className="mr-2" />
+                  <FaEnvelope className="mr-1" />
                   {partner.companyEmail}
                 </span>
               </div>
             </div>
-            <div className="text-right space-y-2">
-              <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
+            <div className="text-right space-y-1">
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
                 partner.status === "Active" 
                   ? "bg-green-100 text-green-800" 
                   : "bg-red-100 text-red-800"
               }`}>
-                {partner.status === "Active" ? <FaCheckCircle className="mr-2" /> : <FaTimesCircle className="mr-2" />}
+                {partner.status === "Active" ? <FaCheckCircle className="mr-1" /> : <FaTimesCircle className="mr-1" />}
                 {partner.status}
               </span>
               {!partner.isSigned && (
                 <button
                   onClick={handleSignPartner}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                 >
-                  <FaCheckCircle className="mr-2" />
+                  <FaCheckCircle className="mr-1" />
                   Mark as Signed
                 </button>
               )}
               {partner.isSigned && (
-                <div className="text-sm text-gray-600">
+                <div className="text-xs text-gray-600">
                   <p>Signed by: {partner.signedBy?.name}</p>
                   <p>Signed on: {new Date(partner.signedAt).toLocaleDateString()}</p>
                 </div>
@@ -191,12 +191,12 @@ const PartnerDetail = () => {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white shadow-xl rounded-lg p-8">
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="flex space-x-8">
+        <div className="bg-white shadow-lg rounded-lg p-6">
+          <div className="border-b border-gray-200 mb-4">
+            <nav className="flex space-x-6">
               <button
                 onClick={() => setActiveTab("details")}
-                className={`pb-4 px-1 border-b-2 font-medium text-sm ${
+                className={`pb-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === "details"
                     ? "border-[#3c8dbc] text-[#3c8dbc]"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -206,7 +206,7 @@ const PartnerDetail = () => {
               </button>
               <button
                 onClick={() => setActiveTab("request")}
-                className={`pb-4 px-1 border-b-2 font-medium text-sm ${
+                className={`pb-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === "request"
                     ? "border-[#3c8dbc] text-[#3c8dbc]"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -216,7 +216,7 @@ const PartnerDetail = () => {
               </button>
               <button
                 onClick={() => setActiveTab("approval")}
-                className={`pb-4 px-1 border-b-2 font-medium text-sm ${
+                className={`pb-3 px-1 border-b-2 font-medium text-sm ${
                   activeTab === "approval"
                     ? "border-[#3c8dbc] text-[#3c8dbc]"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -229,32 +229,32 @@ const PartnerDetail = () => {
 
           {/* Content */}
           {activeTab === "details" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Company Information</h3>
-                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                  <p className="flex items-center text-gray-600">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <h3 className="text-base font-semibold text-gray-900">Company Information</h3>
+                <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                  <p className="flex items-center text-sm text-gray-600">
                     <FaBuilding className="mr-2 text-[#3c8dbc]" />
                     <span className="font-medium">Company Type:</span> {partner.companyType}
                   </p>
-                  <p className="flex items-center text-gray-600">
+                  <p className="flex items-center text-sm text-gray-600">
                     <FaEnvelope className="mr-2 text-[#3c8dbc]" />
                     <span className="font-medium">Email:</span> {partner.companyEmail}
                   </p>
-                  <p className="flex items-center text-gray-600">
+                  <p className="flex items-center text-sm text-gray-600">
                     <FaMapMarkerAlt className="mr-2 text-[#3c8dbc]" />
                     <span className="font-medium">Address:</span> {partner.companyAddress}
                   </p>
                 </div>
               </div>
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Partnership Details</h3>
-                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                  <p className="flex items-center text-gray-600">
+              <div className="space-y-3">
+                <h3 className="text-base font-semibold text-gray-900">Partnership Details</h3>
+                <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                  <p className="flex items-center text-sm text-gray-600">
                     <FaFileAlt className="mr-2 text-[#3c8dbc]" />
                     <span className="font-medium">Framework Type:</span> {partner.frameworkType}
                   </p>
-                  <p className="flex items-center text-gray-600">
+                  <p className="flex items-center text-sm text-gray-600">
                     <FaClock className="mr-2 text-[#3c8dbc]" />
                     <span className="font-medium">Duration:</span> {partner.duration}
                   </p>
@@ -264,18 +264,18 @@ const PartnerDetail = () => {
           )}
 
           {(activeTab === "request" || activeTab === "approval") && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Upload Form */}
-              <form onSubmit={handleUpload} className="bg-gray-50 p-6 rounded-lg">
-                <div className="space-y-4">
+              <form onSubmit={handleUpload} className="bg-gray-50 p-4 rounded-lg">
+                <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Upload File
                     </label>
                     <div className="flex items-center justify-center w-full">
-                      <label className="flex flex-col items-center px-4 py-6 bg-white text-blue-600 rounded-lg border-2 border-dashed border-blue-200 cursor-pointer hover:border-blue-400 transition-colors w-full">
+                      <label className="flex flex-col items-center px-3 py-4 bg-white text-blue-600 rounded-lg border-2 border-dashed border-blue-200 cursor-pointer hover:border-blue-400 transition-colors w-full">
                         <svg
-                          className="w-8 h-8 mb-2"
+                          className="w-6 h-6 mb-1"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -283,7 +283,7 @@ const PartnerDetail = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <span className="text-sm">{file ? file.name : "Choose file"}</span>
+                        <span className="text-xs">{file ? file.name : "Choose file"}</span>
                         <input
                           type="file"
                           className="hidden"
@@ -293,21 +293,21 @@ const PartnerDetail = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Description
                     </label>
                     <textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      rows={3}
+                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      rows={2}
                       placeholder="Add a description for the file..."
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full px-4 py-2 bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors disabled:opacity-50"
+                    className="w-full px-3 py-1.5 text-sm bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors disabled:opacity-50"
                   >
                     {loading ? "Uploading..." : "Upload File"}
                   </button>
@@ -315,38 +315,48 @@ const PartnerDetail = () => {
               </form>
 
               {/* Attachments List */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="space-y-3">
+                <h3 className="text-base font-semibold text-gray-900">
                   {activeTab === "request" ? "Request Attachments" : "Approval Attachments"}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {partner[activeTab === "request" ? "requestAttachments" : "approvalAttachments"].map((attachment, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-white rounded-lg shadow">
-                      <div className="flex items-center space-x-4">
-                        <FaFile className="text-blue-500 text-xl" />
-                        <div>
-                          <p className="font-medium">{attachment.originalName}</p>
-                          <p className="text-sm text-gray-500">{attachment.description}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {partner[activeTab === "request" ? "requestAttachments" : "approvalAttachments"].map((attachment, index) => {
+                    const fileName = activeTab === "approval" 
+                      ? attachment.path.split(/[/\\]/).pop() // Split by both forward and back slashes
+                      : typeof attachment === 'string' 
+                        ? attachment.includes('/') || attachment.includes('\\')
+                          ? attachment.split(/[/\\]/).pop() 
+                          : attachment
+                        : attachment.originalName || attachment.path;
+                    
+                    return (
+                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg shadow">
+                        <div className="flex items-center space-x-3">
+                          <FaFile className="text-blue-500 text-lg" />
+                          <div>
+                            <p className="text-sm font-medium">{fileName}</p>
+                            <p className="text-xs text-gray-500">{attachment.description}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <a
+                            href={`http://localhost:5000/public/uploads/${typeof attachment === 'string' ? attachment.split(/[/\\]/).pop() : attachment.path.split(/[/\\]/).pop()}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 text-blue-500 hover:text-blue-700"
+                          >
+                            <FaDownload />
+                          </a>
+                          <button
+                            onClick={() => handleRemoveAttachment(attachment._id)}
+                            className="p-1.5 text-red-500 hover:text-red-700"
+                          >
+                            <FaTrash />
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <a
-                          href={`http://localhost:5000/api/v1/files/${attachment.path}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 text-blue-500 hover:text-blue-700"
-                        >
-                          <FaDownload />
-                        </a>
-                        <button
-                          onClick={() => handleRemoveAttachment(attachment._id)}
-                          className="p-2 text-red-500 hover:text-red-700"
-                        >
-                          <FaTrash />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
