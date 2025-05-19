@@ -1,17 +1,8 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaBuilding, FaEnvelope, FaFileAlt, FaEye, FaCheckCircle } from "react-icons/fa";
-
-const fetchSignedPartners = async () => {
-  const token = localStorage.getItem("token");
-  const res = await axios.get("http://localhost:5000/api/v1/partners/signed", {
-    headers: { Authorization: `Bearer ${token}` },
-    withCredentials: true
-  });
-  return res.data.data;
-};
+import { fetchSignedPartners } from "../../api/adminApi";
 
 const SignedPartners = () => {
   const navigate = useNavigate();

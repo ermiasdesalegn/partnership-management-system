@@ -276,6 +276,7 @@ export const getAllAdmins = async (req, res) => {
       });
     }
   };
+ 
   
   // Get all users (both internal and external)
  export const getAllUsers = async (req, res) => {
@@ -355,8 +356,7 @@ export const getAllAdmins = async (req, res) => {
   
   export const getRequestsByRole = catchAsync(async (req, res, next) => {
     const role = req.admin.role;
-    console.log("Admin Role:", req.admin.role);
-
+    console.log("Admin Role:", req.admin.role);    
     if (!["partnership-division", "law-department", "general-director"].includes(role)) {
       return next(new AppError("Invalid role for request access", 403));
     }
@@ -388,6 +388,7 @@ export const getAllAdmins = async (req, res) => {
       data: requests,
     });
   });
+  
   export const getSingleRequestInRoleList = catchAsync(async (req, res, next) => {
     const adminRole = req.admin.role;
     const requestId = req.params.id;

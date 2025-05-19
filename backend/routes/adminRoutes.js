@@ -22,7 +22,7 @@ import {
 import {addFeedbackAttachment, addRequestAttachment} from "../controllers/requestController.js"
 import {forwardToGeneralDirector} from "../controllers/forwardToGeneralDirector.js"
 import {generalDirectorDecision,getRequestsForGeneralDirector} from "../controllers/generalDirectorDecision.js"
-import {lawDepartmentReviewRequest,getLawRelatedRequests} from "../controllers/lawDepartmentReviewRequest.js"
+import {lawDepartmentReviewRequest,getLawRelatedRequests,getLawRelatedRequestsForPartnership} from "../controllers/lawDepartmentReviewRequest.js"
 import {partnershipReviewRequest,getPartnershipReviewedRequests,getApprovedRequestsForPartnershipDivision,getDisapprovedRequestsForLawDepartment,getPendingRequests} from "../controllers/partnershipReviewRequest.js"
 import { protectAdmin, restrictToAdmin } from "../middleware/authMiddleware.js";
 import upload from "../middleware/upload.js";   
@@ -137,6 +137,22 @@ router.get(
   protectAdmin,
   restrictToAdmin("partnership-division"),
   getPartnershipReviewedRequests
+);
+
+// Partnership Division: Get law-related requests
+router.get(
+  "/partnership/law-requests",
+  protectAdmin,
+  restrictToAdmin("partnership-division"),
+  getLawRelatedRequestsForPartnership
+);
+
+// Partnership Division: Forward approved law-related request to General Director
+router.post(
+  "/partnership/forward-to-general-director",
+  protectAdmin,
+  restrictToAdmin("partnership-division"),
+  forwardToGeneralDirector
 );
 
 export default router;

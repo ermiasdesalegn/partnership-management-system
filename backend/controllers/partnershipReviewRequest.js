@@ -29,7 +29,7 @@ export const partnershipReviewRequest = async (req, res) => {
     request.approvals.push(approval);
 
     if (decision === "approve") {
-      const isLaw = isLawRelated === "true" || isLawRelated === true;
+      const isLaw = request.type === 'internal' ? (isLawRelated === "true" || isLawRelated === true) : false;
       request.status = "In Review";
       request.lawRelated = isLaw;
       request.frameworkType = frameworkType;

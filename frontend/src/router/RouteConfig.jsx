@@ -28,7 +28,7 @@ const RouteConfig = () => {
         <Route path="dashboard" element={<InternalDashboard />} />
         <Route path="requests" element={<Requests />} />
         <Route path="request" element={<InternalRequestForm />} />
-        <Route path="request/:id" element={<RequestDetails />} />
+        <Route path="requests/:id" element={<RequestDetails />} />
         <Route path="profile" element={<Profile />} />
       </Route>
       

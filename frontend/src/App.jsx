@@ -8,6 +8,7 @@ import PartnerReports from "./components/partner/partner";
 import PartnerDetail from "./components/partner/PartnerDetail";
 import SignedPartners from "./components/partner/SignedPartners";
 import UnsignedPartners from "./components/partner/UnsignedPartners";
+import LawRelatedRequests from './components/view-request/LawRelatedRequests';
 
 function App() {
   return (

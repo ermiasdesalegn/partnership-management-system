@@ -53,7 +53,11 @@ companyDetails: {
 },
   lawRelated: {
     type: Boolean,
-    default: false
+    default: function() {
+      // For external requests, always false
+      // For internal requests, will be set during partnership division review
+      return this.type === 'internal' ? false : false;
+    }
   },
   attachments: [
     {

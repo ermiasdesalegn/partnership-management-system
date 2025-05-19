@@ -110,3 +110,192 @@ export const fetchReviewedRequests = async () => {
   });
   return res.data.data;
 };
+
+// Partnership Reviewed Requests Functions
+export const fetchPartnershipReviewedRequests = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get("http://localhost:5000/api/v1/admin/partnership-reviewed", {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+// Partner Management Functions
+export const fetchPartners = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get("http://localhost:5000/api/v1/partners", {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+export const fetchPartnerById = async (id) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get(`http://localhost:5000/api/v1/partners/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+export const fetchSignedPartners = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get("http://localhost:5000/api/v1/partners/signed", {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+export const fetchUnsignedPartners = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get("http://localhost:5000/api/v1/partners/unsigned", {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+export const signPartner = async (partnerId) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.patch(
+    `http://localhost:5000/api/v1/partners/${partnerId}/sign`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true
+    }
+  );
+  return response.data;
+};
+
+export const uploadPartnerAttachment = async ({ partnerId, file, description, type }) => {
+  const token = localStorage.getItem("token");
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("description", description);
+
+  const endpoint = type === "request" 
+    ? `http://localhost:5000/api/v1/partners/${partnerId}/request-attachments`
+    : `http://localhost:5000/api/v1/partners/${partnerId}/approval-attachments`;
+
+  const response = await axios.post(endpoint, formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data"
+    },
+    withCredentials: true
+  });
+  return response.data;
+};
+
+export const removePartnerAttachment = async ({ partnerId, attachmentId, type }) => {
+  const token = localStorage.getItem("token");
+  const endpoint = type === "request"
+    ? `http://localhost:5000/api/v1/partners/${partnerId}/request-attachments/${attachmentId}`
+    : `http://localhost:5000/api/v1/partners/${partnerId}/approval-attachments/${attachmentId}`;
+
+  const response = await axios.delete(endpoint, {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data;
+};
+
+// Law Related Requests Functions
+export const fetchLawRelatedRequests = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get("http://localhost:5000/api/v1/admin/partnership/law-requests", {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+export const forwardToGeneralDirector = async (requestId) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.post(
+    "http://localhost:5000/api/v1/admin/partnership/forward-to-general-director",
+    { requestId },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true
+    }
+  );
+  return response.data;
+};
+
+// Dashboard Functions
+export const fetchDashboardData = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get("http://localhost:5000/api/v1/admin/dashboard", {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+// Request Detail Functions
+export const fetchRequest = async (id) => {
+  const token = localStorage.getItem("token");
+  const res = await axios.get(`http://localhost:5000/api/v1/admin/requests/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return res.data.data;
+};
+
+export const submitReview = async ({ id, decision, currentStage, isLawRelated, message, feedbackMessage, frameworkType, attachments, feedbackAttachments }) => {
+  const token = localStorage.getItem("token");
+  let endpoint;
+  
+  switch (currentStage) {
+    case "partnership-division":
+      endpoint = "admin/review/partnership";
+      break;
+    case "law-department":
+      endpoint = "admin/review/law";
+      break;
+    case "general-director":
+      endpoint = "admin/review/general-director";
+      break;
+    default:
+      throw new Error("Invalid stage");
+  }
+
+  const formData = new FormData();
+  formData.append("requestId", id);
+  formData.append("decision", decision);
+  formData.append("message", message || "");
+  formData.append("feedbackMessage", feedbackMessage || "");
+  
+  if (currentStage === "partnership-division") {
+    formData.append("isLawRelated", isLawRelated);
+    formData.append("frameworkType", frameworkType);
+  }
+
+  // Append admin attachments
+  if (attachments?.length) {
+    for (let i = 0; i < attachments.length; i++) {
+      formData.append("attachments", attachments[i]);
+    }
+  }
+
+  // Append user feedback attachments
+  if (feedbackAttachments?.length) {
+    for (let i = 0; i < feedbackAttachments.length; i++) {
+      formData.append("feedbackAttachments", feedbackAttachments[i]);
+    }
+  }
+
+  const res = await axios.post(`http://localhost:5000/api/v1/${endpoint}`, formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data"
+    },
+    withCredentials: true
+  });
+  return res.data;
+};

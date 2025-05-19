@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { 
@@ -18,57 +17,7 @@ import {
   FaFileWord,
   FaFileImage
 } from 'react-icons/fa';
-
-const fetchRequest = async (id) => {
-  const token = localStorage.getItem("token");
-  const res = await axios.get(`http://localhost:5000/api/v1/admin/requests/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    withCredentials: true
-  });
-  return res.data.data;
-};
-
-const submitReview = async ({ id, decision, currentStage, isLawRelated, message, feedbackMessage, frameworkType, attachments, feedbackAttachments }) => {
-  const token = localStorage.getItem("token");
-  const endpoint =
-    currentStage === "partnership-division"
-      ? "admin/review/partnership"
-      : "admin/review/general-director";
-
-  const formData = new FormData();
-  formData.append("requestId", id);
-  formData.append("decision", decision);
-  formData.append("message", message || "");
-  formData.append("feedbackMessage", feedbackMessage || "");
-  
-  if (currentStage === "partnership-division") {
-    formData.append("isLawRelated", isLawRelated);
-    formData.append("frameworkType", frameworkType);
-  }
-
-  // Append admin attachments
-  if (attachments?.length) {
-    for (let i = 0; i < attachments.length; i++) {
-      formData.append("attachments", attachments[i]);
-    }
-  }
-
-  // Append user feedback attachments
-  if (feedbackAttachments?.length) {
-    for (let i = 0; i < feedbackAttachments.length; i++) {
-      formData.append("feedbackAttachments", feedbackAttachments[i]);
-    }
-  }
-
-  const res = await axios.post(`http://localhost:5000/api/v1/${endpoint}`, formData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "multipart/form-data"
-    },
-    withCredentials: true
-  });
-  return res.data;
-};
+import { fetchRequest, submitReview } from "../../api/adminApi";
 
 const RequestDetail = () => {
   const { id } = useParams();
@@ -529,7 +478,9 @@ const RequestDetail = () => {
               <h3 className="text-xl font-bold">
                 {req.currentStage === "partnership-division" 
                   ? "Partnership Division Decision" 
-                  : "General Director Decision"} - {decisionType === "approve" ? "Approve" : "Disapprove"}
+                  : req.currentStage === "law-department" 
+                    ? "Law Department Decision"
+                    : "General Director Decision"} - {decisionType === "approve" ? "Approve" : "Disapprove"}
               </h3>
               <button 
                 onClick={() => setModalOpen(false)}
@@ -579,18 +530,20 @@ const RequestDetail = () => {
                     </div>
                   )}
 
-                  <div className="mb-2 flex items-center">
-                    <input
-                      type="checkbox"
-                      id="lawRelated"
-                      checked={isLawRelated}
-                      onChange={(e) => setIsLawRelated(e.target.checked)}
-                      className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="lawRelated" className="ml-2 text-gray-700">
-                      This request involves legal matters
-                    </label>
-                  </div>
+                  {req?.type === 'internal' && (
+                    <div className="mb-2 flex items-center">
+                      <input
+                        type="checkbox"
+                        id="lawRelated"
+                        checked={isLawRelated}
+                        onChange={(e) => setIsLawRelated(e.target.checked)}
+                        className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="lawRelated" className="ml-2 text-gray-700">
+                        This request involves legal matters
+                      </label>
+                    </div>
+                  )}
                 </div>
               )}
 

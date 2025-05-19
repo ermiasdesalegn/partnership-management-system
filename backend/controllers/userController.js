@@ -224,7 +224,6 @@ export const createRequest = catchAsync(async (req, res, next) => {
 
   // Parse company details
   const companyDetails = JSON.parse(req.body.companyDetails);
-
   // Get user details from the authenticated user
   const user = await User.findById(req.user.id);
   if (!user) {

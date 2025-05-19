@@ -129,7 +129,18 @@ const RequestTable = () => {
               <tbody className="bg-white divide-y divide-gray-100">
                 {requests.map((req) => (
                   <tr key={req._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900">{req.companyDetails?.name || "—"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      <div className="flex flex-col">
+                        <span>{req.companyDetails?.name || "—"}</span>
+                        <span className={`mt-2 px-3 py-1 rounded-full text-xs font-medium ${
+                          req.type === 'internal' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {req.type === 'internal' ? 'Internal Request' : 'External Request'}
+                        </span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-700">{req.companyDetails?.email || "—"}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "react-toastify";
 import { 
   FaBuilding, 
@@ -17,15 +16,12 @@ import {
   FaClock,
   FaFile
 } from 'react-icons/fa';
-
-const fetchPartner = async (id) => {
-  const token = localStorage.getItem("token");
-  const res = await axios.get(`http://localhost:5000/api/v1/partners/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    withCredentials: true
-  });
-  return res.data.data;
-};
+import { 
+  fetchPartnerById, 
+  signPartner, 
+  uploadPartnerAttachment, 
+  removePartnerAttachment 
+} from "../../api/adminApi";
 
 const PartnerDetail = () => {
   const { id } = useParams();
@@ -34,11 +30,45 @@ const PartnerDetail = () => {
   const [activeTab, setActiveTab] = useState("details");
   const [file, setFile] = useState(null);
   const [description, setDescription] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const { data: partner, isLoading, error } = useQuery({
     queryKey: ["partnerDetail", id],
-    queryFn: () => fetchPartner(id)
+    queryFn: () => fetchPartnerById(id)
+  });
+
+  const signMutation = useMutation({
+    mutationFn: signPartner,
+    onSuccess: () => {
+      toast.success("Partner marked as signed successfully");
+      queryClient.invalidateQueries(["partnerDetail", id]);
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Error marking partner as signed");
+    }
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: uploadPartnerAttachment,
+    onSuccess: () => {
+      toast.success("File uploaded successfully");
+      queryClient.invalidateQueries(["partnerDetail", id]);
+      setFile(null);
+      setDescription("");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Error uploading file");
+    }
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: removePartnerAttachment,
+    onSuccess: () => {
+      toast.success("Attachment removed successfully");
+      queryClient.invalidateQueries(["partnerDetail", id]);
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Error removing attachment");
+    }
   });
 
   const handleFileChange = (e) => {
@@ -52,72 +82,24 @@ const PartnerDetail = () => {
       return;
     }
 
-    setLoading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("description", description);
-
-    try {
-      const token = localStorage.getItem("token");
-      const endpoint = activeTab === "request" 
-        ? `http://localhost:5000/api/v1/partners/${id}/request-attachments`
-        : `http://localhost:5000/api/v1/partners/${id}/approval-attachments`;
-
-      await axios.post(endpoint, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data"
-        },
-        withCredentials: true
-      });
-
-      toast.success("File uploaded successfully");
-      queryClient.invalidateQueries(["partnerDetail", id]);
-      setFile(null);
-      setDescription("");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Error uploading file");
-    } finally {
-      setLoading(false);
-    }
+    uploadMutation.mutate({
+      partnerId: id,
+      file,
+      description,
+      type: activeTab
+    });
   };
 
-  const handleRemoveAttachment = async (attachmentId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const endpoint = activeTab === "request"
-        ? `http://localhost:5000/api/v1/partners/${id}/request-attachments/${attachmentId}`
-        : `http://localhost:5000/api/v1/partners/${id}/approval-attachments/${attachmentId}`;
-
-      await axios.delete(endpoint, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true
-      });
-
-      toast.success("Attachment removed successfully");
-      queryClient.invalidateQueries(["partnerDetail", id]);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Error removing attachment");
-    }
+  const handleRemoveAttachment = (attachmentId) => {
+    removeMutation.mutate({
+      partnerId: id,
+      attachmentId,
+      type: activeTab
+    });
   };
 
-  const handleSignPartner = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.patch(
-        `http://localhost:5000/api/v1/partners/${id}/sign`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true
-        }
-      );
-
-      toast.success("Partner marked as signed successfully");
-      queryClient.invalidateQueries(["partnerDetail", id]);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Error marking partner as signed");
-    }
+  const handleSignPartner = () => {
+    signMutation.mutate(id);
   };
 
   if (isLoading) {
@@ -306,10 +288,10 @@ const PartnerDetail = () => {
                   </div>
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={uploadMutation.isLoading}
                     className="w-full px-3 py-1.5 text-sm bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors disabled:opacity-50"
                   >
-                    {loading ? "Uploading..." : "Upload File"}
+                    {uploadMutation.isLoading ? "Uploading..." : "Upload File"}
                   </button>
                 </div>
               </form>
@@ -321,13 +303,19 @@ const PartnerDetail = () => {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {partner[activeTab === "request" ? "requestAttachments" : "approvalAttachments"].map((attachment, index) => {
+                    // Extract filename from path, handling both full paths and just filenames
                     const fileName = activeTab === "approval" 
                       ? attachment.path.split(/[/\\]/).pop() // Split by both forward and back slashes
                       : typeof attachment === 'string' 
                         ? attachment.includes('/') || attachment.includes('\\')
                           ? attachment.split(/[/\\]/).pop() 
                           : attachment
-                        : attachment.originalName || attachment.path;
+                        : attachment.originalName || attachment.path.split(/[/\\]/).pop();
+                    
+                    // Get the correct file path for download
+                    const filePath = typeof attachment === 'string' 
+                      ? attachment.split(/[/\\]/).pop()
+                      : attachment.path.split(/[/\\]/).pop();
                     
                     return (
                       <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg shadow">
@@ -335,12 +323,21 @@ const PartnerDetail = () => {
                           <FaFile className="text-blue-500 text-lg" />
                           <div>
                             <p className="text-sm font-medium">{fileName}</p>
-                            <p className="text-xs text-gray-500">{attachment.description}</p>
+                            {activeTab === "approval" && (
+                              <div className="text-xs text-gray-500 space-y-1">
+                                <p>Uploaded by: {attachment.uploadedBy?.name || 'Unknown'}</p>
+                                <p>Upload type: {attachment.uploaderModel || 'Unknown'}</p>
+                                <p>Date: {attachment.uploadedAt ? new Date(attachment.uploadedAt).toLocaleDateString() : 'Unknown'}</p>
+                                {attachment.description && (
+                                  <p>Description: {attachment.description}</p>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center space-x-1">
                           <a
-                            href={`http://localhost:5000/public/uploads/${typeof attachment === 'string' ? attachment.split(/[/\\]/).pop() : attachment.path.split(/[/\\]/).pop()}`}
+                            href={`http://localhost:5000/public/uploads/${filePath}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 text-blue-500 hover:text-blue-700"
