@@ -169,7 +169,11 @@ const RequestDetail = () => {
         case "law-department":
           return req?.currentStage === "law-department";
         case "director":
-          return req?.currentStage === "director";
+          // Check if the request is meant for director review and is in the director stage
+          if (!req?.forDirector || req?.currentStage !== "director") {
+            return false;
+          }
+          return true;
         case "general-director":
           return req?.currentStage === "general-director";
         default:
@@ -178,31 +182,35 @@ const RequestDetail = () => {
     };
 
     if (!canReview()) {
-      toast.error("You don't have permission to review this request");
+      const message = adminData?.role === "director" && !req?.forDirector 
+        ? "This request does not require director approval"
+        : "You don't have permission to review this request";
+      toast.error(message);
       setModalOpen(false);
       return null;
     }
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl p-0 my-4 flex flex-col max-h-[90vh]">
-          {/* Modal Header */}
-          <div className="bg-[#3c8dbc] text-white p-6 rounded-t-xl flex justify-between items-center sticky top-0 z-10">
-            <h3 className="text-xl font-bold">
-              {modalTitle()} - {decisionType === "approve" ? "Approve" : "Disapprove"}
-            </h3>
-            <button 
-              onClick={() => setModalOpen(false)}
-              className="text-white hover:text-gray-200 focus:outline-none"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl w-[90%] max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">{modalTitle()}</h2>
+            
+            {/* Request Status */}
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">Request Status</h3>
+              <div className="space-y-2">
+                <p className="text-gray-600">
+                  <span className="font-medium">Current Stage:</span> {req?.currentStage?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                </p>
+                {adminData?.role === "director" && (
+                  <p className="text-gray-600">
+                    <span className="font-medium">Requires Director Approval:</span> {req?.forDirector ? "Yes" : "No"}
+                  </p>
+                )}
+              </div>
+            </div>
 
-          {/* Modal Body */}
-          <div className="p-6 overflow-y-auto flex-1">
             {/* Only show framework configuration for partnership division */}
             {showFrameworkConfig && (
               <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-100">

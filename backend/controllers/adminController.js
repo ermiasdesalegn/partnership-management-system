@@ -446,9 +446,8 @@ export const getAllAdmins = async (req, res) => {
       return next(new AppError("Request not found", 404));
     }
   
-    // Check if the currentStage of the request matches the role of the admin
-    // Allow director to access any request
-    if (adminRole !== "director" && request.currentStage !== adminRole) {
+    // Allow both director and general-director to access any request
+    if (adminRole !== "director" && adminRole !== "general-director" && request.currentStage !== adminRole) {
       return next(new AppError("Unauthorized access to this request", 403));
     }
 
