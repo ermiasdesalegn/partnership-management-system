@@ -21,8 +21,8 @@ const router = express.Router();
 // Protect all routes
 router.use(protectAdmin);
 
-// Restrict to partnership-division and general-director
-router.use(restrictToAdmin("partnership-division", "general-director"));
+// Restrict to partnership-division, director and general-director
+router.use(restrictToAdmin("partnership-division", "director", "general-director"));
 
 // Partner routes
 router.route("/")

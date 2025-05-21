@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { FaBuilding, FaEnvelope, FaFileAlt, FaEye, FaCheckCircle } from "react-icons/fa";
-import { fetchUnsignedPartners, signPartner } from "../../api/adminApi";
+import { fetchUnsignedPartners, signPartner, fetchCurrentAdmin } from "../../api/adminApi";
 
 const SignConfirmationModal = ({ isOpen, onClose, partner, onConfirm, isSigning }) => {
   if (!isOpen) return null;
@@ -36,42 +36,49 @@ const SignConfirmationModal = ({ isOpen, onClose, partner, onConfirm, isSigning 
 };
 
 const UnsignedPartners = () => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSigning, setIsSigning] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: partners, isLoading, error } = useQuery({
     queryKey: ["unsignedPartners"],
     queryFn: fetchUnsignedPartners
   });
 
-  const signMutation = useMutation({
-    mutationFn: signPartner,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["unsignedPartners"]);
-      setIsModalOpen(false);
-      setSelectedPartner(null);
-    }
+  const { data: adminData } = useQuery({
+    queryKey: ["currentAdmin"],
+    queryFn: fetchCurrentAdmin
   });
+
+  const isGeneralDirector = adminData?.role === "general-director";
 
   const handleSignPartner = (partner) => {
     setSelectedPartner(partner);
     setIsModalOpen(true);
   };
 
-  const handleConfirmSign = () => {
-    if (selectedPartner) {
-      signMutation.mutate(selectedPartner._id);
+  const handleConfirmSign = async () => {
+    if (!selectedPartner) return;
+    
+    setIsSigning(true);
+    try {
+      await signPartner(selectedPartner._id);
+      queryClient.invalidateQueries(["unsignedPartners"]);
+      setIsModalOpen(false);
+      setSelectedPartner(null);
+    } catch (error) {
+      console.error("Error signing partner:", error);
+    } finally {
+      setIsSigning(false);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen px-8 py-10 bg-gradient-to-br from-white via-[#3c8dbc]/5 to-[#3c8dbc]/10 flex items-center justify-center">
-        <div className="w-full max-w-7xl mx-auto">
-          <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-[#3c8dbc] mx-auto" />
-        </div>
+      <div className="min-h-screen w-full bg-gradient-to-br from-white via-[#3c8dbc]/5 to-[#3c8dbc]/10 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-[#3c8dbc]" />
       </div>
     );
   }
@@ -91,88 +98,42 @@ const UnsignedPartners = () => {
 
   return (
     <div className="w-full min-h-screen px-8 py-10 bg-gray-100">
-      <div className="w-full max-w-7xl mx-auto">
-        <div className="bg-white shadow-xl rounded-lg p-8">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-[#3c8dbc]">Unsigned Partnerships</h2>
-            <p className="mt-1 text-sm text-gray-600">List of all partnerships pending signature</p>
-          </div>
+      <div className="w-full bg-white shadow-xl rounded-lg p-8">
+        <h2 className="text-3xl font-bold text-[#3c8dbc] mb-6">Unsigned Partners</h2>
 
-          {partners.length === 0 ? (
-            <div className="bg-gray-50 p-6 rounded-lg text-center">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.75 17L7 14.25M7 14.25L4.25 17M7 14.25v6.75M17 6.75L19.75 9.5M19.75 9.5L17 12.25M19.75 9.5H13"
-                />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No unsigned partnerships found</h3>
-              <p className="mt-1 text-sm text-gray-500">There are currently no partnerships pending signature.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr className="bg-[#3c8dbc] text-white">
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Company</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Framework</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
-                  {partners.map((partner) => (
-                    <tr key={partner._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-[#3c8dbc]/10 rounded-full flex items-center justify-center">
-                            <FaBuilding className="text-[#3c8dbc]" />
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{partner.companyName}</div>
-                            <div className="text-sm text-gray-500">{partner.companyEmail}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{partner.companyType}</td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3c8dbc]/10 text-[#3c8dbc]">
-                          <FaFileAlt className="mr-1" />
-                          {partner.frameworkType}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex space-x-3">
-                          <button
-                            onClick={() => navigate(`/admin/partners/${partner._id}`)}
-                            className="text-[#3c8dbc] hover:text-[#2c6a8f] flex items-center"
-                          >
-                            <FaEye className="mr-1" />
-                            View Details
-                          </button>
-                          <button
-                            onClick={() => handleSignPartner(partner)}
-                            className="text-green-600 hover:text-green-800 flex items-center"
-                          >
-                            <FaCheckCircle className="mr-1" />
-                            Sign Partner
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+        {partners?.length === 0 ? (
+          <div className="text-center text-gray-500 text-lg">No unsigned partners found.</div>
+        ) : (
+          <div className="space-y-4">
+            {partners?.map((partner) => (
+              <div key={partner._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-lg font-semibold">{partner.companyName}</h3>
+                    <p className="text-gray-600">{partner.companyEmail}</p>
+                    <p className="text-sm text-gray-500">Framework Type: {partner.frameworkType}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => navigate(`/admin/partners/${partner._id}`)}
+                      className="px-4 py-2 text-[#3c8dbc] hover:text-[#2c6a8f] underline text-sm"
+                    >
+                      View Details
+                    </button>
+                    {isGeneralDirector && (
+                      <button
+                        onClick={() => handleSignPartner(partner)}
+                        className="px-4 py-2 bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors"
+                      >
+                        Sign Partner
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <SignConfirmationModal
@@ -183,7 +144,7 @@ const UnsignedPartners = () => {
         }}
         partner={selectedPartner}
         onConfirm={handleConfirmSign}
-        isSigning={signMutation.isLoading}
+        isSigning={isSigning}
       />
     </div>
   );

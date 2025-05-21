@@ -20,7 +20,8 @@ import {
   fetchPartnerById, 
   signPartner, 
   uploadPartnerAttachment, 
-  removePartnerAttachment 
+  removePartnerAttachment,
+  fetchCurrentAdmin 
 } from "../../api/adminApi";
 
 const PartnerDetail = () => {
@@ -35,6 +36,13 @@ const PartnerDetail = () => {
     queryKey: ["partnerDetail", id],
     queryFn: () => fetchPartnerById(id)
   });
+
+  const { data: adminData } = useQuery({
+    queryKey: ["currentAdmin"],
+    queryFn: fetchCurrentAdmin
+  });
+
+  const isGeneralDirector = adminData?.role === "general-director";
 
   const signMutation = useMutation({
     mutationFn: signPartner,
@@ -153,7 +161,7 @@ const PartnerDetail = () => {
                 {partner.status === "Active" ? <FaCheckCircle className="mr-1" /> : <FaTimesCircle className="mr-1" />}
                 {partner.status}
               </span>
-              {!partner.isSigned && (
+              {!partner.isSigned && isGeneralDirector && (
                 <button
                   onClick={handleSignPartner}
                   className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"

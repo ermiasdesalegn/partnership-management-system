@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import Request from "../models/Request.js";
 export const partnershipReviewRequest = async (req, res) => {
   try {
-    const { requestId, decision, message, feedbackMessage, isLawRelated, frameworkType, duration } = req.body;
+    const { requestId, decision, message, feedbackMessage, isLawRelated, frameworkType, duration, forDirector } = req.body;
     const admin = req.admin;
 
     const request = await Request.findById(requestId);
@@ -34,7 +34,28 @@ export const partnershipReviewRequest = async (req, res) => {
       request.lawRelated = isLaw;
       request.frameworkType = frameworkType;
       request.duration = duration;
-      request.currentStage = isLaw ? "law-department" : "general-director";
+      
+      // Set forDirector flag based on the input
+      request.forDirector = forDirector === "true" || forDirector === true;
+      
+      // For internal requests, always go to law department first if law-related
+      if (request.type === 'internal' && isLaw) {
+        request.currentStage = "law-department";
+      } else if (request.type === 'internal' && !isLaw) {
+        // For internal non-law requests, check if director approval is needed
+        if (request.forDirector) {
+          request.currentStage = "director";
+        } else {
+          request.currentStage = "general-director";
+        }
+      } else {
+        // For external requests, check if director approval is needed
+        if (request.forDirector) {
+          request.currentStage = "director";
+        } else {
+          request.currentStage = "general-director";
+        }
+      }
     } else {
       request.status = "Disapproved";
     }

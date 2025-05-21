@@ -18,8 +18,12 @@ const RequestSchema = new mongoose.Schema({
   },
   currentStage: {
     type: String,
-    enum: ["partnership-division", "law-department", "general-director"],
+    enum: ["partnership-division", "law-department", "general-director", "director"],
     default: "partnership-division"
+  },
+  forDirector: {
+    type: Boolean,
+    default: false
   },
   frameworkType: {
     type: String,

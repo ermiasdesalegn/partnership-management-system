@@ -17,7 +17,7 @@ import {
   FaFileWord,
   FaFileImage
 } from 'react-icons/fa';
-import { fetchRequest, submitReview } from "../../api/adminApi";
+import { fetchRequest, submitReview, fetchCurrentAdmin } from "../../api/adminApi";
 
 const RequestDetail = () => {
   const { id } = useParams();
@@ -27,6 +27,7 @@ const RequestDetail = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [decisionType, setDecisionType] = useState("approve");
   const [isLawRelated, setIsLawRelated] = useState(false);
+  const [forDirector, setForDirector] = useState(false);
   const [message, setMessage] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [attachments, setAttachments] = useState([]);
@@ -38,6 +39,11 @@ const RequestDetail = () => {
   const { data: req, isLoading, error } = useQuery({
     queryKey: ["requestDetail", id],
     queryFn: () => fetchRequest(id)
+  });
+
+  const { data: adminData } = useQuery({
+    queryKey: ["currentAdmin"],
+    queryFn: fetchCurrentAdmin
   });
 
   const handleFrameworkTypeChange = (e) => {
@@ -68,7 +74,8 @@ const RequestDetail = () => {
         feedbackMessage,
         frameworkType: frameworkType === "Other" ? customFramework : frameworkType,
         attachments,
-        feedbackAttachments
+        feedbackAttachments,
+        forDirector
       }),
     onSuccess: () => {
       toast.success("Action submitted successfully!");
@@ -130,6 +137,266 @@ const RequestDetail = () => {
       return;
     }
     mutation.mutate();
+  };
+
+  const renderDecisionModal = () => {
+    if (!modalOpen) return null;
+
+    const modalTitle = () => {
+      switch (adminData?.role) {
+        case "partnership-division":
+          return "Partnership Division Decision";
+        case "law-department":
+          return "Law Department Decision";
+        case "director":
+          return "Director Decision";
+        case "general-director":
+          return "General Director Decision";
+        default:
+          return "Review Decision";
+      }
+    };
+
+    const showFrameworkConfig = adminData?.role === "partnership-division" && 
+                              req?.currentStage === "partnership-division" && 
+                              decisionType === "approve";
+
+    // Check if the admin has permission to review this request
+    const canReview = () => {
+      switch (adminData?.role) {
+        case "partnership-division":
+          return req?.currentStage === "partnership-division";
+        case "law-department":
+          return req?.currentStage === "law-department";
+        case "director":
+          return req?.currentStage === "director";
+        case "general-director":
+          return req?.currentStage === "general-director";
+        default:
+          return false;
+      }
+    };
+
+    if (!canReview()) {
+      toast.error("You don't have permission to review this request");
+      setModalOpen(false);
+      return null;
+    }
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl p-0 my-4 flex flex-col max-h-[90vh]">
+          {/* Modal Header */}
+          <div className="bg-[#3c8dbc] text-white p-6 rounded-t-xl flex justify-between items-center sticky top-0 z-10">
+            <h3 className="text-xl font-bold">
+              {modalTitle()} - {decisionType === "approve" ? "Approve" : "Disapprove"}
+            </h3>
+            <button 
+              onClick={() => setModalOpen(false)}
+              className="text-white hover:text-gray-200 focus:outline-none"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Modal Body */}
+          <div className="p-6 overflow-y-auto flex-1">
+            {/* Only show framework configuration for partnership division */}
+            {showFrameworkConfig && (
+              <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
+                <h4 className="font-semibold text-gray-800 mb-3">Request Framework Configuration</h4>
+                
+                {/* Framework Type Selection */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Framework Type
+                  </label>
+                  <select
+                    value={frameworkType}
+                    onChange={handleFrameworkTypeChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="MOU">MOU (Memorandum of Understanding)</option>
+                    <option value="Contract">Contract</option>
+                    <option value="NDA">NDA (Non-Disclosure Agreement)</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                {showCustomFramework && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Specify Framework Type
+                    </label>
+                    <input
+                      type="text"
+                      value={customFramework}
+                      onChange={(e) => setCustomFramework(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter framework type"
+                    />
+                  </div>
+                )}
+
+                {req?.type === 'internal' && (
+                  <div className="mb-2 flex items-center">
+                    <input
+                      type="checkbox"
+                      id="lawRelated"
+                      checked={isLawRelated}
+                      onChange={(e) => setIsLawRelated(e.target.checked)}
+                      className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="lawRelated" className="ml-2 text-gray-700">
+                      This request involves legal matters
+                    </label>
+                  </div>
+                )}
+
+                <div className="mb-2 flex items-center">
+                  <input
+                    type="checkbox"
+                    id="forDirector"
+                    checked={forDirector}
+                    onChange={(e) => setForDirector(e.target.checked)}
+                    className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="forDirector" className="ml-2 text-gray-700">
+                    This request requires director approval
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Admin Notes Section */}
+            <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
+              <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded mr-2">
+                  ADMIN ONLY
+                </span>
+                Internal Notes
+              </h4>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Notes for other administrators
+                </label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                  placeholder="Add notes visible only to administrators..."
+                />
+              </div>
+
+              {/* Admin Attachments */}
+              <div className="mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Attachments for administrators
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleAttachmentChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {attachments.length > 0 && (
+                  <div className="mt-2 text-sm text-gray-500">
+                    {attachments.length} file(s) selected
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* User Feedback Section */}
+            <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
+              <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded mr-2">
+                  USER VISIBLE
+                </span>
+                Feedback for Requester
+              </h4>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Feedback message for the requester
+                </label>
+                <textarea
+                  value={feedbackMessage}
+                  onChange={(e) => setFeedbackMessage(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                  placeholder="Add feedback that will be visible to the requester..."
+                />
+              </div>
+
+              {/* User Feedback Attachments */}
+              <div className="mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Attachments for the requester
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFeedbackAttachmentChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {feedbackAttachments.length > 0 && (
+                  <div className="mt-2 text-sm text-gray-500">
+                    {feedbackAttachments.length} file(s) selected
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+          <div className="border-t border-gray-200 p-4 bg-gray-50 rounded-b-xl flex justify-end items-center gap-3 sticky bottom-0">
+            <button
+              onClick={() => setModalOpen(false)}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center"
+              disabled={mutation.isLoading}
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center ${
+                decisionType === "approve" 
+                  ? "bg-green-600 hover:bg-green-700" 
+                  : "bg-red-600 hover:bg-red-700"
+              }`}
+              disabled={mutation.isLoading}
+            >
+              {mutation.isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  {decisionType === "approve" ? (
+                    <FaCheckCircle className="mr-2" />
+                  ) : (
+                    <FaTimesCircle className="mr-2" />
+                  )}
+                  Confirm {decisionType.charAt(0).toUpperCase() + decisionType.slice(1)}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -469,213 +736,7 @@ const RequestDetail = () => {
         </div>
       </div>
 
-      {/* Decision Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl p-0 my-4 flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
-            <div className="bg-[#3c8dbc] text-white p-6 rounded-t-xl flex justify-between items-center sticky top-0 z-10">
-              <h3 className="text-xl font-bold">
-                {req.currentStage === "partnership-division" 
-                  ? "Partnership Division Decision" 
-                  : req.currentStage === "law-department" 
-                    ? "Law Department Decision"
-                    : "General Director Decision"} - {decisionType === "approve" ? "Approve" : "Disapprove"}
-              </h3>
-              <button 
-                onClick={() => setModalOpen(false)}
-                className="text-white hover:text-gray-200 focus:outline-none"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Modal Body - Scrollable */}
-            <div className="p-6 overflow-y-auto flex-1">
-              {req.currentStage === "partnership-division" && decisionType === "approve" && (
-                <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
-                  <h4 className="font-semibold text-gray-800 mb-3">Request Framework Configuration</h4>
-                  
-                  {/* Framework Type Selection */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Framework Type
-                    </label>
-                    <select
-                      value={frameworkType}
-                      onChange={handleFrameworkTypeChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="MOU">MOU (Memorandum of Understanding)</option>
-                      <option value="Contract">Contract</option>
-                      <option value="NDA">NDA (Non-Disclosure Agreement)</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-
-                  {showCustomFramework && (
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Specify Framework Type
-                      </label>
-                      <input
-                        type="text"
-                        value={customFramework}
-                        onChange={(e) => setCustomFramework(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter framework type"
-                      />
-                    </div>
-                  )}
-
-                  {req?.type === 'internal' && (
-                    <div className="mb-2 flex items-center">
-                      <input
-                        type="checkbox"
-                        id="lawRelated"
-                        checked={isLawRelated}
-                        onChange={(e) => setIsLawRelated(e.target.checked)}
-                        className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
-                      />
-                      <label htmlFor="lawRelated" className="ml-2 text-gray-700">
-                        This request involves legal matters
-                      </label>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Admin Notes Section */}
-              <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
-                <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
-                  <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded mr-2">
-                    ADMIN ONLY
-                  </span>
-                  Internal Notes
-                </h4>
-                
-                {/* Admin Notes */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notes for other administrators
-                  </label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows={3}
-                    placeholder="Add notes visible only to administrators..."
-                  />
-                </div>
-
-                {/* Admin Attachments */}
-                <div className="mb-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Attachments for administrators
-                  </label>
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleAttachmentChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {attachments.length > 0 && (
-                    <div className="mt-2 text-sm text-gray-500">
-                      {attachments.length} file(s) selected
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* User Feedback Section */}
-              <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
-                <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
-                  <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded mr-2">
-                    USER VISIBLE
-                  </span>
-                  Feedback for Requester
-                </h4>
-
-                {/* User Feedback Message */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Feedback message for the requester
-                  </label>
-                  <textarea
-                    value={feedbackMessage}
-                    onChange={(e) => setFeedbackMessage(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows={3}
-                    placeholder="Add feedback that will be visible to the requester..."
-                  />
-                </div>
-
-                {/* User Feedback Attachments */}
-                <div className="mb-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Attachments for the requester
-                  </label>
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleFeedbackAttachmentChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {feedbackAttachments.length > 0 && (
-                    <div className="mt-2 text-sm text-gray-500">
-                      {feedbackAttachments.length} file(s) selected
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="border-t border-gray-200 p-4 bg-gray-50 rounded-b-xl flex justify-end items-center gap-3 sticky bottom-0">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center"
-                disabled={mutation.isLoading}
-              >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center ${
-                  decisionType === "approve" 
-                    ? "bg-green-600 hover:bg-green-700" 
-                    : "bg-red-600 hover:bg-red-700"
-                }`}
-                disabled={mutation.isLoading}
-              >
-                {mutation.isLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    {decisionType === "approve" ? (
-                      <FaCheckCircle className="mr-2" />
-                    ) : (
-                      <FaTimesCircle className="mr-2" />
-                    )}
-                    Confirm {decisionType.charAt(0).toUpperCase() + decisionType.slice(1)}
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {renderDecisionModal()}
     </div>
   );
 };

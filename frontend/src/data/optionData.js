@@ -43,23 +43,19 @@ const optionsData = [
     link: "/admin/usersdata",
     dropdown: [
       {
-        
         title: "Internal Users",
         link: "/admin/internal-user",
       },
       {
-    
         title: "External Users",
         link: "/admin/external-user",
       },
       {
-     
         title: "User Analytics",
         link: "/admin/user/summary",
       },
     ],
   },
-  
   {
     Icon: FaHandshake,
     title: "Partners",
@@ -92,49 +88,11 @@ const optionsData = [
       },
     ],
   },
-  // {
-  //   Icon: FaHandshake,
-  //   title: "Strategic Partner",
-  //   link: "/admin/partner/strategic",
-  // },
-  // {
-  //   Icon: FaHandshake,
-  //   title: "Operational Partner",
-  //   link: "/admin/partner/operational",
-  // },
-  // {
-  //   Icon: FaHandshake,
-  //   title: "Project Partner",
-  //   link: "/admin/partner/project",
-  // },
-  // {
-  //   Icon: FaHandshake,
-  //   title: "Tactical Partner",
-  //   link: "/admin/partner/tactical",
-  // },
-  // {
-  //   Icon: FaPen,
-  //   title: "Blogs-post",
-  //   link: "/admin/blogs-post",
-  // },
   {
     Icon: MdFeedback,
     title: "View-feedbacks",
     link: "/admin/view-feedbacks",
   },
-
-  // {
-  //   Icon: IoMdNotifications,
-  //   badge: Badge,
-  //   title: "Notifications",
-  //   link: "/admin/notifications",
-  //   notifs: 3,
-  // },
-  // {
-  //   Icon: FiSettings,
-  //   title: "Settings",
-  //   link: "/admin/settings",
-  // },
 ];
 
 export default optionsData;

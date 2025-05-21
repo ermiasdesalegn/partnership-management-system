@@ -26,6 +26,7 @@ import {lawDepartmentReviewRequest,getLawRelatedRequests,getLawRelatedRequestsFo
 import {partnershipReviewRequest,getPartnershipReviewedRequests,getApprovedRequestsForPartnershipDivision,getDisapprovedRequestsForLawDepartment,getPendingRequests} from "../controllers/partnershipReviewRequest.js"
 import { protectAdmin, restrictToAdmin } from "../middleware/authMiddleware.js";
 import upload from "../middleware/upload.js";   
+import { getDirectorRequests, directorReview } from "../controllers/directorController.js";
 
 const router = express.Router();
 
@@ -47,12 +48,12 @@ router.patch("/me/cover-photo", upload.single("coverPhoto"), uploadCoverPhoto);
 router.get("/", restrictToAdmin("general-director"), getAllAdmins);
 router.post("/signup", signup);
 
-// Data access (partnership-division and general-director)
-const pdAndGdRoles = ["partnership-division", "general-director"];
+// Data access (partnership-division, director and general-director)
+const pdAndGdRoles = ["partnership-division", "director", "general-director"];
 
 router.get("/requests", restrictToAdmin(...pdAndGdRoles), getAllRequests);
-router.get("/requestsRelated", restrictToAdmin("partnership-division", "law-department", "general-director"), getRequestsByRole);
-router.get("/requests/:id", protectAdmin, restrictToAdmin("partnership-division", "law-department", "general-director"), getSingleRequestInRoleList);
+router.get("/requestsRelated", restrictToAdmin("partnership-division", "law-department", "director", "general-director"), getRequestsByRole);
+router.get("/requests/:id", protectAdmin, restrictToAdmin("partnership-division", "law-department", "director", "general-director"), getSingleRequestInRoleList);
 
 router.get("/users", restrictToAdmin(...pdAndGdRoles), getAllUsers);
 router.get("/users/external", restrictToAdmin(...pdAndGdRoles), getAllExternalUsers);
@@ -64,7 +65,7 @@ router.get("/users/external/:userId/requests", restrictToAdmin(...pdAndGdRoles),
 router.post(
   "/review/partnership",
   protectAdmin,
-  restrictToAdmin("partnership-division"),
+  restrictToAdmin("partnership-division", "director"),
   upload.fields([
     { name: "attachments", maxCount: 5 },
     { name: "feedbackAttachments", maxCount: 5 }
@@ -76,7 +77,7 @@ router.post(
 router.post(
   "/review/law",
   protectAdmin,
-  restrictToAdmin("law-department"),
+  restrictToAdmin("law-department", "director"),
   upload.fields([
     { name: "attachments", maxCount: 5 },
     { name: "feedbackAttachments", maxCount: 5 }
@@ -88,7 +89,7 @@ router.post(
 router.post(
   "/forward/general-director",
   protectAdmin,
-  restrictToAdmin("partnership-division"),
+  restrictToAdmin("partnership-division", "director"),
   forwardToGeneralDirector
 );
 
@@ -96,7 +97,7 @@ router.post(
 router.post(
   "/review/general-director",
   protectAdmin,
-  restrictToAdmin("general-director"),
+  restrictToAdmin("general-director", "director"),
   upload.fields([
     { name: "attachments", maxCount: 5 },
     { name: "feedbackAttachments", maxCount: 5 }
@@ -104,9 +105,9 @@ router.post(
   generalDirectorDecision
 );
 
-router.get("/law-requests", protectAdmin, restrictToAdmin("law-department"), getLawRelatedRequests);
-router.get("/pending-requests", protectAdmin, restrictToAdmin("partnership-division"), getPendingRequests);
-router.get('/my-reviewed-requests', protectAdmin, restrictToAdmin('partnership-division', 'law-department', 'general-director'), getReviewedRequestsByAdmin);
+router.get("/law-requests", protectAdmin, restrictToAdmin("law-department", "director"), getLawRelatedRequests);
+router.get("/pending-requests", protectAdmin, restrictToAdmin("partnership-division", "director"), getPendingRequests);
+router.get('/my-reviewed-requests', protectAdmin, restrictToAdmin('partnership-division', 'law-department', 'director', 'general-director'), getReviewedRequestsByAdmin);
 
 router.post(
   '/requests:requestId/attachments',
@@ -153,6 +154,20 @@ router.post(
   protectAdmin,
   restrictToAdmin("partnership-division"),
   forwardToGeneralDirector
+);
+
+// Director routes
+router.get("/director/requests", protectAdmin, restrictToAdmin("director"), getDirectorRequests);
+router.get("/director/all-requests", protectAdmin, restrictToAdmin("director"), getAllRequests);
+router.post(
+  "/director/review",
+  protectAdmin,
+  restrictToAdmin("director"),
+  upload.fields([
+    { name: "attachments", maxCount: 5 },
+    { name: "feedbackAttachments", maxCount: 5 }
+  ]),
+  directorReview
 );
 
 export default router;

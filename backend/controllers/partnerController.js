@@ -189,6 +189,11 @@ export const removeApprovalAttachment = catchAsync(async (req, res, next) => {
 
 // Mark partner as signed
 export const markPartnerAsSigned = catchAsync(async (req, res, next) => {
+  // Check if the admin is a general director
+  if (req.admin.role !== "general-director") {
+    return next(new AppError("Only the General Director can mark partners as signed", 403));
+  }
+
   const partner = await Partner.findByIdAndUpdate(
     req.params.id,
     { 

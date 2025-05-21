@@ -11,33 +11,13 @@ import {
   FaBell,
   FaArrowRight
 } from 'react-icons/fa';
-import { toast } from 'react-toastify';
 
 const InternalDashboard = () => {
   const navigate = useNavigate();
 
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['dashboardData'],
-    queryFn: async () => {
-      try {
-        const response = await fetchDashboardData();
-        // Ensure we're accessing the correct data structure
-        return {
-          stats: response.data.stats || {
-            totalRequests: 0,
-            pendingRequests: 0,
-            completedRequests: 0,
-            rejectedRequests: 0
-          },
-          recentRequests: response.data.recentRequests || [],
-          notifications: response.data.notifications || []
-        };
-      } catch (error) {
-        console.error('Dashboard data fetch error:', error);
-        toast.error('Failed to load dashboard data');
-        throw error;
-      }
-    }
+    queryFn: fetchDashboardData
   });
 
   const getStatusColor = (status) => {
@@ -76,9 +56,6 @@ const InternalDashboard = () => {
     );
   }
 
-  // Log the dashboard data for debugging
-  console.log('Dashboard Data:', dashboardData);
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
@@ -116,12 +93,12 @@ const InternalDashboard = () => {
                 <FaClock className="w-6 h-6 text-yellow-600" />
               </div>
             </div>
-          </div>
+      </div>
 
           {/* Completed Requests Card */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
-              <div>
+                <div>
                 <p className="text-sm font-medium text-gray-600">Completed Requests</p>
                 <p className="text-2xl font-semibold text-gray-900 mt-1">{dashboardData?.stats?.completedRequests || 0}</p>
               </div>
@@ -129,7 +106,7 @@ const InternalDashboard = () => {
                 <FaCheckCircle className="w-6 h-6 text-green-600" />
               </div>
             </div>
-          </div>
+                </div>
 
           {/* Rejected Requests Card */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
@@ -137,7 +114,7 @@ const InternalDashboard = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Rejected Requests</p>
                 <p className="text-2xl font-semibold text-gray-900 mt-1">{dashboardData?.stats?.rejectedRequests || 0}</p>
-              </div>
+                </div>
               <div className="p-3 bg-red-50 rounded-lg">
                 <FaTimesCircle className="w-6 h-6 text-red-600" />
               </div>
@@ -189,10 +166,10 @@ const InternalDashboard = () => {
                   </div>
                 )}
               </div>
-            </div>
-          </div>
+        </div>
+      </div>
 
-          {/* Notifications Section */}
+      {/* Notifications Section */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100">
@@ -206,7 +183,7 @@ const InternalDashboard = () => {
                         <div className="p-2 bg-blue-50 rounded-lg">
                           <FaBell className="w-5 h-5 text-blue-600" />
                         </div>
-                        <div>
+      <div>
                           <h3 className="font-medium text-gray-900">{notification.title}</h3>
                           <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
                           <p className="text-xs text-gray-500 mt-2">

@@ -12,6 +12,8 @@ import InProgress from "../components/inProgress/Index";
 import ProgressDetail from "../components/inProgress/ProgressDetail";
 import { Route } from "react-router";
 import RegisteredUsers from "../components/user-managment/RegisteredUsers";
+import InternalUsers from "../components/user-managment/InternalUsers";
+import ExternalUsers from "../components/user-managment/ExternalUsers";
 import ToBeReviewed from "../components/view-request/ToBeReviewed";
 import RequestDetail from "../components/view-request/RequestDetail";
 import ReviewedByYou from "../components/view-request/ReviewedByYou";
@@ -24,7 +26,8 @@ const AdminRoute = [
     <Route path="request" element={<ReqTableData />} />
     <Route path="requests-in-progress" element={<ToBeReviewed />} />
     <Route path="requests-in-progress/request/:id" element={<RequestDetail />} />
-    <Route path="external-user" element={<RegisteredUsers />} />
+    <Route path="internal-user" element={<InternalUsers />} />
+    <Route path="external-user" element={<ExternalUsers />} />
     <Route path="in-progress" element={<InProgress />} />
     <Route path="in-progress/:id" element={<ProgressDetail />} />
     <Route path="notifications" element={<AdminNotification />} />
@@ -36,7 +39,6 @@ const AdminRoute = [
     <Route path="partners/signed" element={<SignedPartners />} />
     <Route path="partners/unsigned" element={<UnsignedPartners />} />
     <Route path="reviewed-requests" element={<ReviewedByYou />} />
-    <Route path="external-user" element={<RegisteredUsers/>}/>
   </Route>,
 ];
 

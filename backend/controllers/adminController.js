@@ -320,10 +320,30 @@ export const getAllAdmins = async (req, res) => {
 };
 
   
-  // Get all external users
-  export const getAllExternalUsers = async (req, res) => {
+  // Get all internal users
+  export const getAllInternalUsers = async (req, res) => {
     try {
-      const users = await User.find({ type: "external" });
+      const users = await User.aggregate([
+        { $match: { role: "internal" } },
+        {
+          $lookup: {
+            from: "requests",
+            localField: "_id",
+            foreignField: "userRef",
+            as: "userRequests"
+          }
+        },
+        {
+          $project: {
+            name: 1,
+            email: 1,
+            department: 1,
+            role: 1,
+            requestCount: { $size: "$userRequests" }
+          }
+        }
+      ]);
+
       res.status(200).json({
         success: true,
         count: users.length,
@@ -337,10 +357,30 @@ export const getAllAdmins = async (req, res) => {
     }
   };
   
-  // Get all internal users
-  export const getAllInternalUsers = async (req, res) => {
+  // Get all external users
+  export const getAllExternalUsers = async (req, res) => {
     try {
-      const users = await User.find({ type: "internal" });
+      const users = await User.aggregate([
+        { $match: { role: "external" } },
+        {
+          $lookup: {
+            from: "requests",
+            localField: "_id",
+            foreignField: "userRef",
+            as: "userRequests"
+          }
+        },
+        {
+          $project: {
+            name: 1,
+            email: 1,
+            company: 1,
+            role: 1,
+            requestCount: { $size: "$userRequests" }
+          }
+        }
+      ]);
+
       res.status(200).json({
         success: true,
         count: users.length,
@@ -357,7 +397,7 @@ export const getAllAdmins = async (req, res) => {
   export const getRequestsByRole = catchAsync(async (req, res, next) => {
     const role = req.admin.role;
     console.log("Admin Role:", req.admin.role);    
-    if (!["partnership-division", "law-department", "general-director"].includes(role)) {
+    if (!["partnership-division", "law-department", "director", "general-director"].includes(role)) {
       return next(new AppError("Invalid role for request access", 403));
     }
     let requests;
@@ -368,8 +408,9 @@ export const getAllAdmins = async (req, res) => {
       case "law-department":
         requests = await Request.find({ currentStage: "law-department" }).populate("userRef");
         break;
+      case "director":
       case "general-director":
-        requests = await Request.find({ currentStage: "general-director" }).populate("userRef");
+        requests = await Request.find().populate("userRef");
         break;
       default:
         return next(new AppError("Role not found", 403));
@@ -406,7 +447,8 @@ export const getAllAdmins = async (req, res) => {
     }
   
     // Check if the currentStage of the request matches the role of the admin
-    if (request.currentStage !== adminRole) {
+    // Allow director to access any request
+    if (adminRole !== "director" && request.currentStage !== adminRole) {
       return next(new AppError("Unauthorized access to this request", 403));
     }
 

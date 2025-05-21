@@ -34,7 +34,12 @@ export const lawDepartmentReviewRequest = async (req, res) => {
     });
 
     if (decision === "approve") {
-      request.currentStage = "partnership-division"; // Return to partnership for forwarding
+      // Check if request needs director approval
+      if (request.forDirector === true) {
+        request.currentStage = "director";
+      } else {
+        request.currentStage = "general-director";
+      }
     } else {
       request.status = "Disapproved";
     }

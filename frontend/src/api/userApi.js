@@ -8,8 +8,6 @@ export const fetchDashboardData = async () => {
   const response = await axios.get(`${BASE_URL}/internal/dashboard`, {
     headers: { Authorization: `Bearer ${token}` }
   });
-  // Log the response for debugging
-  console.log('Dashboard API Response:', response.data);
   return response.data;
 };
 

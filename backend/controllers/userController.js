@@ -240,7 +240,7 @@ export const createRequest = catchAsync(async (req, res, next) => {
       ...companyDetails,
       // Ensure enum values match
       type: companyDetails.type in ["Government", "Private", "Non-Government", "Other"] 
-        ? companyDetails.type 
+        ? companyDetails.type
         : "Other"
     },
     attachments: req.files.map(file => ({

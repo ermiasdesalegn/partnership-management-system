@@ -247,55 +247,80 @@ export const fetchRequest = async (id) => {
   return res.data.data;
 };
 
-export const submitReview = async ({ id, decision, currentStage, isLawRelated, message, feedbackMessage, frameworkType, attachments, feedbackAttachments }) => {
+export const submitReview = async ({
+  id,
+  decision,
+  currentStage,
+  isLawRelated,
+  message,
+  feedbackMessage,
+  frameworkType,
+  attachments,
+  feedbackAttachments,
+  forDirector
+}) => {
   const token = localStorage.getItem("token");
-  let endpoint;
-  
-  switch (currentStage) {
-    case "partnership-division":
-      endpoint = "admin/review/partnership";
-      break;
-    case "law-department":
-      endpoint = "admin/review/law";
-      break;
-    case "general-director":
-      endpoint = "admin/review/general-director";
-      break;
-    default:
-      throw new Error("Invalid stage");
+  if (!token) {
+    throw new Error("Not authenticated");
   }
 
   const formData = new FormData();
   formData.append("requestId", id);
   formData.append("decision", decision);
-  formData.append("message", message || "");
-  formData.append("feedbackMessage", feedbackMessage || "");
-  
+  formData.append("message", message);
+  formData.append("feedbackMessage", feedbackMessage);
+
+  // Add attachments if any
+  if (attachments?.length > 0) {
+    attachments.forEach(file => {
+      formData.append("attachments", file);
+    });
+  }
+
+  // Add feedback attachments if any
+  if (feedbackAttachments?.length > 0) {
+    feedbackAttachments.forEach(file => {
+      formData.append("feedbackAttachments", file);
+    });
+  }
+
+  // Add stage-specific data
   if (currentStage === "partnership-division") {
     formData.append("isLawRelated", isLawRelated);
     formData.append("frameworkType", frameworkType);
+    formData.append("forDirector", forDirector);
   }
 
-  // Append admin attachments
-  if (attachments?.length) {
-    for (let i = 0; i < attachments.length; i++) {
-      formData.append("attachments", attachments[i]);
+  // Use the correct endpoint based on the current stage
+  let endpoint;
+  switch (currentStage) {
+    case "partnership-division":
+      endpoint = "http://localhost:5000/api/v1/admin/review/partnership";
+      break;
+    case "law-department":
+      endpoint = "http://localhost:5000/api/v1/admin/review/law";
+      break;
+    case "director":
+      endpoint = "http://localhost:5000/api/v1/admin/director/review";
+      break;
+    case "general-director":
+      endpoint = "http://localhost:5000/api/v1/admin/review/general-director";
+      break;
+    default:
+      throw new Error("Invalid stage for review");
+  }
+
+  const response = await axios.post(
+    endpoint,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`
+      },
+      withCredentials: true
     }
-  }
+  );
 
-  // Append user feedback attachments
-  if (feedbackAttachments?.length) {
-    for (let i = 0; i < feedbackAttachments.length; i++) {
-      formData.append("feedbackAttachments", feedbackAttachments[i]);
-    }
-  }
-
-  const res = await axios.post(`http://localhost:5000/api/v1/${endpoint}`, formData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "multipart/form-data"
-    },
-    withCredentials: true
-  });
-  return res.data;
+  return response.data;
 };
