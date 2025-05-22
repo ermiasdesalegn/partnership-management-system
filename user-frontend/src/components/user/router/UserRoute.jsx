@@ -19,9 +19,7 @@ const UserRoute = [
       <Route path="request" element={<RequestForm />} />
       <Route path="profile" element={<Profile />} />
       <Route path="request-status" element={<RequestStatus />} />
-      
-          <Route path="/user/requests/:id" element={<RequestDetails />} />
-       
+      <Route path="requests/:id" element={<RequestDetails />} />
       <Route path="howto" element={<HowTo />} />
       <Route path="faq" element={<FAQ />} /> {/* Added FAQ Route */}
       <Route path="support" element={<Support />} />

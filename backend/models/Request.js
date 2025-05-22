@@ -13,8 +13,8 @@ const RequestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["Pending", "In Review", "Approved", "Disapproved"],
-    default: "Pending"
+    enum: ["pending", "in_review", "approved", "disapproved"],
+    default: "pending"
   },
   currentStage: {
     type: String,
@@ -104,15 +104,9 @@ companyDetails: {
     enum: ["Draft", "Email Sent", "Reviewed", "Approved", "Rejected"]
   },
   duration: {
-    value: {
-      type: Number,
-      min: [1, "Duration must be at least 1"]
-    },
-    type: {
-      type: String,
-      enum: ["months", "years"],
-      default: "years"
-    }
+    type: Number,
+    min: [1, "Duration must be at least 1 year"],
+    required: true
   }
 });
 

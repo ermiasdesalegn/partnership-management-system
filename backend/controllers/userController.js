@@ -263,23 +263,19 @@ export const getRequestStatus = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    // Get the current user's details first
+    const user = await User.findById(userId).select('name email phone');
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+
     // Find all requests for this user with all necessary fields
     const requests = await Request.find({ userRef: userId })
       .sort({ createdAt: -1 })
       .select('status createdAt updatedAt frameworkType duration companyDetails attachments');
-
-    if (!requests || requests.length === 0) {
-      return res.status(200).json({
-        status: 'success',
-        data: {
-          requests: [],
-          message: 'No requests found for this user'
-        }
-      });
-    }
-
-    // Get the current user's details
-    const user = await User.findById(userId).select('name email phone');
 
     // Format the response to match the frontend expectations
     const formattedRequests = requests.map(request => ({
@@ -315,19 +311,42 @@ export const getRequestStatus = async (req, res) => {
 };
 
 export const getRequestById = catchAsync(async (req, res, next) => {
+  // Get user details first
+  const user = await User.findById(req.user.id).select('name email phone');
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
   const request = await Request.findOne({
     _id: req.params.id,
     userRef: req.user.id // Ensure the request belongs to the authenticated user
-  });
+  }).select('status createdAt updatedAt frameworkType duration companyDetails attachments');
 
   if (!request) {
     return next(new AppError('No request found with that ID', 404));
   }
 
+  // Format the response to match the frontend expectations
+  const formattedRequest = {
+    _id: request._id,
+    status: request.status,
+    createdAt: request.createdAt,
+    updatedAt: request.updatedAt,
+    frameworkType: request.frameworkType,
+    duration: request.duration,
+    userDetails: {
+      name: user.name,
+      email: user.email,
+      phone: user.phone
+    },
+    companyDetails: request.companyDetails || {},
+    attachments: request.attachments || []
+  };
+
   res.status(200).json({
     status: 'success',
     data: {
-      request
+      request: formattedRequest
     }
   });
 });
