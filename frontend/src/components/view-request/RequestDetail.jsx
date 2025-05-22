@@ -35,6 +35,8 @@ const RequestDetail = () => {
   const [frameworkType, setFrameworkType] = useState("MOU");
   const [customFramework, setCustomFramework] = useState("");
   const [showCustomFramework, setShowCustomFramework] = useState(false);
+  const [duration, setDuration] = useState(1);
+  const [durationType, setDurationType] = useState("years");
 
   const { data: req, isLoading, error } = useQuery({
     queryKey: ["requestDetail", id],
@@ -75,7 +77,11 @@ const RequestDetail = () => {
         frameworkType: frameworkType === "Other" ? customFramework : frameworkType,
         attachments,
         feedbackAttachments,
-        forDirector
+        forDirector,
+        duration: {
+          value: duration,
+          type: durationType
+        }
       }),
     onSuccess: () => {
       toast.success("Action submitted successfully!");
@@ -231,6 +237,39 @@ const RequestDetail = () => {
                     <option value="NDA">NDA (Non-Disclosure Agreement)</option>
                     <option value="Other">Other</option>
                   </select>
+                </div>
+
+                {/* Partnership Duration */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Partnership Duration
+                  </label>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        min="1"
+                        value={duration}
+                        onChange={(e) => setDuration(parseInt(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter duration"
+                        required
+                      />
+                    </div>
+                    <div className="w-32">
+                      <select
+                        value={durationType}
+                        onChange={(e) => setDurationType(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="months">Months</option>
+                        <option value="years">Years</option>
+                      </select>
+                    </div>
+                  </div>
+                  <p className="mt-1 text-sm text-gray-500">
+                    This duration will be used to set deadlines for all partnership activities
+                  </p>
                 </div>
 
                 {showCustomFramework && (
@@ -460,7 +499,7 @@ const RequestDetail = () => {
                     </p>
                     <p className="flex items-center text-gray-600">
                       <FaClock className="mr-2 text-blue-500" />
-                      <span className="font-medium">Duration:</span> {req.duration}
+                      <span className="font-medium">Duration:</span> {req.duration?.value} {req.duration?.type}
                     </p>
                     <p className="flex items-center text-gray-600">
                       <FaGavel className="mr-2 text-blue-500" />

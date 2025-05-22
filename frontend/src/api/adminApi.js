@@ -257,7 +257,8 @@ export const submitReview = async ({
   frameworkType,
   attachments,
   feedbackAttachments,
-  forDirector
+  forDirector,
+  duration
 }) => {
   const token = localStorage.getItem("token");
   if (!token) {
@@ -289,6 +290,7 @@ export const submitReview = async ({
     formData.append("isLawRelated", isLawRelated);
     formData.append("frameworkType", frameworkType);
     formData.append("forDirector", forDirector);
+    formData.append("duration", JSON.stringify(duration));
   }
 
   // Use the correct endpoint based on the current stage

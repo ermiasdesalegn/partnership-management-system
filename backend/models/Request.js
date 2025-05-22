@@ -91,6 +91,10 @@ companyDetails: {
       attachments: [String],
       feedbackMessage: String,
       feedbackAttachments: [String],
+      duration: {
+        type: Number,
+        min: [1, "Duration must be at least 1 year"]
+      },
       date: { type: Date, default: Date.now },
     },
   ],
@@ -99,7 +103,17 @@ companyDetails: {
     type: String,
     enum: ["Draft", "Email Sent", "Reviewed", "Approved", "Rejected"]
   },
-  duration: String
+  duration: {
+    value: {
+      type: Number,
+      min: [1, "Duration must be at least 1"]
+    },
+    type: {
+      type: String,
+      enum: ["months", "years"],
+      default: "years"
+    }
+  }
 });
 
 export default mongoose.model("Request", RequestSchema);

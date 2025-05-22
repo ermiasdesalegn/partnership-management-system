@@ -23,6 +23,7 @@ import {
   removePartnerAttachment,
   fetchCurrentAdmin 
 } from "../../api/adminApi";
+import PartnerActivities from "./PartnerActivities";
 
 const PartnerDetail = () => {
   const { id } = useParams();
@@ -214,6 +215,18 @@ const PartnerDetail = () => {
               >
                 Approval Attachments
               </button>
+              {partner.isSigned && (
+                <button
+                  onClick={() => setActiveTab("activities")}
+                  className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === "activities"
+                      ? "border-[#3c8dbc] text-[#3c8dbc]"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  Activities
+                </button>
+              )}
             </nav>
           </div>
 
@@ -246,7 +259,7 @@ const PartnerDetail = () => {
                   </p>
                   <p className="flex items-center text-sm text-gray-600">
                     <FaClock className="mr-2 text-[#3c8dbc]" />
-                    <span className="font-medium">Duration:</span> {partner.duration}
+                    <span className="font-medium">Duration:</span> {partner.requestRef?.duration?.value} {partner.requestRef?.duration?.type}
                   </p>
                 </div>
               </div>
@@ -365,6 +378,10 @@ const PartnerDetail = () => {
                 </div>
               </div>
             </div>
+          )}
+
+          {activeTab === "activities" && partner.isSigned && (
+            <PartnerActivities partnerId={partner._id} />
           )}
         </div>
       </div>

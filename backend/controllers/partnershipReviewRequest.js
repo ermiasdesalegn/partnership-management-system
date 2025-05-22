@@ -33,7 +33,15 @@ export const partnershipReviewRequest = async (req, res) => {
       request.status = "In Review";
       request.lawRelated = isLaw;
       request.frameworkType = frameworkType;
-      request.duration = duration;
+      // Parse the duration object if it exists
+      if (duration) {
+        try {
+          request.duration = JSON.parse(duration);
+        } catch (err) {
+          console.error("Error parsing duration:", err);
+          request.duration = { value: 3, type: "years" }; // Default fallback
+        }
+      }
       
       // Set forDirector flag based on the input
       request.forDirector = forDirector === "true" || forDirector === true;
