@@ -223,7 +223,18 @@ export const createRequest = catchAsync(async (req, res, next) => {
   }
 
   // Parse company details
-  const companyDetails = JSON.parse(req.body.companyDetails);
+  let companyDetails;
+  try {
+    companyDetails = JSON.parse(req.body.companyDetails);
+  } catch (error) {
+    return next(new AppError('Invalid company details format', 400));
+  }
+
+  // Validate company details
+  if (!companyDetails.name || !companyDetails.type || !companyDetails.email) {
+    return next(new AppError('Company name, type, and email are required', 400));
+  }
+
   // Get user details from the authenticated user
   const user = await User.findById(req.user.id);
   if (!user) {
@@ -234,21 +245,21 @@ export const createRequest = catchAsync(async (req, res, next) => {
   const newRequest = await Request.create({
     userRef: req.user.id,
     type: "external",
-    status: "Pending",
+    status: "pending",
     currentStage: "partnership-division",
     companyDetails: {
       ...companyDetails,
       // Ensure enum values match
-      type: companyDetails.type in ["Government", "Private", "Non-Government", "Other"] 
+      type: ["Government", "Private", "Non-Government", "Other"].includes(companyDetails.type)
         ? companyDetails.type
         : "Other"
     },
-    attachments: req.files.map(file => ({
+    attachments: req.files ? req.files.map(file => ({
       path: file.path.replace(/\\/g, '/'),
       originalName: file.originalname,
       uploadedBy: req.user.id,
       uploaderModel: 'User'
-    }))
+    })) : []
   });
 
   res.status(201).json({
@@ -317,10 +328,11 @@ export const getRequestById = catchAsync(async (req, res, next) => {
     return next(new AppError('User not found', 404));
   }
 
+  // Fetch the request and include all fields (including approvals)
   const request = await Request.findOne({
     _id: req.params.id,
     userRef: req.user.id // Ensure the request belongs to the authenticated user
-  }).select('status createdAt updatedAt frameworkType duration companyDetails attachments');
+  });
 
   if (!request) {
     return next(new AppError('No request found with that ID', 404));
@@ -340,7 +352,8 @@ export const getRequestById = catchAsync(async (req, res, next) => {
       phone: user.phone
     },
     companyDetails: request.companyDetails || {},
-    attachments: request.attachments || []
+    attachments: request.attachments || [],
+    approvals: request.approvals || [] // <-- Include approvals in the response
   };
 
   res.status(200).json({

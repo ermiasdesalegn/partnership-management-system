@@ -36,7 +36,11 @@ export const partnershipReviewRequest = async (req, res) => {
       // Parse the duration object if it exists
       if (duration) {
         try {
-          request.duration = JSON.parse(duration);
+          const parsedDuration = JSON.parse(duration);
+          request.duration = {
+            value: parseInt(parsedDuration.value) || 3,
+            type: parsedDuration.type === 'months' ? 'months' : 'years'
+          };
         } catch (err) {
           console.error("Error parsing duration:", err);
           request.duration = { value: 3, type: "years" }; // Default fallback

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
@@ -12,14 +12,17 @@ import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
-  DocumentCheckIcon
+  DocumentCheckIcon,
+  ChevronRightIcon
 } from "@heroicons/react/24/outline";
 
 const RequestStatus = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const navigate = useNavigate();
+  const { requestId } = useParams();
 
   useEffect(() => {
     const fetchRequestStatus = async () => {
@@ -38,8 +41,21 @@ const RequestStatus = () => {
         });
 
         if (response.data.status === 'success') {
-          setRequests(response.data.data.requests || []);
-          if (response.data.data.requests.length === 0) {
+          const requestsData = response.data.data.requests || [];
+          setRequests(requestsData);
+          
+          // If there's a requestId in the URL, find and select that request
+          if (requestId) {
+            const request = requestsData.find(req => req._id === requestId);
+            if (request) {
+              setSelectedRequest(request);
+            } else {
+              toast.error('Request not found');
+              navigate('/user/requests');
+            }
+          }
+
+          if (requestsData.length === 0) {
             setError('No requests found');
           }
         } else {
@@ -59,7 +75,53 @@ const RequestStatus = () => {
     };
 
     fetchRequestStatus();
-  }, [navigate]);
+  }, [navigate, requestId]);
+
+  const getStatusColor = (status) => {
+    // Normalize the status text for comparison
+    const normalizedStatus = status?.toLowerCase().trim();
+    switch (normalizedStatus) {
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'disapproved':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'in review':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    // Normalize the status text for comparison
+    const normalizedStatus = status?.toLowerCase().trim();
+    switch (normalizedStatus) {
+      case 'approved':
+        return <CheckCircleIcon className="h-6 w-6 text-green-500" />;
+      case 'disapproved':
+        return <XCircleIcon className="h-6 w-6 text-red-500" />;
+      case 'pending':
+        return <ClockIcon className="h-6 w-6 text-yellow-500" />;
+      case 'in review':
+        return <DocumentCheckIcon className="h-6 w-6 text-blue-500" />;
+      default:
+        return <DocumentCheckIcon className="h-6 w-6 text-gray-500" />;
+    }
+  };
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const handleRequestClick = (request) => {
+    navigate(`/user/requests/${request._id}`);
+  };
 
   if (loading) {
     return (
@@ -86,83 +148,60 @@ const RequestStatus = () => {
     );
   }
 
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // If we have a requestId and selectedRequest, show the detail view
+  if (requestId && selectedRequest) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-24 pb-8 px-4"
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <button
+              onClick={() => navigate('/user/requests')}
+              className="flex items-center text-[#3c8dbc] hover:text-[#2c6a8f] transition-colors duration-300 group"
+            >
+              <ArrowLeftIcon className="h-5 w-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200" />
+              Back to Requests
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900">Request Details</h1>
+          </div>
 
-  const getStatusIcon = (status) => {
-    switch (status.toLowerCase()) {
-      case 'approved':
-        return <CheckCircleIcon className="h-6 w-6 text-green-500" />;
-      case 'rejected':
-        return <XCircleIcon className="h-6 w-6 text-red-500" />;
-      case 'pending':
-        return <ClockIcon className="h-6 w-6 text-yellow-500" />;
-      default:
-        return <DocumentCheckIcon className="h-6 w-6 text-gray-500" />;
-    }
-  };
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-24 pb-8 px-4"
-    >
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <button
-            onClick={() => navigate('/user')}
-            className="flex items-center text-[#3c8dbc] hover:text-[#2c6a8f] transition-colors duration-300"
-          >
-            <ArrowLeftIcon className="h-5 w-5 mr-2" />
-            Back to Dashboard
-          </button>
-          <h1 className="text-3xl font-bold text-gray-900">Your Requests</h1>
-        </div>
-
-        {requests.map((request) => (
-          <div key={request._id} className="mb-8">
-            {/* Status Card */}
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Request Status</p>
-                  <h3 className="text-2xl font-bold text-gray-900 mt-1">
-                    {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                  </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-6">
+              {/* Status Card */}
+              <div className="bg-[#3c8dbc]/5 rounded-xl p-6 border border-[#3c8dbc]/10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-[#3c8dbc] font-medium">Request Status</p>
+                    <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                      {selectedRequest.status}
+                    </h3>
+                  </div>
+                  {getStatusIcon(selectedRequest.status)}
                 </div>
-                {getStatusIcon(request.status)}
+                <div className="mt-4">
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedRequest.status)}`}>
+                    {selectedRequest.status}
+                  </span>
+                </div>
               </div>
-              <div className="mt-4">
-                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.status)}`}>
-                  {request.status}
-                </span>
-              </div>
-            </div>
 
-            {/* Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Timeline */}
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Timeline</h2>
+              <div className="bg-[#3c8dbc]/5 rounded-xl p-6 border border-[#3c8dbc]/10">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <ClockIcon className="h-6 w-6 mr-2 text-[#3c8dbc]" />
+                  Timeline
+                </h2>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4">
                     <CalendarIcon className="h-6 w-6 text-[#3c8dbc]" />
                     <div>
                       <p className="font-medium text-gray-900">Submitted</p>
                       <p className="text-sm text-gray-600">
-                        {new Date(request.createdAt).toLocaleDateString()}
+                        {formatDate(selectedRequest.createdAt)}
                       </p>
                     </div>
                   </div>
@@ -171,98 +210,196 @@ const RequestStatus = () => {
                     <div>
                       <p className="font-medium text-gray-900">Last Updated</p>
                       <p className="text-sm text-gray-600">
-                        {request?.updatedAt ? new Date(request.updatedAt).toLocaleString() : 'Not available'}
+                        {selectedRequest.updatedAt ? formatDate(selectedRequest.updatedAt) : 'Not available'}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
+            {/* Right Column */}
+            <div className="space-y-6">
               {/* Framework Details */}
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Framework Details</h2>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Type</p>
-                    <p className="font-medium text-gray-900">{request.frameworkType}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Duration</p>
-                    <p className="font-medium text-gray-900">{request.duration}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Company Information */}
-            <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <BuildingOfficeIcon className="h-6 w-6 mr-2 text-[#3c8dbc]" />
-                Company Information
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Company Name</p>
-                  <p className="font-medium text-gray-900">{request.companyDetails?.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Company Type</p>
-                  <p className="font-medium text-gray-900">{request.companyDetails?.type}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium text-gray-900">{request.companyDetails?.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Address</p>
-                  <p className="font-medium text-gray-900">{request.companyDetails?.address}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Attachments */}
-            {request.attachments && request.attachments.length > 0 && (
-              <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                  <DocumentIcon className="h-6 w-6 mr-2 text-[#3c8dbc]" />
-                  Attached Documents
+              <div className="bg-[#3c8dbc]/5 rounded-xl p-6 border border-[#3c8dbc]/10">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <DocumentCheckIcon className="h-6 w-6 mr-2 text-[#3c8dbc]" />
+                  Framework Details
                 </h2>
                 <div className="space-y-4">
-                  {request.attachments.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <DocumentIcon className="h-8 w-8 text-[#3c8dbc]" />
-                        <div>
-                          <p className="font-medium text-gray-900">{file.originalName}</p>
-                          <p className="text-sm text-gray-600">
-                            Uploaded on {new Date(file.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          const fileName = file.path.includes('/') || file.path.includes('\\') 
-                            ? file.path.split(/[/\\]/).pop() 
-                            : file.path;
-                          link.href = `http://localhost:5000/api/v1/files/${fileName}`;
-                          link.download = file.originalName;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                        }}
-                        className="p-2 text-[#3c8dbc] hover:text-[#2c6a8f] transition-colors duration-200"
-                        title="Download file"
-                      >
-                        <ArrowDownTrayIcon className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ))}
+                  <div>
+                    <p className="text-sm text-[#3c8dbc] font-medium">Type</p>
+                    <p className="font-medium text-gray-900">{selectedRequest.frameworkType}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#3c8dbc] font-medium">Duration</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedRequest.duration?.value} {selectedRequest.duration?.type}
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
+
+              {/* Company Information */}
+              <div className="bg-[#3c8dbc]/5 rounded-xl p-6 border border-[#3c8dbc]/10">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <BuildingOfficeIcon className="h-6 w-6 mr-2 text-[#3c8dbc]" />
+                  Company Information
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-[#3c8dbc] font-medium">Company Name</p>
+                    <p className="font-medium text-gray-900">{selectedRequest.companyDetails?.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#3c8dbc] font-medium">Company Type</p>
+                    <p className="font-medium text-gray-900">{selectedRequest.companyDetails?.type}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#3c8dbc] font-medium">Email</p>
+                    <p className="font-medium text-gray-900">{selectedRequest.companyDetails?.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#3c8dbc] font-medium">Address</p>
+                    <p className="font-medium text-gray-900">{selectedRequest.companyDetails?.address}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        ))}
+
+          {/* Attachments */}
+          {selectedRequest.attachments && selectedRequest.attachments.length > 0 && (
+            <div className="mt-6 bg-[#3c8dbc]/5 rounded-xl p-6 border border-[#3c8dbc]/10">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <DocumentIcon className="h-6 w-6 mr-2 text-[#3c8dbc]" />
+                Attached Documents
+              </h2>
+              <div className="space-y-4">
+                {selectedRequest.attachments.map((file, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100 hover:border-[#3c8dbc]/20 transition-colors duration-200"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <DocumentIcon className="h-8 w-8 text-[#3c8dbc]" />
+                      <div>
+                        <p className="font-medium text-gray-900">{file.originalName}</p>
+                        <p className="text-sm text-gray-600">
+                          Uploaded on {formatDate(file.uploadedAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        const fileName = file.path.includes('/') || file.path.includes('\\') 
+                          ? file.path.split(/[/\\]/).pop() 
+                          : file.path;
+                        link.href = `http://localhost:5000/api/v1/files/${fileName}`;
+                        link.download = file.originalName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      className="p-2 text-[#3c8dbc] hover:text-[#2c6a8f] hover:bg-[#3c8dbc]/5 rounded-lg transition-all duration-200"
+                      title="Download file"
+                    >
+                      <ArrowDownTrayIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+
+  // List view
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-24 pb-8 px-4"
+    >
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <button
+            onClick={() => navigate('/user')}
+            className="flex items-center text-[#3c8dbc] hover:text-[#2c6a8f] transition-colors duration-300 group"
+          >
+            <ArrowLeftIcon className="h-5 w-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200" />
+            Back to Dashboard
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900">Your Requests</h1>
+        </div>
+
+        {/* Table View */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6 border border-gray-100">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-[#3c8dbc]">
+                <tr>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Framework Type
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Company
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Submitted
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Duration
+                  </th>
+                  <th scope="col" className="relative px-6 py-4">
+                    <span className="sr-only">View</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {requests.map((request) => (
+                  <tr 
+                    key={request._id}
+                    className="hover:bg-[#3c8dbc]/5 transition-all duration-200 cursor-pointer"
+                    onClick={() => handleRequestClick(request)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {getStatusIcon(request.status)}
+                        <span className={`ml-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.status)}`}>
+                          {request.status}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {request.frameworkType}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{request.companyDetails?.name}</div>
+                      <div className="text-sm text-gray-500">{request.companyDetails?.type}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(request.createdAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {request.duration?.value} {request.duration?.type}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <ChevronRightIcon className="h-5 w-5 text-[#3c8dbc]" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </motion.div>
   );

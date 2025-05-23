@@ -177,7 +177,7 @@ export const createAdmin = async (req, res, next) => {
     }
 
     // Validate role
-    if (!['partnership-division', 'law-department', "director", 'general-director', 'super-admin', 'general'].includes(role)) {
+    if (!['partnership-division', 'law-department',"director", 'general-director', 'super-admin'].includes(role)) {
       return next(new AppError('Invalid role', 400));
     }
 
