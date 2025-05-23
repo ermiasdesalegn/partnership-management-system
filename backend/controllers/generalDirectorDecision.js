@@ -17,7 +17,7 @@ export const generalDirectorDecision = async (req, res) => {
     }
 
     // If already approved, block further approval
-    if (request.status === "Approved") {
+    if (request.status && request.status.toLowerCase() === "approved") {
       return res.status(400).json({ message: "This request has already been approved." });
     }
 
@@ -55,7 +55,7 @@ export const generalDirectorDecision = async (req, res) => {
     const approvedStages = request.approvals.filter((a) => a.decision === "approve").length;
 
     if (decision === "approve" && approvedStages >= requiredApprovals) {
-      request.status = "Approved";
+      request.status = "approved";
       // Automatically create a Partner record
       await Partner.create({
         requestRef: request._id,
@@ -81,7 +81,7 @@ export const generalDirectorDecision = async (req, res) => {
         })
       });
     } else if (decision === "disapprove") {
-      request.status = "Disapproved";
+      request.status = "disapproved";
     }
 
     await request.save();

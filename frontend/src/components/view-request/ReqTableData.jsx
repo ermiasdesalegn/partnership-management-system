@@ -162,16 +162,16 @@ const RequestTable = () => {
                     <td className="px-6 py-4">
                       <span
                         className={`px-3 py-1 inline-flex text-xs font-medium rounded-full ${
-                          req.status === "Approved"
+                          req.status && req.status.toLowerCase() === "approved"
                             ? "bg-green-100 text-green-800"
-                            : req.status === "In Review"
+                            : req.status && req.status.toLowerCase() === "In Review"
                             ? "bg-yellow-100 text-yellow-800"
-                            : req.status === "Disapproved"
+                            : req.status && req.status.toLowerCase() === "disapproved"
                             ? "bg-red-100 text-red-800"
                             : "bg-[#3c8dbc]/10 text-[#3c8dbc]"
                         }`}
                       >
-                        {req.status}
+                        {req.status && req.status.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
