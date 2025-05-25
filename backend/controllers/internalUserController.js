@@ -71,8 +71,8 @@ export const getDashboardData = async (req, res, next) => {
     // Calculate stats
     const stats = {
       totalRequests: requests.length,
-      pendingRequests: requests.filter(req => req.status === 'Pending').length,
-      completedRequests: requests.filter(req => ['Approved', 'Rejected'].includes(req.status)).length
+      pendingRequests: requests.filter(req => req.status === 'pending').length,
+      completedRequests: requests.filter(req => ['approved', 'disapproved'].includes(req.status)).length
     };
 
     // Get recent requests (last 5)

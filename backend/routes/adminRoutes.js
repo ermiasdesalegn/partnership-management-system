@@ -22,7 +22,7 @@ import {
 import {addFeedbackAttachment, addRequestAttachment} from "../controllers/requestController.js"
 import {forwardToGeneralDirector} from "../controllers/forwardToGeneralDirector.js"
 import {generalDirectorDecision,getRequestsForGeneralDirector} from "../controllers/generalDirectorDecision.js"
-import {lawDepartmentReviewRequest,getLawRelatedRequests,getLawRelatedRequestsForPartnership} from "../controllers/lawDepartmentReviewRequest.js"
+import {lawServiceReviewRequest, lawResearchReviewRequest, getLawRelatedRequests, getLawRelatedRequestsForPartnership} from "../controllers/lawDepartmentReviewRequest.js"
 import {partnershipReviewRequest,getPartnershipReviewedRequests,getApprovedRequestsForPartnershipDivision,getDisapprovedRequestsForLawDepartment,getPendingRequests} from "../controllers/partnershipReviewRequest.js"
 import { protectAdmin, restrictToAdmin } from "../middleware/authMiddleware.js";
 import upload from "../middleware/upload.js";   
@@ -49,11 +49,11 @@ router.get("/", restrictToAdmin("general-director"), getAllAdmins);
 router.post("/signup", signup);
 
 // Data access (partnership-division, director and general-director)
-const pdAndGdRoles = ["partnership-division", "director", "general-director"];
+const pdAndGdRoles = ["partnership-division", "law-service", "law-research", "director", "general-director"];
 
 router.get("/requests", restrictToAdmin(...pdAndGdRoles), getAllRequests);
-router.get("/requestsRelated", restrictToAdmin("partnership-division", "law-department", "director", "general-director"), getRequestsByRole);
-router.get("/requests/:id", protectAdmin, restrictToAdmin("partnership-division", "law-department", "director", "general-director"), getSingleRequestInRoleList);
+router.get("/requestsRelated", restrictToAdmin("partnership-division", "law-service", "law-research", "director", "general-director"), getRequestsByRole);
+router.get("/requests/:id", protectAdmin, restrictToAdmin("partnership-division", "law-service", "law-research", "director", "general-director"), getSingleRequestInRoleList);
 
 router.get("/users", restrictToAdmin(...pdAndGdRoles), getAllUsers);
 router.get("/users/external", restrictToAdmin(...pdAndGdRoles), getAllExternalUsers);
@@ -75,14 +75,25 @@ router.post(
 
 // Law department reviews law-related requests
 router.post(
-  "/review/law",
+  "/review/law-service",
   protectAdmin,
-  restrictToAdmin("law-department", "director"),
+  restrictToAdmin("law-service", "director"),
   upload.fields([
     { name: "attachments", maxCount: 5 },
     { name: "feedbackAttachments", maxCount: 5 }
   ]),
-  lawDepartmentReviewRequest
+  lawServiceReviewRequest
+);
+
+router.post(
+  "/review/law-research",
+  protectAdmin,
+  restrictToAdmin("law-research", "director"),
+  upload.fields([
+    { name: "attachments", maxCount: 5 },
+    { name: "feedbackAttachments", maxCount: 5 }
+  ]),
+  lawResearchReviewRequest
 );
 
 // Partnership Division forwards to General Director (after law review)
@@ -105,9 +116,10 @@ router.post(
   generalDirectorDecision
 );
 
-router.get("/law-requests", protectAdmin, restrictToAdmin("law-department", "director"), getLawRelatedRequests);
+router.get("/law-service-requests", protectAdmin, restrictToAdmin("law-service", "director"), getLawRelatedRequests);
+router.get("/law-research-requests", protectAdmin, restrictToAdmin("law-research", "director"), getLawRelatedRequests);
 router.get("/pending-requests", protectAdmin, restrictToAdmin("partnership-division", "director"), getPendingRequests);
-router.get('/my-reviewed-requests', protectAdmin, restrictToAdmin('partnership-division', 'law-department', 'director', 'general-director'), getReviewedRequestsByAdmin);
+router.get('/my-reviewed-requests', protectAdmin, restrictToAdmin('partnership-division', 'law-service', 'law-research', 'director', 'general-director'), getReviewedRequestsByAdmin);
 
 router.post(
   '/requests:requestId/attachments',
@@ -130,7 +142,7 @@ router.get("/general-director-requests", protectAdmin, restrictToAdmin("general-
 router.get("/approved-requests", protectAdmin, restrictToAdmin("partnership-division"), getApprovedRequestsForPartnershipDivision);
 
 // Law Department: Get disapproved requests
-router.get("/disapproved-requests", protectAdmin, restrictToAdmin("law-department"), getDisapprovedRequestsForLawDepartment);
+router.get("/disapproved-requests", protectAdmin, restrictToAdmin("law-service", "law-research"), getDisapprovedRequestsForLawDepartment);
 
 // Get all requests reviewed by partnership division (regardless of current stage)
 router.get(

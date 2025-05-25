@@ -19,7 +19,7 @@ const RequestSchema = new mongoose.Schema({
   },
   currentStage: {
     type: String,
-    enum: ["partnership-division", "law-department", "general-director", "director"],
+    enum: ["partnership-division", "law-service", "law-research", "general-director", "director"],
     default: "partnership-division"
   },
   forDirector: {
@@ -64,6 +64,19 @@ companyDetails: {
       return this.type === 'internal' ? false : false;
     }
   },
+  isLawServiceRelated: {
+    type: Boolean,
+    default: false
+  },
+  isLawResearchRelated: {
+    type: Boolean,
+    default: false
+  },
+  partnershipRequestType: {
+    type: String,
+    enum: ["strategic", "operational", "project", "tactical"],
+    required: false
+  },
   attachments: [
     {
       path: String,
@@ -105,8 +118,8 @@ companyDetails: {
     enum: ["Draft", "Email Sent", "Reviewed", "Approved", "Rejected"]
   },
   duration: {
-    value: { type: Number, required: true },
-    type: { type: String, enum: ['years', 'months'], required: true }
+    value: { type: Number },
+    type: { type: String, enum: ['years', 'months'] }
   }
 });
 

@@ -71,7 +71,7 @@ export const generalDirectorDecision = async (req, res) => {
           if (!a.attachments) return [];
           if (Array.isArray(a.attachments)) {
             return a.attachments.map(path => ({
-              path,
+              path: path.split(/[/\\]/).pop(),
               approvedBy: a.approvedBy,
               stage: a.stage,
               date: a.date || null

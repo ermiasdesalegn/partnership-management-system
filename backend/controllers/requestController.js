@@ -34,8 +34,19 @@ export const createRequest = catchAsync(async (req, res, next) => {
     return next(new AppError('Missing required fields', 400));
   }
 
-  // Parse company details
+  // Parse company details and duration
   const companyDetails = JSON.parse(req.body.companyDetails);
+  let duration;
+  try {
+    duration = JSON.parse(req.body.duration);
+  } catch (error) {
+    return next(new AppError('Invalid duration format', 400));
+  }
+
+  // Validate duration
+  if (!duration || !duration.value || !duration.type || !['months', 'years'].includes(duration.type)) {
+    return next(new AppError('Invalid duration format. Must include value and type (months/years)', 400));
+  }
 
   // Get user's role from the authenticated user
   const user = await User.findById(req.user.id);
@@ -47,7 +58,7 @@ export const createRequest = catchAsync(async (req, res, next) => {
   const newRequest = await Request.create({
     userRef: req.user.id,
     type: user.role === 'internal' ? 'internal' : 'external', // Set type based on user's role
-    status: "Pending",
+    status: "pending", // Changed from "Pending" to "pending"
     currentStage: "partnership-division",
     companyDetails: {
       ...companyDetails,
@@ -55,6 +66,10 @@ export const createRequest = catchAsync(async (req, res, next) => {
       type: companyDetails.type in ["Government", "Private", "Non-Government", "Other"] 
         ? companyDetails.type 
         : "Other"
+    },
+    duration: {
+      value: duration.value,
+      type: duration.type
     },
     attachments: req.files ? req.files.map(file => ({
       path: file.filename, // Just store the filename

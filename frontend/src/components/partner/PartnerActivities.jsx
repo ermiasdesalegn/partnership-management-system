@@ -14,6 +14,7 @@ import {
   BarElement,
   Title
 } from 'chart.js';
+import { fetchCurrentAdmin } from "../../api/adminApi";
 
 ChartJS.register(
   ArcElement,
@@ -27,12 +28,37 @@ ChartJS.register(
 
 const API_BASE_URL = "http://localhost:5000";
 
-const PartnerActivities = ({ partnerId }) => {
+const PartnerActivities = ({ partnerId, canManageActivities }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [file, setFile] = useState(null);
   const [description, setDescription] = useState("");
   const queryClient = useQueryClient();
+
+  // Get current admin data
+  const { data: adminData } = useQuery({
+    queryKey: ["currentAdmin"],
+    queryFn: fetchCurrentAdmin
+  });
+
+  // Check if admin has permission to view activities
+  const hasPermission = adminData?.role === "general-director" || adminData?.role === "partnership-division" || adminData?.role === "director";
+
+  // If admin doesn't have permission, show message
+  if (!hasPermission) {
+    return (
+      <div className="w-full min-h-screen px-8 py-10 bg-gradient-to-br from-white via-[#3c8dbc]/5 to-[#3c8dbc]/10 flex items-center justify-center">
+        <div className="w-full max-w-7xl mx-auto">
+          <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Access Restricted</h2>
+            <p className="text-gray-600">
+              Only General Director, Partnership Division, and Director can view partner activities.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Get auth token
   const getAuthHeader = () => {
@@ -43,6 +69,28 @@ const PartnerActivities = ({ partnerId }) => {
       }
     };
   };
+
+  // Delete activity mutation
+  const deleteActivityMutation = useMutation({
+    mutationFn: async (activityId) => {
+      const response = await axios.delete(
+        `${API_BASE_URL}/api/v1/partnership-activities/activities/${activityId}`,
+        {
+          ...getAuthHeader(),
+          withCredentials: true
+        }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["partnerActivities", partnerId]);
+      queryClient.invalidateQueries(["partnerActivityStats", partnerId]);
+      toast.success("Activity deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Failed to delete activity");
+    }
+  });
 
   // Fetch partner details
   const { data: partner } = useQuery({
@@ -263,6 +311,12 @@ const PartnerActivities = ({ partnerId }) => {
     });
   };
 
+  const handleDeleteActivity = (activityId) => {
+    if (window.confirm("Are you sure you want to delete this activity?")) {
+      deleteActivityMutation.mutate(activityId);
+    }
+  };
+
   // Calculate statistics
   const calculateStats = (activities) => {
     const stats = {
@@ -439,14 +493,16 @@ const PartnerActivities = ({ partnerId }) => {
         </div>
       </div>
 
-      {/* Create Activity Button */}
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-      >
-        <FaPlus className="mr-2" />
-        Create New Activity
-      </button>
+      {/* Only show create activity button for authorized roles */}
+      {canManageActivities && (
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          <FaPlus className="mr-2" />
+          Create New Activity
+        </button>
+      )}
 
       {/* Activities List */}
       <div className="space-y-6">
@@ -536,7 +592,7 @@ const PartnerActivities = ({ partnerId }) => {
 
               {/* Actions Section */}
               <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                {activity.status !== "completed" && (
+                {canManageActivities && activity.status !== "completed" && (
                   <>
                     <button
                       onClick={() => handleStatusUpdate(activity._id, "in_progress")}
@@ -564,207 +620,233 @@ const PartnerActivities = ({ partnerId }) => {
                     </button>
                   </>
                 )}
-                <button
-                  onClick={() => setSelectedActivity(activity)}
-                  className="flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-all duration-200 text-sm font-medium"
-                >
-                  <FaFileUpload className="mr-2" />
-                  Add Attachment
-                </button>
+                {canManageActivities && (
+                  <>
+                    <button
+                      onClick={() => setSelectedActivity(activity)}
+                      className="flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-all duration-200 text-sm font-medium"
+                    >
+                      <FaFileUpload className="mr-2" />
+                      Add Attachment
+                    </button>
+                    <button
+                      onClick={() => handleDeleteActivity(activity._id)}
+                      className="flex items-center px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-all duration-200 text-sm font-medium"
+                    >
+                      <FaTrash className="mr-2" />
+                      Delete Activity
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Create Activity Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all">
-            <div className="p-8">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold text-gray-800">Create New Activity</h2>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <form onSubmit={handleCreateActivity} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Activity Title
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      required
-                      placeholder="Enter activity title"
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Description
-                    </label>
-                    <textarea
-                      name="description"
-                      required
-                      rows={4}
-                      placeholder="Describe the activity details..."
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    />
-                  </div>
-
-                  <div className="col-span-2 md:col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Assigned To
-                    </label>
-                    <select
-                      name="assignedTo"
-                      required
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    >
-                      <option value="">Select assignee</option>
-                      <option value="partner">Partner</option>
-                      <option value="insa">INSA</option>
-                      <option value="both">Both</option>
-                    </select>
-                  </div>
-
-                  <div className="col-span-2 md:col-span-1">
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
-                      <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0">
-                          <svg className="h-6 w-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-medium text-blue-800">Automatic Deadline</h3>
-                          <p className="mt-1 text-sm text-blue-600">
-                            The deadline will be automatically set based on the partnership duration of{' '}
-                            {typeof partner?.requestRef?.duration === 'object' 
-                              ? `${partner.requestRef.duration.value} ${partner.requestRef.duration.type}`
-                              : '3 years'}.
-                          </p>
-                        </div>
-                      </div>
+      {/* Only show modals if user can manage activities */}
+      {canManageActivities && (
+        <>
+          {/* Create Activity Modal */}
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all animate-slideUp">
+                <div className="relative">
+                  {/* Modal Header with Gradient */}
+                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl p-6">
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-2xl font-bold text-white">Create New Activity</h2>
+                      <button
+                        onClick={() => setIsModalOpen(false)}
+                        className="text-white/80 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                  >
-                    Create Activity
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Upload Attachment Modal */}
-      {selectedActivity && (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800">Add Attachment</h2>
-                <button
-                  onClick={() => {
-                    setSelectedActivity(null);
-                    setFile(null);
-                    setDescription("");
-                  }}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <form onSubmit={handleFileUpload} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    File
-                  </label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-500 transition-colors duration-200">
-                    <div className="space-y-1 text-center">
-                      <FaFileUpload className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="flex text-sm text-gray-600">
-                        <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
-                          <span>Upload a file</span>
+                  <div className="p-8">
+                    <form onSubmit={handleCreateActivity} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Activity Title
+                          </label>
                           <input
-                            type="file"
-                            onChange={(e) => setFile(e.target.files[0])}
-                            className="sr-only"
+                            type="text"
+                            name="title"
                             required
+                            placeholder="Enter activity title"
+                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                           />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
+                        </div>
+
+                        <div className="col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Description
+                          </label>
+                          <textarea
+                            name="description"
+                            required
+                            rows={4}
+                            placeholder="Describe the activity details..."
+                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white resize-none"
+                          />
+                        </div>
+
+                        <div className="col-span-2 md:col-span-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Assigned To
+                          </label>
+                          <select
+                            name="assignedTo"
+                            required
+                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                          >
+                            <option value="">Select assignee</option>
+                            <option value="partner">Partner</option>
+                            <option value="insa">INSA</option>
+                            <option value="both">Both</option>
+                          </select>
+                        </div>
+
+                        <div className="col-span-2 md:col-span-1">
+                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
+                            <div className="flex items-start space-x-3">
+                              <div className="flex-shrink-0">
+                                <svg className="h-6 w-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-medium text-blue-800">Automatic Deadline</h3>
+                                <p className="mt-1 text-sm text-blue-600">
+                                  The deadline will be automatically set based on the partnership duration of{' '}
+                                  {typeof partner?.requestRef?.duration === 'object' 
+                                    ? `${partner.requestRef.duration.value} ${partner.requestRef.duration.type}`
+                                    : '3 years'}.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-500">
-                        Any file up to 10MB
-                      </p>
-                    </div>
+
+                      <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                        <button
+                          type="button"
+                          onClick={() => setIsModalOpen(false)}
+                          className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        >
+                          Create Activity
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <input
-                    type="text"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Add a description for this file"
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedActivity(null);
-                      setFile(null);
-                      setDescription("");
-                    }}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Upload
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+
+          {/* Upload Attachment Modal */}
+          {selectedActivity && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all animate-slideUp">
+                <div className="relative">
+                  {/* Modal Header with Gradient */}
+                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl p-6">
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-xl font-bold text-white">Add Attachment</h2>
+                      <button
+                        onClick={() => {
+                          setSelectedActivity(null);
+                          setFile(null);
+                          setDescription("");
+                        }}
+                        className="text-white/80 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-6">
+                    <form onSubmit={handleFileUpload} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          File
+                        </label>
+                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-500 transition-colors duration-200 bg-gray-50 hover:bg-white">
+                          <div className="space-y-1 text-center">
+                            <FaFileUpload className="mx-auto h-12 w-12 text-gray-400" />
+                            <div className="flex text-sm text-gray-600">
+                              <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                                <span>Upload a file</span>
+                                <input
+                                  type="file"
+                                  onChange={(e) => setFile(e.target.files[0])}
+                                  className="sr-only"
+                                  required
+                                />
+                              </label>
+                              <p className="pl-1">or drag and drop</p>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              Any file up to 10MB
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Description
+                        </label>
+                        <input
+                          type="text"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          placeholder="Add a description for this file"
+                          className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 hover:bg-white"
+                        />
+                      </div>
+
+                      <div className="flex justify-end space-x-3 pt-4">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedActivity(null);
+                            setFile(null);
+                            setDescription("");
+                          }}
+                          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        >
+                          Upload
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

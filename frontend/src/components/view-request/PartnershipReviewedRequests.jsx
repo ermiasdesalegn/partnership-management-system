@@ -162,10 +162,16 @@ const PartnershipReviewedRequests = () => {
                           <FaClock className="mr-2" />
                           Submitted: {new Date(req.createdAt).toLocaleDateString()}
                         </p>
-                        {req.isLawRelated && (
+                        {req.isLawServiceRelated && (
                           <p className="flex items-center text-gray-600">
                             <FaGavel className="mr-2" />
-                            Law Department Review Required
+                            Law Service Review Required
+                          </p>
+                        )}
+                        {req.isLawResearchRelated && (
+                          <p className="flex items-center text-gray-600">
+                            <FaGavel className="mr-2" />
+                            Law Research Review Required
                           </p>
                         )}
                       </div>

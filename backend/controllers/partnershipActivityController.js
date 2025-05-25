@@ -168,4 +168,21 @@ export const getActivityStatistics = catchAsync(async (req, res, next) => {
     status: "success",
     data: stats
   });
+});
+
+// Delete activity
+export const deleteActivity = catchAsync(async (req, res, next) => {
+  const { activityId } = req.params;
+
+  const activity = await PartnershipActivity.findById(activityId);
+  if (!activity) {
+    return next(new AppError("Activity not found", 404));
+  }
+
+  await PartnershipActivity.findByIdAndDelete(activityId);
+
+  res.status(200).json({
+    status: "success",
+    message: "Activity deleted successfully"
+  });
 }); 

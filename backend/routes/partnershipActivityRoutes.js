@@ -5,7 +5,8 @@ import {
   updateActivityStatus,
   addActivityAttachment,
   removeActivityAttachment,
-  getActivityStatistics
+  getActivityStatistics,
+  deleteActivity
 } from "../controllers/partnershipActivityController.js";
 import { protectAdmin, restrictToAdmin } from "../middleware/authMiddleware.js";
 import upload from "../middleware/upload.js";
@@ -15,14 +16,17 @@ const router = express.Router();
 // All routes require admin authentication
 router.use(protectAdmin);
 
-// Only partnership division can manage activities
-router.use(restrictToAdmin("partnership-division"));
+// Get activities and statistics - accessible by all authorized roles
+router.get("/:partnerId/activities", restrictToAdmin("general-director", "partnership-division", "director"), getPartnerActivities);
+router.get("/:partnerId/statistics", restrictToAdmin("general-director", "partnership-division", "director"), getActivityStatistics);
+
+// Management routes - only accessible by general-director and partnership-division
+router.use(restrictToAdmin("general-director", "partnership-division"));
 
 // Activity management routes
 router.post("/:partnerId/activities", createActivity);
-router.get("/:partnerId/activities", getPartnerActivities);
 router.patch("/activities/:activityId/status", updateActivityStatus);
-router.get("/:partnerId/statistics", getActivityStatistics);
+router.delete("/activities/:activityId", deleteActivity);
 
 // Attachment management routes
 router.post(

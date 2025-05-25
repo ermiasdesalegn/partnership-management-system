@@ -177,21 +177,18 @@ export const createAdmin = async (req, res, next) => {
     }
 
     // Validate role
-    if (!['partnership-division', 'law-department',"director", 'general-director', 'super-admin'].includes(role)) {
+    if (!['partnership-division', 'law-service', 'law-research', 'director', 'general-director', 'super-admin'].includes(role)) {
       return next(new AppError('Invalid role', 400));
     }
 
-    // Check if admin already exists
     const existingAdmin = await Admin.findOne({ email });
     if (existingAdmin) {
       return next(new AppError('Admin already exists', 400));
     }
 
-    // Generate temporary password
     const tempPassword = generateRandomPassword();
     const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
-    // Generate setup token
     const setupToken = jwt.sign(
       { email },
       process.env.JWT_SECRET,

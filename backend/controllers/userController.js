@@ -227,7 +227,7 @@ export const createRequest = catchAsync(async (req, res, next) => {
   try {
     companyDetails = JSON.parse(req.body.companyDetails);
   } catch (error) {
-    return next(new AppError('Invalid company details format', 400));
+    return next(new AppError('Invalid JSON format for company details', 400));
   }
 
   // Validate company details

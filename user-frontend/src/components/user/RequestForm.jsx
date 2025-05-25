@@ -41,7 +41,7 @@ export default function RequestForm() {
       companyDetails: { 
         type: 'Private',
         phone: '9'
-      },
+      }
     }
   });
 

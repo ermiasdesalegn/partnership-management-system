@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import Request from "../models/Request.js";
 export const partnershipReviewRequest = async (req, res) => {
   try {
-    const { requestId, decision, message, feedbackMessage, isLawRelated, frameworkType, duration, forDirector } = req.body;
+    const { requestId, decision, message, feedbackMessage, isLawServiceRelated, isLawResearchRelated, frameworkType, duration, forDirector, partnershipRequestType } = req.body;
     const admin = req.admin;
 
     const request = await Request.findById(requestId);
@@ -29,11 +29,14 @@ export const partnershipReviewRequest = async (req, res) => {
     request.approvals.push(approval);
 
     if (decision === "approve") {
-      const isLaw = request.type === 'internal' ? (isLawRelated === "true" || isLawRelated === true) : false;
+      const isLaw = request.type === 'internal' ? (isLawServiceRelated === "true" || isLawServiceRelated === true) : false;
       request.status = "In Review";
       request.lawRelated = isLaw;
+      request.isLawServiceRelated = isLawServiceRelated === "true" || isLawServiceRelated === true;
+      request.isLawResearchRelated = isLawResearchRelated === "true" || isLawResearchRelated === true;
       request.frameworkType = frameworkType;
-      // Parse the duration object if it exists
+      request.partnershipRequestType = partnershipRequestType;
+      
       if (duration) {
         try {
           const parsedDuration = JSON.parse(duration);
@@ -50,23 +53,37 @@ export const partnershipReviewRequest = async (req, res) => {
       // Set forDirector flag based on the input
       request.forDirector = forDirector === "true" || forDirector === true;
       
-      // For internal requests, always go to law department first if law-related
-      if (request.type === 'internal' && isLaw) {
-        request.currentStage = "law-department";
-      } else if (request.type === 'internal' && !isLaw) {
-        // For internal non-law requests, check if director approval is needed
+      // Determine next stage based on current stage and conditions
+      if (request.currentStage === "partnership-division") {
+        // If both law service and law research are needed, go to law-service first
+        if (request.isLawServiceRelated) {
+          request.currentStage = "law-service";
+        } else if (request.isLawResearchRelated) {
+          request.currentStage = "law-research";
+        } else if (request.forDirector) {
+          request.currentStage = "director";
+        } else {
+          request.currentStage = "general-director";
+        }
+      } else if (request.currentStage === "law-service") {
+        // After law service approval, check if law research is needed
+        if (request.isLawResearchRelated) {
+          request.currentStage = "law-research";
+        } else if (request.forDirector) {
+          request.currentStage = "director";
+        } else {
+          request.currentStage = "general-director";
+        }
+      } else if (request.currentStage === "law-research") {
+        // After law research approval, check if director approval is needed
         if (request.forDirector) {
           request.currentStage = "director";
         } else {
           request.currentStage = "general-director";
         }
-      } else {
-        // For external requests, check if director approval is needed
-        if (request.forDirector) {
-          request.currentStage = "director";
-        } else {
-          request.currentStage = "general-director";
-        }
+      } else if (request.currentStage === "director") {
+        // After director approval, go to general director
+        request.currentStage = "general-director";
       }
     } else {
       request.status = "Disapproved";

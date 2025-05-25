@@ -103,25 +103,22 @@ const ReviewedByYou = () => {
             if (!myApproval) return null;
 
             return (
-              <div key={req._id} className="bg-white shadow rounded-lg p-6 hover:shadow-lg transition duration-300">
-                {/* Header */}
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-[#3c8dbc]/10 rounded-full">
-                      <FaBuilding className="text-[#3c8dbc]" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {req.companyDetails?.name || "Unnamed Company"}
-                      </h3>
-                      <div className="text-sm text-gray-500 flex flex-wrap gap-3">
-                        <span className="flex items-center">
-                          <FaEnvelope className="mr-1" />
-                          {req.companyDetails?.email || "No email"}
-                        </span>
-                        <span className="text-gray-400">•</span>
-                        <span>Current Stage: {req.currentStage || "N/A"}</span>
-                      </div>
+              <div key={req._id} className="bg-white shadow-md rounded-lg p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">{req.companyDetails?.name}</h3>
+                    <div className="flex items-center space-x-4 mt-2">
+                      <span className="flex items-center text-gray-600">
+                        <FaEnvelope className="mr-2" />
+                        {req.companyDetails?.email}
+                      </span>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        req.type === 'internal' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {req.type === 'internal' ? 'Internal Request' : 'External Request'}
+                      </span>
                     </div>
                   </div>
                   <div className="text-right">

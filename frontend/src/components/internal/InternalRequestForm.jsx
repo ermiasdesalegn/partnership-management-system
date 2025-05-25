@@ -16,7 +16,10 @@ const InternalRequestForm = () => {
       type: "Private"
     },
     frameworkType: "MOU",
-    duration: "",
+    duration: {
+      value: 1,
+      type: "years"
+    },
     description: "",
   });
   const [files, setFiles] = useState([]);
@@ -59,6 +62,22 @@ const InternalRequestForm = () => {
           [field]: value
         }
       }));
+    } else if (name === 'durationValue') {
+      setFormData(prev => ({
+        ...prev,
+        duration: {
+          ...prev.duration,
+          value: parseInt(value) || 1
+        }
+      }));
+    } else if (name === 'durationType') {
+      setFormData(prev => ({
+        ...prev,
+        duration: {
+          ...prev.duration,
+          type: value
+        }
+      }));
     } else {
       setFormData(prev => ({
         ...prev,
@@ -87,7 +106,7 @@ const InternalRequestForm = () => {
     else if (!/\S+@\S+\.\S+/.test(formData.companyDetails.email)) newErrors['companyDetails.email'] = "Invalid email format";
     if (!formData.companyDetails.address.trim()) newErrors['companyDetails.address'] = "Address is required";
     if (!formData.companyDetails.phone.trim()) newErrors['companyDetails.phone'] = "Phone number is required";
-    if (!formData.duration.trim()) newErrors.duration = "Duration is required";
+    if (!formData.duration.value || formData.duration.value < 1) newErrors.duration = "Duration must be at least 1";
     if (!formData.description.trim()) newErrors.description = "Description is required";
     if (files.length === 0) newErrors.files = "At least one attachment is required";
 
@@ -108,7 +127,7 @@ const InternalRequestForm = () => {
       const requestData = {
         companyDetails: JSON.stringify(formData.companyDetails),
         frameworkType: formData.frameworkType,
-        duration: formData.duration,
+        duration: JSON.stringify(formData.duration),
         description: formData.description,
         files: files
       };
@@ -297,24 +316,39 @@ const InternalRequestForm = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                {/* Duration Field */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Duration *
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaClock className="text-gray-400" />
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        name="durationValue"
+                        min="1"
+                        value={formData.duration.value}
+                        onChange={handleChange}
+                        className={`w-full px-3 py-2 border ${
+                          errors.duration ? 'border-red-500' : 'border-gray-300'
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                        placeholder="Enter duration"
+                        required
+                      />
                     </div>
-                    <input
-                      type="text"
-                      name="duration"
-                      value={formData.duration}
+                    <div className="w-32">
+                      <select
+                        name="durationType"
+                        value={formData.duration.type}
                       onChange={handleChange}
-                      className={`w-full pl-10 px-4 py-2 rounded-lg border ${
+                        className={`w-full px-3 py-2 border ${
                         errors.duration ? 'border-red-500' : 'border-gray-300'
-                      } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                      placeholder="e.g., 1 year, 6 months"
-                    />
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      >
+                        <option value="months">Months</option>
+                        <option value="years">Years</option>
+                      </select>
+                    </div>
                   </div>
                   {errors.duration && (
                     <p className="mt-1 text-sm text-red-600">{errors.duration}</p>

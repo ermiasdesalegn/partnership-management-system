@@ -240,6 +240,7 @@ export const getAllAdmins = async (req, res) => {
   export const getAllRequests = async (req, res) => {
     try {
       const { type, department } = req.query;
+      const adminRole = req.admin.role;
       
       // Build the query
       let query = {};
@@ -255,9 +256,19 @@ export const getAllAdmins = async (req, res) => {
         })
         .sort({ createdAt: -1 });
 
-      // If department filter is provided, filter the results
+      // Filter requests based on admin role
       let filteredRequests = requests;
-      if (department) {
+      if (adminRole === "law-service") {
+        filteredRequests = requests.filter(request => 
+          request.currentStage === "law-service" || 
+          request.isLawServiceRelated
+        );
+      } else if (adminRole === "law-research") {
+        filteredRequests = requests.filter(request => 
+          request.currentStage === "law-research" || 
+          request.isLawResearchRelated
+        );
+      } else if (department) {
         filteredRequests = requests.filter(request => 
           request.userRef?.role === 'internal' && 
           request.userRef?.department === department
@@ -397,7 +408,7 @@ export const getAllAdmins = async (req, res) => {
   export const getRequestsByRole = catchAsync(async (req, res, next) => {
     const role = req.admin.role;
     console.log("Admin Role:", req.admin.role);    
-    if (!["partnership-division", "law-department", "director", "general-director"].includes(role)) {
+    if (!["partnership-division", "law-service", "law-research", "director", "general-director"].includes(role)) {
       return next(new AppError("Invalid role for request access", 403));
     }
     let requests;
@@ -405,8 +416,17 @@ export const getAllAdmins = async (req, res) => {
       case "partnership-division":
         requests = await Request.find({ currentStage: "partnership-division" }).populate("userRef");
         break;
-      case "law-department":
-        requests = await Request.find({ currentStage: "law-department" }).populate("userRef");
+      case "law-service":
+        requests = await Request.find({ 
+          currentStage: "law-service",
+          isLawServiceRelated: true
+        }).populate("userRef");
+        break;
+      case "law-research":
+        requests = await Request.find({ 
+          currentStage: "law-research",
+          isLawResearchRelated: true
+        }).populate("userRef");
         break;
       case "director":
       case "general-director":
@@ -447,8 +467,18 @@ export const getAllAdmins = async (req, res) => {
     }
   
     // Allow both director and general-director to access any request
-    if (adminRole !== "director" && adminRole !== "general-director" && request.currentStage !== adminRole) {
+    if (adminRole !== "director" && adminRole !== "general-director") {
+      // For law-service and law-research, check if request is related to their department
+      if (adminRole === "law-service" && !request.isLawServiceRelated) {
+        return next(new AppError("Unauthorized access to this request", 403));
+      }
+      if (adminRole === "law-research" && !request.isLawResearchRelated) {
+        return next(new AppError("Unauthorized access to this request", 403));
+      }
+      // For partnership-division, check if request is in their stage
+      if (adminRole === "partnership-division" && request.currentStage !== "partnership-division") {
       return next(new AppError("Unauthorized access to this request", 403));
+      }
     }
 
     // Transform file paths to be relative to uploads directory
@@ -534,17 +564,36 @@ export const getAllAdmins = async (req, res) => {
   export const getReviewedRequestsByAdmin = async (req, res) => {
     try {
       const adminId = req.admin._id;
+      const adminRole = req.admin.role;
   
-      const reviewedRequests = await Request.find({
+      // Build query based on admin role
+      let query = {
         approvals: {
           $elemMatch: {
             approvedBy: adminId,
-            decision: { $in: ['approve', 'disapprove'] },
-          },
-        },
-      })
+            decision: { $in: ['approve', 'disapprove'] }
+          }
+        }
+      };
+
+      // Add role-specific filters
+      if (adminRole === 'law-service') {
+        query.$or = [
+          { 'approvals.stage': 'law-service' },
+          { isLawServiceRelated: true }
+        ];
+      } else if (adminRole === 'law-research') {
+        query.$or = [
+          { 'approvals.stage': 'law-research' },
+          { isLawResearchRelated: true }
+        ];
+      } else if (adminRole === 'partnership-division') {
+        query['approvals.stage'] = 'partnership-division';
+      }
+
+      const reviewedRequests = await Request.find(query)
         .populate("userRef", "name email")
-        .populate("approvals.approvedBy", "name") // ✅ Populate admin names
+        .populate("approvals.approvedBy", "name role")
         .select("-__v");
   
       res.status(200).json({

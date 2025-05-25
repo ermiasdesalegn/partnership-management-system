@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ToastContainer, toast } from "react-toastify";
@@ -26,7 +26,8 @@ const RequestDetail = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [decisionType, setDecisionType] = useState("approve");
-  const [isLawRelated, setIsLawRelated] = useState(false);
+  const [isLawServiceRelated, setIsLawServiceRelated] = useState(false);
+  const [isLawResearchRelated, setIsLawResearchRelated] = useState(false);
   const [forDirector, setForDirector] = useState(false);
   const [message, setMessage] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
@@ -37,6 +38,7 @@ const RequestDetail = () => {
   const [showCustomFramework, setShowCustomFramework] = useState(false);
   const [duration, setDuration] = useState(1);
   const [durationType, setDurationType] = useState("years");
+  const [partnershipRequestType, setPartnershipRequestType] = useState("strategic");
 
   const { data: req, isLoading, error } = useQuery({
     queryKey: ["requestDetail", id],
@@ -47,6 +49,12 @@ const RequestDetail = () => {
     queryKey: ["currentAdmin"],
     queryFn: fetchCurrentAdmin
   });
+
+  useEffect(() => {
+    if (partnershipRequestType === "project" || partnershipRequestType === "tactical") {
+      setIsLawResearchRelated(false);
+    }
+  }, [partnershipRequestType]);
 
   const handleFrameworkTypeChange = (e) => {
     const value = e.target.value;
@@ -71,7 +79,8 @@ const RequestDetail = () => {
         id,
         decision: decisionType,
         currentStage: req?.currentStage,
-        isLawRelated,
+        isLawServiceRelated,
+        isLawResearchRelated,
         message,
         feedbackMessage,
         frameworkType: frameworkType === "Other" ? customFramework : frameworkType,
@@ -81,7 +90,8 @@ const RequestDetail = () => {
         duration: {
           value: duration,
           type: durationType
-        }
+        },
+        partnershipRequestType
       }),
     onSuccess: () => {
       toast.success("Action submitted successfully!");
@@ -152,8 +162,10 @@ const RequestDetail = () => {
       switch (adminData?.role) {
         case "partnership-division":
           return "Partnership Division Decision";
-        case "law-department":
-          return "Law Department Decision";
+        case "law-service":
+          return "Law Service Review";
+        case "law-research":
+          return "Law Research Review";
         case "director":
           return "Director Decision";
         case "general-director":
@@ -167,21 +179,24 @@ const RequestDetail = () => {
                               req?.currentStage === "partnership-division" && 
                               decisionType === "approve";
 
+    const showUserFeedback = adminData?.role === "partnership-division";
+
     // Check if the admin has permission to review this request
     const canReview = () => {
-      switch (adminData?.role) {
+      const { role } = adminData;
+      const { currentStage } = req;
+
+      switch (role) {
         case "partnership-division":
-          return req?.currentStage === "partnership-division";
-        case "law-department":
-          return req?.currentStage === "law-department";
+          return currentStage === "partnership-division";
+        case "law-service":
+          return currentStage === "law-service" && req.isLawServiceRelated;
+        case "law-research":
+          return currentStage === "law-research" && req.isLawResearchRelated;
         case "director":
-          // Check if the request is meant for director review and is in the director stage
-          if (!req?.forDirector || req?.currentStage !== "director") {
-            return false;
-          }
-          return true;
+          return currentStage === "director" && req.forDirector;
         case "general-director":
-          return req?.currentStage === "general-director";
+          return currentStage === "general-director";
         default:
           return false;
       }
@@ -217,105 +232,34 @@ const RequestDetail = () => {
               </div>
             </div>
 
-            {/* Only show framework configuration for partnership division */}
-            {showFrameworkConfig && (
-              <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
-                <h4 className="font-semibold text-gray-800 mb-3">Request Framework Configuration</h4>
-                
-                {/* Framework Type Selection */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Framework Type
-                  </label>
-                  <select
-                    value={frameworkType}
-                    onChange={handleFrameworkTypeChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="MOU">MOU (Memorandum of Understanding)</option>
-                    <option value="Contract">Contract</option>
-                    <option value="NDA">NDA (Non-Disclosure Agreement)</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                {/* Partnership Duration */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Partnership Duration
-                  </label>
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <input
-                        type="number"
-                        min="1"
-                        value={duration}
-                        onChange={(e) => setDuration(parseInt(e.target.value))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter duration"
-                        required
-                      />
-                    </div>
-                    <div className="w-32">
-                      <select
-                        value={durationType}
-                        onChange={(e) => setDurationType(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="months">Months</option>
-                        <option value="years">Years</option>
-                      </select>
-                    </div>
-                  </div>
-                  <p className="mt-1 text-sm text-gray-500">
-                    This duration will be used to set deadlines for all partnership activities
-                  </p>
-                </div>
-
-                {showCustomFramework && (
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Specify Framework Type
-                    </label>
-                    <input
-                      type="text"
-                      value={customFramework}
-                      onChange={(e) => setCustomFramework(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter framework type"
-                    />
-                  </div>
-                )}
-
-                {req?.type === 'internal' && (
-                  <div className="mb-2 flex items-center">
-                    <input
-                      type="checkbox"
-                      id="lawRelated"
-                      checked={isLawRelated}
-                      onChange={(e) => setIsLawRelated(e.target.checked)}
-                      className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="lawRelated" className="ml-2 text-gray-700">
-                      This request involves legal matters
-                    </label>
-                  </div>
-                )}
-
-                <div className="mb-2 flex items-center">
-                  <input
-                    type="checkbox"
-                    id="forDirector"
-                    checked={forDirector}
-                    onChange={(e) => setForDirector(e.target.checked)}
-                    className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="forDirector" className="ml-2 text-gray-700">
-                    This request requires director approval
-                  </label>
-                </div>
+            {/* Decision Type Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Decision</label>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setDecisionType("approve")}
+                  className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                    decisionType === "approve"
+                      ? "bg-green-500 text-white hover:bg-green-600"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <FaCheckCircle className="mr-2" />
+                  Approve
+                </button>
+                <button
+                  onClick={() => setDecisionType("disapprove")}
+                  className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                    decisionType === "disapprove"
+                      ? "bg-red-500 text-white hover:bg-red-600"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <FaTimesCircle className="mr-2" />
+                  Disapprove
+                </button>
               </div>
-            )}
+            </div>
 
             {/* Admin Notes Section */}
             <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
@@ -358,46 +302,183 @@ const RequestDetail = () => {
               </div>
             </div>
 
-            {/* User Feedback Section */}
-            <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
-              <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
-                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded mr-2">
-                  USER VISIBLE
-                </span>
-                Feedback for Requester
-              </h4>
+            {/* User Feedback Section - Only visible to partnership-division */}
+            {showUserFeedback && (
+              <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
+                <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                  <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded mr-2">
+                    USER VISIBLE
+                  </span>
+                  Feedback for Requester
+                </h4>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Feedback message for the requester
-                </label>
-                <textarea
-                  value={feedbackMessage}
-                  onChange={(e) => setFeedbackMessage(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={3}
-                  placeholder="Add feedback that will be visible to the requester..."
-                />
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Feedback message for the requester
+                  </label>
+                  <textarea
+                    value={feedbackMessage}
+                    onChange={(e) => setFeedbackMessage(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={3}
+                    placeholder="Add feedback that will be visible to the requester..."
+                  />
+                </div>
+
+                {/* User Feedback Attachments */}
+                <div className="mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Attachments for the requester
+                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFeedbackAttachmentChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {feedbackAttachments.length > 0 && (
+                    <div className="mt-2 text-sm text-gray-500">
+                      {feedbackAttachments.length} file(s) selected
+                    </div>
+                  )}
+                </div>
               </div>
+            )}
 
-              {/* User Feedback Attachments */}
-              <div className="mb-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Attachments for the requester
-                </label>
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFeedbackAttachmentChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                {feedbackAttachments.length > 0 && (
-                  <div className="mt-2 text-sm text-gray-500">
-                    {feedbackAttachments.length} file(s) selected
+            {/* Framework Configuration (only for partnership division) */}
+            {showFrameworkConfig && (
+              <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
+                <h4 className="font-semibold text-gray-800 mb-3">Request Framework Configuration</h4>
+                
+                {/* Framework Type Selection */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Framework Type
+                  </label>
+                  <select
+                    value={frameworkType}
+                    onChange={handleFrameworkTypeChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="MOU">MOU (Memorandum of Understanding)</option>
+                    <option value="MOA">MOA (Memorandum of Agreement)</option>
+                    <option value="Contract">Contract</option>
+                    <option value="NDA">NDA (Non-Disclosure Agreement)</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                {showCustomFramework && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Specify Framework Type
+                    </label>
+                    <input
+                      type="text"
+                      value={customFramework}
+                      onChange={(e) => setCustomFramework(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter framework type"
+                    />
                   </div>
                 )}
+
+                {/* Partnership Duration */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Partnership Duration
+                  </label>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        min="1"
+                        value={duration}
+                        onChange={(e) => setDuration(parseInt(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter duration"
+                        required
+                      />
+                    </div>
+                    <div className="w-32">
+                      <select
+                        value={durationType}
+                        onChange={(e) => setDurationType(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="months">Months</option>
+                        <option value="years">Years</option>
+                      </select>
+                    </div>
+                  </div>
+                  <p className="mt-1 text-sm text-gray-500">
+                    This duration will be used to set deadlines for all partnership activities
+                  </p>
+                </div>
+
+                {/* Partnership Request Type */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Partnership Request Type *
+                  </label>
+                  <select
+                    value={partnershipRequestType}
+                    onChange={(e) => setPartnershipRequestType(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="strategic">Strategic</option>
+                    <option value="operational">Operational</option>
+                    <option value="project">Project</option>
+                    <option value="tactical">Tactical</option>
+                  </select>
+                </div>
+
+                {/* Additional Options */}
+                <div className="space-y-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="lawServiceRelated"
+                      checked={isLawServiceRelated}
+                      onChange={(e) => setIsLawServiceRelated(e.target.checked)}
+                      className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="lawServiceRelated" className="ml-2 text-gray-700">
+                      This request involves law service
+                    </label>
+                  </div>
+
+                  {(partnershipRequestType === "strategic" || partnershipRequestType === "operational") && (
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="lawResearchRelated"
+                        checked={isLawResearchRelated}
+                        onChange={(e) => setIsLawResearchRelated(e.target.checked)}
+                        className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="lawResearchRelated" className="ml-2 text-gray-700">
+                        This request involves law research
+                      </label>
+                    </div>
+                  )}
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="forDirector"
+                      checked={forDirector}
+                      onChange={(e) => setForDirector(e.target.checked)}
+                      className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="forDirector" className="ml-2 text-gray-700">
+                      This request requires director approval
+                    </label>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Modal Footer */}
@@ -415,7 +496,7 @@ const RequestDetail = () => {
             <button
               onClick={handleSubmit}
               className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center ${
-                decisionType === "approve" 
+                decisionType === "approve"
                   ? "bg-green-600 hover:bg-green-700" 
                   : "bg-red-600 hover:bg-red-700"
               }`}
@@ -503,7 +584,22 @@ const RequestDetail = () => {
                     </p>
                     <p className="flex items-center text-gray-600">
                       <FaGavel className="mr-2 text-blue-500" />
-                      <span className="font-medium">Law Related:</span> {req.lawRelated ? "Yes" : "No"}
+                      <span className="font-medium">Law Service Related:</span> {req.isLawServiceRelated ? "Yes" : "No"}
+                    </p>
+                    <p className="flex items-center text-gray-600">
+                      <FaGavel className="mr-2 text-blue-500" />
+                      <span className="font-medium">Law Research Related:</span> {req.isLawResearchRelated ? "Yes" : "No"}
+                    </p>
+                    <p className="flex items-center text-gray-600">
+                      <FaUser className="mr-2 text-blue-500" />
+                      <span className="font-medium">Request Type:</span> 
+                      <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                        req.type === 'internal' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {req.type === 'internal' ? 'Internal Request' : 'External Request'}
+                      </span>
                     </p>
                   </div>
                 </div>

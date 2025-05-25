@@ -192,12 +192,12 @@ const RequestDetails = () => {
                   {request.frameworkType}
                 </Typography>
               </div>
-              <div>
-                <Typography variant="small" color="blue-gray">
+              <div className="mb-4">
+                <Typography variant="h6" color="blue-gray" className="mb-2">
                   Duration
                 </Typography>
-                <Typography variant="paragraph" color="blue-gray">
-                  {request.duration}
+                <Typography>
+                  {request.duration ? `${request.duration.value} ${request.duration.type}` : 'Not specified'}
                 </Typography>
               </div>
             </div>

@@ -22,7 +22,7 @@ const AdminSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["partnership-division", "law-department","director", "general-director", "super-admin"],
+    enum: ["partnership-division", "law-service", "law-research", "director", "general-director", "super-admin"],
     required: true
   },
   department: {

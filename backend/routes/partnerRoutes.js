@@ -21,25 +21,18 @@ const router = express.Router();
 // Protect all routes
 router.use(protectAdmin);
 
-// Restrict to partnership-division, director and general-director
+// View routes - accessible by all authorized roles
+router.get("/", restrictToAdmin("partnership-division", "director", "general-director", "law-service", "law-research"), getAllPartners);
+router.get("/signed", restrictToAdmin("partnership-division", "director", "general-director", "law-service", "law-research"), getSignedPartners);
+router.get("/unsigned", restrictToAdmin("partnership-division", "director", "general-director", "law-service", "law-research"), getUnsignedPartners);
+router.get("/:id", restrictToAdmin("partnership-division", "director", "general-director", "law-service", "law-research"), getPartner);
+
+// Management routes - restricted to partnership-division, director and general-director
 router.use(restrictToAdmin("partnership-division", "director", "general-director"));
 
-// Partner routes
-router.route("/")
-  .get(getAllPartners)
-  .post(createPartner);
-
-router.route("/signed")
-  .get(getSignedPartners);
-
-router.route("/unsigned")
-  .get(getUnsignedPartners);
-
-router.route("/:id")
-  .get(getPartner)
-  .patch(updatePartner)
-  .delete(deletePartner);
-
+router.post("/", createPartner);
+router.patch("/:id", updatePartner);
+router.delete("/:id", deletePartner);
 router.patch("/:id/sign", markPartnerAsSigned);
 
 // Attachment routes

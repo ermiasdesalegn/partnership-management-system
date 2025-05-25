@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 const ProtectedAdminRoute = ({ children }) => {
   const { user } = useAuth();
 
-  if (!user || !["partnership-division", "general-director", "law-department"].includes(user.role)) {
+  if (!user || !["partnership-division", "general-director", "law-service"].includes(user.role)) {
     return <Navigate to="/login" replace />;
   }
 

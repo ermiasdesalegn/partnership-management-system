@@ -71,15 +71,21 @@ export const fetchRequestsForCurrentAdmin = async () => {
 };
 
 // ✅ Submit a decision for review
-export const submitReviewDecision = async ({ role, requestId, decision }) => {
+export const submitReviewDecision = async ({ role, requestId, decision, message, feedbackMessage, attachments, feedbackAttachments }) => {
   let endpoint = "";
 
   switch (role) {
     case "partnership-division":
       endpoint = `http://localhost:5000/api/v1/admin/review/partnership`;
       break;
-    case "law-department":
-      endpoint = `http://localhost:5000/api/v1/admin/review/law`;
+    case "law-service":
+      endpoint = `http://localhost:5000/api/v1/admin/review/law-service`;
+      break;
+    case "law-research":
+      endpoint = `http://localhost:5000/api/v1/admin/review/law-research`;
+      break;
+    case "director":
+      endpoint = `http://localhost:5000/api/v1/admin/review/director`;
       break;
     case "general-director":
       endpoint = `http://localhost:5000/api/v1/admin/review/general-director`;
@@ -88,16 +94,31 @@ export const submitReviewDecision = async ({ role, requestId, decision }) => {
       throw new Error("Invalid role for review");
   }
 
-  const res = await axios.post(
-    endpoint,
-    { requestId, decision },
-    {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      withCredentials: true,
-    }
-  );
+  const formData = new FormData();
+  formData.append('requestId', requestId);
+  formData.append('decision', decision);
+  formData.append('message', message || '');
+  formData.append('feedbackMessage', feedbackMessage || '');
+
+  if (attachments && attachments.length > 0) {
+    attachments.forEach(file => {
+      formData.append('attachments', file);
+    });
+  }
+
+  if (feedbackAttachments && feedbackAttachments.length > 0) {
+    feedbackAttachments.forEach(file => {
+      formData.append('feedbackAttachments', file);
+    });
+  }
+
+  const res = await axios.post(endpoint, formData, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      'Content-Type': 'multipart/form-data',
+    },
+    withCredentials: true,
+  });
 
   return res.data;
 };
@@ -205,9 +226,18 @@ export const removePartnerAttachment = async ({ partnerId, attachmentId, type })
 };
 
 // Law Related Requests Functions
-export const fetchLawRelatedRequests = async () => {
+export const fetchLawServiceRequests = async () => {
   const token = localStorage.getItem("token");
-  const response = await axios.get("http://localhost:5000/api/v1/admin/partnership/law-requests", {
+  const response = await axios.get("http://localhost:5000/api/v1/admin/law-service-requests", {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+export const fetchLawResearchRequests = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get("http://localhost:5000/api/v1/admin/law-research-requests", {
     headers: { Authorization: `Bearer ${token}` },
     withCredentials: true
   });
@@ -251,14 +281,16 @@ export const submitReview = async ({
   id,
   decision,
   currentStage,
-  isLawRelated,
+  isLawServiceRelated,
+  isLawResearchRelated,
   message,
   feedbackMessage,
   frameworkType,
   attachments,
   feedbackAttachments,
   forDirector,
-  duration
+  duration,
+  partnershipRequestType
 }) => {
   const token = localStorage.getItem("token");
   if (!token) {
@@ -287,10 +319,12 @@ export const submitReview = async ({
 
   // Add stage-specific data
   if (currentStage === "partnership-division") {
-    formData.append("isLawRelated", isLawRelated);
+    formData.append("isLawServiceRelated", isLawServiceRelated);
+    formData.append("isLawResearchRelated", isLawResearchRelated);
     formData.append("frameworkType", frameworkType);
     formData.append("forDirector", forDirector);
     formData.append("duration", JSON.stringify(duration));
+    formData.append("partnershipRequestType", partnershipRequestType);
   }
 
   // Use the correct endpoint based on the current stage
@@ -299,8 +333,11 @@ export const submitReview = async ({
     case "partnership-division":
       endpoint = "http://localhost:5000/api/v1/admin/review/partnership";
       break;
-    case "law-department":
-      endpoint = "http://localhost:5000/api/v1/admin/review/law";
+    case "law-service":
+      endpoint = "http://localhost:5000/api/v1/admin/review/law-service";
+      break;
+    case "law-research":
+      endpoint = "http://localhost:5000/api/v1/admin/review/law-research";
       break;
     case "director":
       endpoint = "http://localhost:5000/api/v1/admin/director/review";
@@ -312,17 +349,13 @@ export const submitReview = async ({
       throw new Error("Invalid stage for review");
   }
 
-  const response = await axios.post(
-    endpoint,
-    formData,
-    {
+  const response = await axios.post(endpoint, formData, {
       headers: {
-        "Content-Type": "multipart/form-data",
-        "Authorization": `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data"
       },
       withCredentials: true
-    }
-  );
+  });
 
   return response.data;
 };

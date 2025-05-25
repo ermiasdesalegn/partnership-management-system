@@ -30,12 +30,14 @@ const ReportModal = ({ partner, onClose }) => {
     }
 
     setLoading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("description", description);
-
     try {
       const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("file", file);
+      if (description) {
+        formData.append("description", description);
+      }
+
       const endpoint = activeTab === "request" 
         ? `/api/v1/partners/${partner._id}/request-attachments`
         : `/api/v1/partners/${partner._id}/approval-attachments`;
@@ -51,8 +53,8 @@ const ReportModal = ({ partner, onClose }) => {
       toast.success("File uploaded successfully");
       setFile(null);
       setDescription("");
-      // Refresh partner data
-      window.location.reload();
+      onClose(); // Close the modal first
+      window.location.reload(); // Then reload the page
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to upload file");
     } finally {
@@ -74,8 +76,8 @@ const ReportModal = ({ partner, onClose }) => {
         withCredentials: true
       });
       toast.success("Attachment removed successfully");
-      // Refresh partner data
-      window.location.reload();
+      onClose(); // Close the modal first
+      window.location.reload(); // Then reload the page
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to remove attachment");
     }

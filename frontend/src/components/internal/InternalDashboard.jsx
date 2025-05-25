@@ -1,7 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { fetchDashboardData } from '../../api/userApi';
 import { 
   FaFileAlt, 
   FaClock, 
@@ -11,17 +9,43 @@ import {
   FaBell,
   FaArrowRight
 } from 'react-icons/fa';
+import { fetchDashboardData } from '../../api/userApi';
+import { toast } from 'react-toastify';
 
 const InternalDashboard = () => {
   const navigate = useNavigate();
-
-  const { data: dashboardData, isLoading, error } = useQuery({
-    queryKey: ['dashboardData'],
-    queryFn: fetchDashboardData
+  const [dashboardData, setDashboardData] = useState({
+    stats: {
+      totalRequests: 0,
+      pendingRequests: 0,
+      completedRequests: 0,
+      rejectedRequests: 0
+    },
+    recentRequests: [],
+    notifications: []
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const data = await fetchDashboardData();
+        setDashboardData(data.data);
+        setError(null);
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load dashboard data");
+        toast.error(err.response?.data?.message || "Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
 
   const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'approved':
         return 'bg-green-100 text-green-800';
       case 'disapproved':
@@ -35,7 +59,7 @@ const InternalDashboard = () => {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-white via-[#3c8dbc]/5 to-[#3c8dbc]/10 flex items-center justify-center">
         <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-[#3c8dbc]" />
@@ -48,9 +72,7 @@ const InternalDashboard = () => {
       <div className="w-full px-8 py-10">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-4 rounded relative">
           <strong className="font-bold">Error:</strong>
-          <span className="block sm:inline ml-2">
-            {error.message || "Something went wrong."}
-          </span>
+          <span className="block sm:inline ml-2">{error}</span>
         </div>
       </div>
     );
@@ -74,7 +96,7 @@ const InternalDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Requests</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-1">{dashboardData?.stats?.totalRequests || 0}</p>
+                <p className="text-2xl font-semibold text-gray-900 mt-1">{dashboardData.stats?.totalRequests || 0}</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-lg">
                 <FaFileAlt className="w-6 h-6 text-blue-600" />
@@ -87,34 +109,34 @@ const InternalDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pending Requests</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-1">{dashboardData?.stats?.pendingRequests || 0}</p>
+                <p className="text-2xl font-semibold text-gray-900 mt-1">{dashboardData.stats?.pendingRequests || 0}</p>
               </div>
               <div className="p-3 bg-yellow-50 rounded-lg">
                 <FaClock className="w-6 h-6 text-yellow-600" />
               </div>
             </div>
-      </div>
+          </div>
 
           {/* Completed Requests Card */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
-                <div>
+              <div>
                 <p className="text-sm font-medium text-gray-600">Completed Requests</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-1">{dashboardData?.stats?.completedRequests || 0}</p>
+                <p className="text-2xl font-semibold text-gray-900 mt-1">{dashboardData.stats?.completedRequests || 0}</p>
               </div>
               <div className="p-3 bg-green-50 rounded-lg">
                 <FaCheckCircle className="w-6 h-6 text-green-600" />
               </div>
             </div>
-                </div>
+          </div>
 
           {/* Rejected Requests Card */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Rejected Requests</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-1">{dashboardData?.stats?.rejectedRequests || 0}</p>
-                </div>
+                <p className="text-2xl font-semibold text-gray-900 mt-1">{dashboardData.stats?.rejectedRequests || 0}</p>
+              </div>
               <div className="p-3 bg-red-50 rounded-lg">
                 <FaTimesCircle className="w-6 h-6 text-red-600" />
               </div>
@@ -131,26 +153,26 @@ const InternalDashboard = () => {
                 <h2 className="text-lg font-semibold text-gray-900">Recent Requests</h2>
               </div>
               <div className="p-6">
-                {dashboardData?.recentRequests?.length > 0 ? (
+                {dashboardData.recentRequests?.length > 0 ? (
                   <div className="space-y-4">
-                    {dashboardData.recentRequests.map((request, index) => (
+                    {dashboardData.recentRequests.map((request) => (
                       <div 
-                        key={index}
+                        key={request._id}
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                         onClick={() => navigate(`/internal/requests/${request._id}`)}
                       >
                         <div className="flex items-center space-x-4">
                           <div className={`p-2 rounded-lg ${getStatusColor(request.status)}`}>
-                            {request.status === 'Approved' ? (
+                            {request.status === 'approved' ? (
                               <FaCheckCircle className="w-5 h-5" />
-                            ) : request.status === 'Disapproved' ? (
+                            ) : request.status === 'disapproved' ? (
                               <FaTimesCircle className="w-5 h-5" />
                             ) : (
                               <FaClock className="w-5 h-5" />
                             )}
                           </div>
                           <div>
-                            <h3 className="font-medium text-gray-900">{request.title}</h3>
+                            <h3 className="font-medium text-gray-900">{request.companyDetails?.name || 'Untitled Request'}</h3>
                             <p className="text-sm text-gray-500">
                               {new Date(request.createdAt).toLocaleDateString()}
                             </p>
@@ -166,24 +188,24 @@ const InternalDashboard = () => {
                   </div>
                 )}
               </div>
-        </div>
-      </div>
+            </div>
+          </div>
 
-      {/* Notifications Section */}
+          {/* Notifications Section */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100">
                 <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
               </div>
               <div className="p-6">
-                {dashboardData?.notifications?.length > 0 ? (
+                {dashboardData.notifications?.length > 0 ? (
                   <div className="space-y-4">
                     {dashboardData.notifications.map((notification, index) => (
                       <div key={index} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
                         <div className="p-2 bg-blue-50 rounded-lg">
                           <FaBell className="w-5 h-5 text-blue-600" />
                         </div>
-      <div>
+                        <div>
                           <h3 className="font-medium text-gray-900">{notification.title}</h3>
                           <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
                           <p className="text-xs text-gray-500 mt-2">

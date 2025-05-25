@@ -468,8 +468,9 @@ const SuperAdminDashboard = () => {
                     >
                       <option value="">Select Role</option>
                       <option value="partnership-division">Partnership Division</option>
-                      <option value="law-department">Law Department</option>
-                      <option value="director">director</option>
+                      <option value="law-service">Law Service</option>
+                      <option value="law-research">Law Research</option>
+                      <option value="director">Director</option>
                       <option value="general-director">General Director</option>
                     </select>
                   </div>

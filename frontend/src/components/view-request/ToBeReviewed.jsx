@@ -63,6 +63,7 @@ const ToBeReviewed = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Company</th>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Email</th>
+                <th className="px-6 py-3 text-left text-sm font-bold uppercase">Type</th>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Requested By</th>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Action</th>
@@ -73,6 +74,15 @@ const ToBeReviewed = () => {
                 <tr key={req._id}>
                   <td className="px-6 py-4">{req.companyDetails?.name || "—"}</td>
                   <td className="px-6 py-4">{req.companyDetails?.email || "—"}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      req.type === 'internal' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {req.type === 'internal' ? 'Internal' : 'External'}
+                    </span>
+                  </td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
