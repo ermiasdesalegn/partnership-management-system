@@ -13,6 +13,7 @@ import {
   FaUserShield,
   FaDownload,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const BACKEND_BASE_URL = "http://localhost:5000";
 
@@ -21,6 +22,8 @@ const ReviewedByYou = () => {
     queryKey: ["myReviewedRequests"],
     queryFn: fetchReviewedRequests,
   });
+
+  const navigate = useNavigate();
 
   let currentAdminId = "";
   try {
@@ -134,6 +137,14 @@ const ReviewedByYou = () => {
                     )}
                   </div>
                 </div>
+
+                {/* View Details Button */}
+                <button
+                  onClick={() => navigate(`/admin/reviewed-requests/${req._id}`)}
+                  className="mt-4 text-[#3c8dbc] hover:text-[#2c6a8f] text-sm font-medium"
+                >
+                  View Full Details
+                </button>
 
                 {/* Your Admin Message */}
                 {myApproval.message && (

@@ -19,6 +19,11 @@ import RequestDetail from "../components/view-request/RequestDetail";
 import ReviewedByYou from "../components/view-request/ReviewedByYou";
 import SignedPartners from "../components/partner/SignedPartners";
 import UnsignedPartners from "../components/partner/UnsignedPartners";
+import ReviewedRequestDetail from "../components/view-request/ReviewedRequestDetail";
+import StrategicPartners from "../components/partner/StrategicPartners";
+import OperationalPartners from "../components/partner/OperationalPartners";
+import ProjectPartners from "../components/partner/ProjectPartners";
+import TacticalPartners from "../components/partner/TacticalPartners";
 
 const AdminRoute = [
   <Route key={"admin"} path="/admin" element={<AdminLayout />}>
@@ -38,7 +43,12 @@ const AdminRoute = [
     <Route path="partners/:id" element={<PartnerDetail />} />
     <Route path="partners/signed" element={<SignedPartners />} />
     <Route path="partners/unsigned" element={<UnsignedPartners />} />
+    <Route path="partners/strategic" element={<StrategicPartners />} />
+    <Route path="partners/operational" element={<OperationalPartners />} />
+    <Route path="partners/project" element={<ProjectPartners />} />
+    <Route path="partners/tactical" element={<TacticalPartners />} />
     <Route path="reviewed-requests" element={<ReviewedByYou />} />
+    <Route path="reviewed-requests/:id" element={<ReviewedRequestDetail />} />
   </Route>,
 ];
 

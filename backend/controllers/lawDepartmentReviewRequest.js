@@ -13,8 +13,9 @@ export const lawServiceReviewRequest = async (req, res) => {
       return res.status(400).json({ message: "Request not found" });
     }
 
-    if (!request.lawRelated) {
-      return res.status(400).json({ message: "This request is not marked as law-related" });
+    // Check if this request is law-service related
+    if (!request.isLawServiceRelated) {
+      return res.status(400).json({ message: "This request is not marked as law-service related" });
     }
 
     if (request.currentStage !== "law-service") {
@@ -66,8 +67,9 @@ export const lawResearchReviewRequest = async (req, res) => {
       return res.status(400).json({ message: "Request not found" });
     }
 
-    if (!request.lawRelated) {
-      return res.status(400).json({ message: "This request is not marked as law-related" });
+    // Check if this request is law-research related
+    if (!request.isLawResearchRelated) {
+      return res.status(400).json({ message: "This request is not marked as law-research related" });
     }
 
     if (request.currentStage !== "law-research") {

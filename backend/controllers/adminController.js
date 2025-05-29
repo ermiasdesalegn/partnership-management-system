@@ -240,7 +240,6 @@ export const getAllAdmins = async (req, res) => {
   export const getAllRequests = async (req, res) => {
     try {
       const { type, department } = req.query;
-      const adminRole = req.admin.role;
       
       // Build the query
       let query = {};
@@ -256,19 +255,9 @@ export const getAllAdmins = async (req, res) => {
         })
         .sort({ createdAt: -1 });
 
-      // Filter requests based on admin role
+      // Filter by department if specified
       let filteredRequests = requests;
-      if (adminRole === "law-service") {
-        filteredRequests = requests.filter(request => 
-          request.currentStage === "law-service" || 
-          request.isLawServiceRelated
-        );
-      } else if (adminRole === "law-research") {
-        filteredRequests = requests.filter(request => 
-          request.currentStage === "law-research" || 
-          request.isLawResearchRelated
-        );
-      } else if (department) {
+      if (department) {
         filteredRequests = requests.filter(request => 
           request.userRef?.role === 'internal' && 
           request.userRef?.department === department
@@ -454,6 +443,11 @@ export const getAllAdmins = async (req, res) => {
     const adminRole = req.admin.role;
     const requestId = req.params.id;
   
+    // Check if admin has permission to access this endpoint
+    if (!["partnership-division", "director", "general-director", "law-service", "law-research"].includes(adminRole)) {
+      return next(new AppError("You don't have permission to access this request", 403));
+    }
+  
     // Fetch the request with populated user and admin details
     const request = await Request.findById(requestId)
       .populate("userRef")
@@ -466,21 +460,15 @@ export const getAllAdmins = async (req, res) => {
       return next(new AppError("Request not found", 404));
     }
   
-    // Allow both director and general-director to access any request
-    if (adminRole !== "director" && adminRole !== "general-director") {
-      // For law-service and law-research, check if request is related to their department
-      if (adminRole === "law-service" && !request.isLawServiceRelated) {
-        return next(new AppError("Unauthorized access to this request", 403));
-      }
-      if (adminRole === "law-research" && !request.isLawResearchRelated) {
-        return next(new AppError("Unauthorized access to this request", 403));
-      }
-      // For partnership-division, check if request is in their stage
-      if (adminRole === "partnership-division" && request.currentStage !== "partnership-division") {
-      return next(new AppError("Unauthorized access to this request", 403));
-      }
+    // Additional role-based access control
+    if (adminRole === "law-service" && request.currentStage !== "law-service") {
+      return next(new AppError("You can only view requests in the law-service stage", 403));
     }
 
+    if (adminRole === "law-research" && request.currentStage !== "law-research") {
+      return next(new AppError("You can only view requests in the law-research stage", 403));
+    }
+  
     // Transform file paths to be relative to uploads directory
     if (request.attachments) {
       request.attachments = request.attachments.map(attachment => ({
@@ -600,6 +588,41 @@ export const getAllAdmins = async (req, res) => {
         status: "success",
         results: reviewedRequests.length,
         data: reviewedRequests,
+      });
+    } catch (err) {
+      res.status(500).json({ status: "fail", message: err.message });
+    }
+  };
+  
+  export const getReviewedRequestById = async (req, res) => {
+    try {
+      const adminId = req.admin._id;
+      const requestId = req.params.id;
+
+      // Find the request that was reviewed by this admin
+      const request = await Request.findOne({
+        _id: requestId,
+        approvals: {
+          $elemMatch: {
+            approvedBy: adminId,
+            decision: { $in: ['approve', 'disapprove'] }
+          }
+        }
+      })
+      .populate("userRef", "name email")
+      .populate("approvals.approvedBy", "name role")
+      .select("-__v");
+
+      if (!request) {
+        return res.status(404).json({
+          status: "fail",
+          message: "Request not found or you haven't reviewed this request"
+        });
+      }
+
+      res.status(200).json({
+        status: "success",
+        data: request
       });
     } catch (err) {
       res.status(500).json({ status: "fail", message: err.message });

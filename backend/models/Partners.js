@@ -25,6 +25,11 @@ const PartnerSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  partnershipRequestType: {
+    type: String,
+    enum: ["strategic", "operational", "project", "tactical"],
+    required: true
+  },
   duration: {
     type: String
   },

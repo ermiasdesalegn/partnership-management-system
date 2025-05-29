@@ -123,13 +123,10 @@ const RequestDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="w-full flex justify-center mt-8">
-          <div className="bg-white shadow-xl w-[95%] relative">
-            <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
-              <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-500" />
-            </div>
-          </div>
+      <div className="w-full flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center justify-center w-full h-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#3c8dbc] mb-3" />
+          <p className="text-gray-600 text-base">Loading request details...</p>
         </div>
       </div>
     );
@@ -137,11 +134,9 @@ const RequestDetail = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="w-full flex justify-center mt-8">
-          <div className="bg-white shadow-xl w-[95%] p-6">
-            <p className="text-red-500 text-lg">Error: {error.message}</p>
-          </div>
+      <div className="bg-gray-50 flex items-center justify-center">
+        <div className="bg-white shadow-xl w-full max-w-7xl mx-auto p-4">
+          <p className="text-red-500 text-base text-center">Error: {error.message}</p>
         </div>
       </div>
     );
@@ -270,10 +265,10 @@ const RequestDetail = () => {
                 Internal Notes
               </h4>
               
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                   Notes for other administrators
-                </label>
+                  </label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -292,7 +287,7 @@ const RequestDetail = () => {
                   type="file"
                   multiple
                   onChange={handleAttachmentChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {attachments.length > 0 && (
                   <div className="mt-2 text-sm text-gray-500">
@@ -300,7 +295,7 @@ const RequestDetail = () => {
                   </div>
                 )}
               </div>
-            </div>
+                </div>
 
             {/* User Feedback Section - Only visible to partnership-division */}
             {showUserFeedback && (
@@ -349,7 +344,7 @@ const RequestDetail = () => {
             {showFrameworkConfig && (
               <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
                 <h4 className="font-semibold text-gray-800 mb-3">Request Framework Configuration</h4>
-                
+
                 {/* Framework Type Selection */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -417,14 +412,14 @@ const RequestDetail = () => {
                 </div>
 
                 {/* Partnership Request Type */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                     Partnership Request Type *
-                  </label>
+                    </label>
                   <select
                     value={partnershipRequestType}
                     onChange={(e) => setPartnershipRequestType(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   >
                     <option value="strategic">Strategic</option>
@@ -432,51 +427,51 @@ const RequestDetail = () => {
                     <option value="project">Project</option>
                     <option value="tactical">Tactical</option>
                   </select>
-                </div>
-
-                {/* Additional Options */}
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="lawServiceRelated"
-                      checked={isLawServiceRelated}
-                      onChange={(e) => setIsLawServiceRelated(e.target.checked)}
-                      className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="lawServiceRelated" className="ml-2 text-gray-700">
-                      This request involves law service
-                    </label>
                   </div>
 
-                  {(partnershipRequestType === "strategic" || partnershipRequestType === "operational") && (
+                {/* Additional Options */}
+                  <div className="space-y-4">
                     <div className="flex items-center">
                       <input
                         type="checkbox"
-                        id="lawResearchRelated"
-                        checked={isLawResearchRelated}
-                        onChange={(e) => setIsLawResearchRelated(e.target.checked)}
+                        id="lawServiceRelated"
+                        checked={isLawServiceRelated}
+                        onChange={(e) => setIsLawServiceRelated(e.target.checked)}
                         className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
                       />
-                      <label htmlFor="lawResearchRelated" className="ml-2 text-gray-700">
-                        This request involves law research
+                      <label htmlFor="lawServiceRelated" className="ml-2 text-gray-700">
+                        This request involves law service
                       </label>
                     </div>
-                  )}
+
+                    {(partnershipRequestType === "strategic" || partnershipRequestType === "operational") && (
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="lawResearchRelated"
+                          checked={isLawResearchRelated}
+                          onChange={(e) => setIsLawResearchRelated(e.target.checked)}
+                          className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor="lawResearchRelated" className="ml-2 text-gray-700">
+                          This request involves law research
+                        </label>
+                      </div>
+                    )}
 
                   <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="forDirector"
-                      checked={forDirector}
-                      onChange={(e) => setForDirector(e.target.checked)}
-                      className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="forDirector" className="ml-2 text-gray-700">
-                      This request requires director approval
-                    </label>
+                      <input
+                        type="checkbox"
+                        id="forDirector"
+                        checked={forDirector}
+                        onChange={(e) => setForDirector(e.target.checked)}
+                        className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="forDirector" className="ml-2 text-gray-700">
+                        This request requires director approval
+                      </label>
+                    </div>
                   </div>
-                </div>
               </div>
             )}
           </div>
@@ -496,7 +491,7 @@ const RequestDetail = () => {
             <button
               onClick={handleSubmit}
               className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center ${
-                decisionType === "approve"
+                decisionType === "approve" 
                   ? "bg-green-600 hover:bg-green-700" 
                   : "bg-red-600 hover:bg-red-700"
               }`}
@@ -528,17 +523,15 @@ const RequestDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50 py-6 w-full">
       <ToastContainer position="top-right" autoClose={3000} />
-
-      <div className="w-full flex justify-center mt-8">
-        <div className="bg-white shadow-xl w-[95%] max-w-[1800px]">
+      <div className="w-full space-y-6 px-0">
           {/* Header Section */}
-          <div className="bg-[#3c8dbc] px-6 py-6">
+        <div className="bg-[#3c8dbc] px-6 py-6 rounded-t-lg">
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">{req.companyDetails?.name}</h1>
-                <div className="flex items-center space-x-4 text-blue-100">
+              <h1 className="text-2xl font-bold text-white mb-1">{req.companyDetails?.name}</h1>
+              <div className="flex items-center space-x-6 text-blue-100 text-base">
                   <span className="flex items-center">
                     <FaBuilding className="mr-2" />
                     {req.companyDetails?.type}
@@ -550,7 +543,7 @@ const RequestDetail = () => {
                 </div>
               </div>
               <div className="text-right">
-                <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
+              <span className={`inline-flex items-center px-4 py-2 rounded-full text-base font-semibold ${
                   req.status === "Approved" 
                     ? "bg-green-100 text-green-800" 
                     : req.status === "Disapproved" 
@@ -567,13 +560,13 @@ const RequestDetail = () => {
           </div>
 
           {/* Main Content */}
-          <div className="px-6 py-6">
+        <div className="px-6 py-6 space-y-6">
             {/* Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="space-y-2">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Request Information</h3>
-                  <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-gray-700 mb-3">Request Information</h3>
+                <div className="space-y-3 text-base">
                     <p className="flex items-center text-gray-600">
                       <FaFileAlt className="mr-2 text-blue-500" />
                       <span className="font-medium">Framework Type:</span> {req.frameworkType}
@@ -604,10 +597,10 @@ const RequestDetail = () => {
                   </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Company Details</h3>
-                  <div className="space-y-2">
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-gray-700 mb-3">Company Details</h3>
+                <div className="space-y-3 text-base">
                     <p className="text-gray-600">
                       <span className="font-medium">Email:</span> {req.companyDetails?.email}
                     </p>
@@ -623,18 +616,18 @@ const RequestDetail = () => {
             </div>
 
             {/* Attachments Section */}
-            {req.attachments && req.attachments.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-3">Attached Files</h2>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Attached Files</h2>
+              {req.attachments && req.attachments.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {req.attachments.map((attachment, index) => (
-                    <div key={index} className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
+                    <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-gray-100 rounded-lg">
+                        <div className="p-2 bg-gray-100 rounded-lg text-xl">
                           {getFileIcon(attachment.originalName)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-base font-medium text-gray-900 truncate">
                             {attachment.originalName}
                           </p>
                           <p className="text-xs text-gray-500">
@@ -645,7 +638,7 @@ const RequestDetail = () => {
                           href={`http://localhost:5000/api/v1/files/${attachment.path}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 text-gray-400 hover:text-gray-600"
+                          className="p-2 text-gray-400 hover:text-gray-600 text-lg"
                         >
                           <FaDownload />
                         </a>
@@ -653,26 +646,34 @@ const RequestDetail = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <FaFileAlt className="text-3xl text-gray-400" />
+                    <p className="text-base text-gray-600">No attachments available</p>
+                    <p className="text-xs text-gray-500">This request does not have any attached files.</p>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Approval History Section */}
             {req.approvals && req.approvals.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-3">Approval History</h2>
-                <div className="space-y-4">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Approval History</h2>
+              <div className="space-y-4">
                   {req.approvals.map((approval, index) => (
-                    <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
+                  <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-3">
                         <div>
-                          <h3 className="text-lg font-medium text-gray-900">
+                        <h3 className="text-lg font-medium text-gray-900">
                             {approval.approvedBy?.name}
                           </h3>
-                          <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500">
                             {approval.approvedBy?.email} • {approval.approvedBy?.role} • {new Date(approval.date).toLocaleString()}
                           </p>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      <span className={`px-3 py-1 rounded-full text-base font-medium ${
                           approval.decision === "approve" 
                             ? "bg-green-100 text-green-800" 
                             : "bg-red-100 text-red-800"
@@ -680,17 +681,15 @@ const RequestDetail = () => {
                           {approval.decision === "approve" ? "Approved" : "Disapproved"}
                         </span>
                       </div>
-                      
                       {approval.message && (
-                        <div className="mt-2 p-3 bg-gray-50 rounded-md">
-                          <p className="text-gray-700">{approval.message}</p>
+                      <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                        <p className="text-base text-gray-700">{approval.message}</p>
                         </div>
                       )}
-
                       {approval.attachments && approval.attachments.length > 0 && (
-                        <div className="mt-3">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Attached Files:</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="mt-3">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Attached Files:</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {approval.attachments.map((file, fileIndex) => {
                               const fileName = typeof file === 'string' 
                                 ? file.includes('/') || file.includes('\\') 
@@ -698,11 +697,9 @@ const RequestDetail = () => {
                                   : file
                                 : 'file';
                               return (
-                                <div key={fileIndex} className="flex items-center space-x-2 bg-gray-50 p-2 rounded">
+                              <div key={fileIndex} className="flex items-center space-x-2 bg-gray-50 p-2 rounded text-sm">
                                   {getFileIcon(fileName)}
-                                  <span className="text-sm text-gray-600 truncate">
-                                    {fileName}
-                                  </span>
+                                <span className="text-gray-600 truncate">{fileName}</span>
                                   <a
                                     href={`http://localhost:5000/api/v1/files/${fileName}`}
                                     target="_blank"
@@ -724,9 +721,10 @@ const RequestDetail = () => {
             )}
 
             {/* Timeline Section */}
+          {req.approvals && req.approvals.length > 0 && (
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-3">Approval Timeline</h2>
-              <div className="space-y-3">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Approval Timeline</h2>
+              <div className="space-y-4">
                 {req.approvals?.map((approval, index) => (
                   <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <div className="flex justify-between items-start">
@@ -736,12 +734,12 @@ const RequestDetail = () => {
                             year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
                           })}
                         </p>
-                        <p className="font-semibold text-blue-600 capitalize">
+                        <p className="font-semibold text-blue-600 capitalize text-base">
                           {approval.decision} by {approval.approvedBy?.name}
                         </p>
                         <span className="text-sm text-gray-600">{approval.stage}</span>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      <div className={`px-3 py-1 rounded-full text-base font-medium ${
                         approval.decision === 'approve' 
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-red-100 text-red-800'
@@ -749,17 +747,15 @@ const RequestDetail = () => {
                         {approval.decision}
                       </div>
                     </div>
-                    
                     {/* Admin Notes (Only visible to admins) */}
                     {approval.message && (
                       <div className="mt-3 p-3 bg-blue-50 rounded-md border border-blue-100">
-                        <div className="flex items-center mb-1">
+                        <div className="flex items-center mb-2">
                           <span className="text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded">
                             ADMIN NOTES
                           </span>
                         </div>
-                        <p className="text-gray-700">{approval.message}</p>
-                        
+                        <p className="text-base text-gray-700">{approval.message}</p>
                         {/* Admin Attachments */}
                         {approval.attachments && approval.attachments.length > 0 && (
                           <div className="mt-2 pt-2 border-t border-blue-100">
@@ -772,7 +768,7 @@ const RequestDetail = () => {
                                     : attachment
                                   : 'file';
                                 return (
-                                  <div key={i} className="flex items-center space-x-2 bg-white p-1 rounded text-xs">
+                                  <div key={i} className="flex items-center space-x-2 bg-white p-1 rounded text-sm">
                                     {getFileIcon(fileName)}
                                     <span className="text-gray-600 truncate">{fileName}</span>
                                     <a
@@ -791,17 +787,15 @@ const RequestDetail = () => {
                         )}
                       </div>
                     )}
-                    
                     {/* User Feedback (Visible to both admin and user) */}
                     {approval.feedbackMessage && (
                       <div className="mt-3 p-3 bg-green-50 rounded-md border border-green-100">
-                        <div className="flex items-center mb-1">
+                        <div className="flex items-center mb-2">
                           <span className="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded">
                             FEEDBACK FOR REQUESTER
                           </span>
                         </div>
-                        <p className="text-gray-700">{approval.feedbackMessage}</p>
-                        
+                        <p className="text-base text-gray-700">{approval.feedbackMessage}</p>
                         {/* Feedback Attachments */}
                         {approval.feedbackAttachments && approval.feedbackAttachments.length > 0 && (
                           <div className="mt-2 pt-2 border-t border-green-100">
@@ -814,7 +808,7 @@ const RequestDetail = () => {
                                     : attachment
                                   : 'file';
                                 return (
-                                  <div key={i} className="flex items-center space-x-2 bg-white p-1 rounded text-xs">
+                                  <div key={i} className="flex items-center space-x-2 bg-white p-1 rounded text-sm">
                                     {getFileIcon(fileName)}
                                     <span className="text-gray-600 truncate">{fileName}</span>
                                     <a
@@ -837,15 +831,16 @@ const RequestDetail = () => {
                 ))}
               </div>
             </div>
+          )}
 
             {/* Action Buttons */}
-            <div className="flex gap-4 justify-end border-t pt-4">
+          <div className="flex gap-4 justify-end border-t pt-6 mt-6">
               <button
                 onClick={() => {
                   setDecisionType("approve");
                   setModalOpen(true);
                 }}
-                className="px-6 py-2 bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors disabled:opacity-50 flex items-center"
+              className="px-6 py-2 bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors disabled:opacity-50 flex items-center text-base"
                 disabled={mutation.isLoading}
               >
                 {mutation.isLoading && decisionType === "approve" 
@@ -862,7 +857,7 @@ const RequestDetail = () => {
                   setDecisionType("disapprove");
                   setModalOpen(true);
                 }}
-                className="px-6 py-2 bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors disabled:opacity-50 flex items-center"
+              className="px-6 py-2 bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors disabled:opacity-50 flex items-center text-base"
                 disabled={mutation.isLoading}
               >
                 {mutation.isLoading && decisionType === "disapprove" 
@@ -874,7 +869,6 @@ const RequestDetail = () => {
                     </>
                   )}
               </button>
-            </div>
           </div>
         </div>
       </div>

@@ -20,8 +20,8 @@ router.use(protectAdmin);
 router.get("/:partnerId/activities", restrictToAdmin("general-director", "partnership-division", "director"), getPartnerActivities);
 router.get("/:partnerId/statistics", restrictToAdmin("general-director", "partnership-division", "director"), getActivityStatistics);
 
-// Management routes - only accessible by general-director and partnership-division
-router.use(restrictToAdmin("general-director", "partnership-division"));
+// Management routes - accessible by general-director, partnership-division, and director
+router.use(restrictToAdmin("general-director", "partnership-division", "director"));
 
 // Activity management routes
 router.post("/:partnerId/activities", createActivity);

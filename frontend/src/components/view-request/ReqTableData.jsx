@@ -1,15 +1,18 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchAdminRequests } from "../../api/adminApi";
+import { fetchAdminRequests, fetchCurrentAdmin } from "../../api/adminApi";
+import { useNavigate } from "react-router-dom";
 import {
   FaBuilding,
   FaUser,
   FaFilter,
   FaExternalLinkAlt,
   FaUserTie,
+  FaEye,
 } from "react-icons/fa";
 
 const RequestTable = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     type: "",
     department: "",
@@ -23,6 +26,12 @@ const RequestTable = () => {
     }),
   });
 
+  const { data: adminData } = useQuery({
+    queryKey: ["currentAdmin"],
+    queryFn: fetchCurrentAdmin
+  });
+
+  const adminRole = adminData?.role;
   const requests = data?.data || [];
 
   const handleFilterChange = (e) => {
@@ -124,6 +133,10 @@ const RequestTable = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Department</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Requested By</th>
+                  {/* Only show Actions column if not law-service or law-research */}
+                  {adminRole !== 'law-service' && adminRole !== 'law-research' && (
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
@@ -182,6 +195,18 @@ const RequestTable = () => {
                         {req.userRef?.email || "—"}
                       </div>
                     </td>
+                    {/* Only show Actions button if not law-service or law-research */}
+                    {adminRole !== 'law-service' && adminRole !== 'law-research' && (
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        <button
+                          onClick={() => navigate(`/admin/request/${req._id}`)}
+                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#3c8dbc] hover:bg-[#2c6a8f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3c8dbc] transition-colors duration-200"
+                        >
+                          <FaEye className="mr-2" />
+                          View Details
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

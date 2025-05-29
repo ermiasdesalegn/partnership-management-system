@@ -270,11 +270,26 @@ export const fetchDashboardData = async () => {
 // Request Detail Functions
 export const fetchRequest = async (id) => {
   const token = localStorage.getItem("token");
-  const res = await axios.get(`http://localhost:5000/api/v1/admin/requests/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    withCredentials: true
-  });
-  return res.data.data;
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  try {
+    const response = await axios.get(`http://localhost:5000/api/v1/admin/requests/${id}`, {
+      headers: { 
+        Authorization: `Bearer ${token}` 
+      },
+      withCredentials: true
+    });
+
+    // Return the data directly since the response already contains the request data
+    return response.data.data;
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to fetch request details");
+    }
+    throw new Error("Failed to fetch request details");
+  }
 };
 
 export const submitReview = async ({
@@ -358,4 +373,13 @@ export const submitReview = async ({
   });
 
   return response.data;
+};
+
+export const fetchReviewedRequestById = async (id) => {
+  const token = localStorage.getItem("token");
+  const res = await axios.get(`http://localhost:5000/api/v1/admin/my-reviewed-requests/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true,
+  });
+  return res.data.data;
 };

@@ -55,7 +55,7 @@ const LawRelatedRequests = ({ currentAdmin }) => {
     return (
       <div className="text-red-500 text-center p-4">
         Error loading requests: {error.message}
-      </div>
+        </div>
     );
   }
 
@@ -82,12 +82,12 @@ const LawRelatedRequests = ({ currentAdmin }) => {
           
           <div className="space-y-4">
             {requests.map((request) => (
-              <div
-                key={request._id}
+            <div
+              key={request._id}
                 className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
+            >
+              <div className="flex justify-between items-start">
+                <div>
                     <h3 className="font-medium text-lg">{request.title}</h3>
                     <p className="text-gray-600 mt-1">{request.description}</p>
                     <div className="mt-2 text-sm text-gray-500">
@@ -108,7 +108,7 @@ const LawRelatedRequests = ({ currentAdmin }) => {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
         </div>
       </div>
     </div>

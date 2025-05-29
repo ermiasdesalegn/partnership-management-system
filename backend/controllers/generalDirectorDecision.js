@@ -64,6 +64,7 @@ export const generalDirectorDecision = async (req, res) => {
         companyType: request.companyDetails?.type,
         companyAddress: request.companyDetails?.address,
         frameworkType: request.frameworkType,
+        partnershipRequestType: request.partnershipRequestType,
         duration: request.duration,
         status: "Active",
         requestAttachments: request.attachments || [],

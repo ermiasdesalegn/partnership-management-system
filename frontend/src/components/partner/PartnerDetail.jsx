@@ -47,7 +47,7 @@ const PartnerDetail = () => {
   const isPartnershipDivision = adminData?.role === "partnership-division";
   const isDirector = adminData?.role === "director";
   const canViewActivities = isGeneralDirector || isPartnershipDivision || isDirector;
-  const canManageActivities = isGeneralDirector || isPartnershipDivision;
+  const canManageActivities = isGeneralDirector || isPartnershipDivision || isDirector;
   const canManageApprovalAttachments = isGeneralDirector || isPartnershipDivision || isDirector;
 
   const signMutation = useMutation({
@@ -160,12 +160,12 @@ const PartnerDetail = () => {
             </div>
             <div className="text-right space-y-1">
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                partner.status === "Active" 
+                partner.isSigned 
                   ? "bg-green-100 text-green-800" 
-                  : "bg-red-100 text-red-800"
+                  : "bg-yellow-100 text-yellow-800"
               }`}>
-                {partner.status === "Active" ? <FaCheckCircle className="mr-1" /> : <FaTimesCircle className="mr-1" />}
-                {partner.status}
+                {partner.isSigned ? <FaCheckCircle className="mr-1" /> : <FaClock className="mr-1" />}
+                {partner.isSigned ? "Active" : "Not Signed"}
               </span>
               {!partner.isSigned && isGeneralDirector && (
                 <button
@@ -275,53 +275,53 @@ const PartnerDetail = () => {
             <div className="space-y-4">
               {/* Upload Form - Only show for request attachments or if user has permission for approval attachments */}
               {(activeTab === "request" || (activeTab === "approval" && canManageApprovalAttachments)) && (
-                <form onSubmit={handleUpload} className="bg-gray-50 p-4 rounded-lg">
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Upload File
+              <form onSubmit={handleUpload} className="bg-gray-50 p-4 rounded-lg">
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Upload File
+                    </label>
+                    <div className="flex items-center justify-center w-full">
+                      <label className="flex flex-col items-center px-3 py-4 bg-white text-blue-600 rounded-lg border-2 border-dashed border-blue-200 cursor-pointer hover:border-blue-400 transition-colors w-full">
+                        <svg
+                          className="w-6 h-6 mb-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <span className="text-xs">{file ? file.name : "Choose file"}</span>
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={handleFileChange}
+                        />
                       </label>
-                      <div className="flex items-center justify-center w-full">
-                        <label className="flex flex-col items-center px-3 py-4 bg-white text-blue-600 rounded-lg border-2 border-dashed border-blue-200 cursor-pointer hover:border-blue-400 transition-colors w-full">
-                          <svg
-                            className="w-6 h-6 mb-1"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                          </svg>
-                          <span className="text-xs">{file ? file.name : "Choose file"}</span>
-                          <input
-                            type="file"
-                            className="hidden"
-                            onChange={handleFileChange}
-                          />
-                        </label>
-                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Description
-                      </label>
-                      <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        rows={2}
-                        placeholder="Add a description for the file..."
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={uploadMutation.isLoading}
-                      className="w-full px-3 py-1.5 text-sm bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors disabled:opacity-50"
-                    >
-                      {uploadMutation.isLoading ? "Uploading..." : "Upload File"}
-                    </button>
                   </div>
-                </form>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      rows={2}
+                      placeholder="Add a description for the file..."
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={uploadMutation.isLoading}
+                    className="w-full px-3 py-1.5 text-sm bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors disabled:opacity-50"
+                  >
+                    {uploadMutation.isLoading ? "Uploading..." : "Upload File"}
+                  </button>
+                </div>
+              </form>
               )}
 
               {/* Attachments List */}
@@ -363,12 +363,12 @@ const PartnerDetail = () => {
                           </a>
                           {/* Only show remove button for request attachments or if user has permission for approval attachments */}
                           {(activeTab === "request" || (activeTab === "approval" && canManageApprovalAttachments)) && (
-                            <button
-                              onClick={() => handleRemoveAttachment(attachment._id)}
-                              className="p-1.5 text-red-500 hover:text-red-700"
-                            >
-                              <FaTrash />
-                            </button>
+                          <button
+                            onClick={() => handleRemoveAttachment(attachment._id)}
+                            className="p-1.5 text-red-500 hover:text-red-700"
+                          >
+                            <FaTrash />
+                          </button>
                           )}
                         </div>
                       </div>

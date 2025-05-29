@@ -17,7 +17,8 @@ import {
   getExternalUserRequests,
   getRequestsByRole,
   getSingleRequestInRoleList,
-  getReviewedRequestsByAdmin
+  getReviewedRequestsByAdmin,
+  getReviewedRequestById
 } from "../controllers/adminController.js";
 import {addFeedbackAttachment, addRequestAttachment} from "../controllers/requestController.js"
 import {forwardToGeneralDirector} from "../controllers/forwardToGeneralDirector.js"
@@ -51,9 +52,9 @@ router.post("/signup", signup);
 // Data access (partnership-division, director and general-director)
 const pdAndGdRoles = ["partnership-division", "law-service", "law-research", "director", "general-director"];
 
-router.get("/requests", restrictToAdmin(...pdAndGdRoles), getAllRequests);
+router.get("/requests", protectAdmin, getAllRequests);
 router.get("/requestsRelated", restrictToAdmin("partnership-division", "law-service", "law-research", "director", "general-director"), getRequestsByRole);
-router.get("/requests/:id", protectAdmin, restrictToAdmin("partnership-division", "law-service", "law-research", "director", "general-director"), getSingleRequestInRoleList);
+router.get("/requests/:id", protectAdmin, restrictToAdmin("partnership-division", "director", "general-director", "law-service", "law-research"), getSingleRequestInRoleList);
 
 router.get("/users", restrictToAdmin(...pdAndGdRoles), getAllUsers);
 router.get("/users/external", restrictToAdmin(...pdAndGdRoles), getAllExternalUsers);
@@ -120,6 +121,9 @@ router.get("/law-service-requests", protectAdmin, restrictToAdmin("law-service",
 router.get("/law-research-requests", protectAdmin, restrictToAdmin("law-research", "director"), getLawRelatedRequests);
 router.get("/pending-requests", protectAdmin, restrictToAdmin("partnership-division", "director"), getPendingRequests);
 router.get('/my-reviewed-requests', protectAdmin, restrictToAdmin('partnership-division', 'law-service', 'law-research', 'director', 'general-director'), getReviewedRequestsByAdmin);
+
+// Get a single reviewed request by ID
+router.get('/my-reviewed-requests/:id', protectAdmin, restrictToAdmin('partnership-division', 'law-service', 'law-research', 'director', 'general-director'), getReviewedRequestById);
 
 router.post(
   '/requests:requestId/attachments',
