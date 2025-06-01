@@ -2,11 +2,24 @@ import Admin from "../models/Admin.js";
 import User from "../models/User.js";
 import Request from "../models/Request.js";
 import Partner from "../models/Partners.js";
+import catchAsync from "../utils/catchAsync.js";
+import AppError from "../utils/appError.js";
+import mongoose from "mongoose";
+
+// Helper function to validate ObjectId
+const isValidObjectId = (id) => {
+  if (!id) return false;
+  return mongoose.Types.ObjectId.isValid(id) && new mongoose.Types.ObjectId(id).toString() === id;
+};
 
 export const generalDirectorDecision = async (req, res) => {
   const { requestId, decision, message, feedbackMessage } = req.body;
 
   try {
+    if (!isValidObjectId(requestId)) {
+      return res.status(400).json({ message: "Invalid request ID format" });
+    }
+
     const request = await Request.findById(requestId);
     
     if (!request) {
@@ -92,8 +105,6 @@ export const generalDirectorDecision = async (req, res) => {
   }
 };
 
-
-
 export const getRequestsForGeneralDirector = async (req, res) => {
   try {
     if (req.admin.role !== "general-director") {
@@ -116,3 +127,131 @@ export const getRequestsForGeneralDirector = async (req, res) => {
     res.status(500).json({ status: "error", message: err.message });
   }
 };
+
+// Helper function for validation
+const validatePrivileges = (privileges) => {
+  if (!privileges || typeof privileges !== 'object') {
+    throw new AppError('Invalid privileges format', 400);
+  }
+
+  const requiredRoles = ['director', 'partnership-division', 'law-service', 'law-research'];
+  
+  for (const role of requiredRoles) {
+    if (typeof privileges[role] !== 'boolean') {
+      throw new AppError(`Invalid privilege value for role: ${role}`, 400);
+    }
+  }
+
+  return true;
+};
+
+export const checkPartnerAccess = catchAsync(async (req, res, next) => {
+  const { partnerId } = req.params;
+  const { role } = req.admin;
+
+  // Skip validation if no partnerId is provided
+  if (!partnerId) {
+    return next();
+  }
+
+  if (!isValidObjectId(partnerId)) {
+    throw new AppError('Invalid partner ID format', 400);
+  }
+
+  const partner = await Partner.findById(partnerId);
+  if (!partner) {
+    throw new AppError('Partner not found', 404);
+  }
+
+  // If partner is not operational, no need to check privileges
+  if (partner.partnershipRequestType !== 'operational') {
+    return next();
+  }
+
+  // Check if partner has privileges defined
+  if (!partner.privileges) {
+    // If no privileges defined, grant access by default
+    return next();
+  }
+
+  // Check if the admin's role has access
+  // Explicitly check if the role's privilege is false
+  if (partner.privileges[role] === false) {
+    throw new AppError('You do not have access to this partner', 403);
+  }
+
+  // If the role's privilege is not explicitly set to false, allow access
+  next();
+});
+
+export const getPartnershipPrivileges = catchAsync(async (req, res) => {
+  const { partnerId } = req.params;
+
+  if (!partnerId) {
+    throw new AppError('Partner ID is required', 400);
+  }
+
+  if (!isValidObjectId(partnerId)) {
+    throw new AppError('Invalid partner ID format', 400);
+  }
+
+  const partner = await Partner.findById(partnerId);
+  if (!partner) {
+    throw new AppError('Partner not found', 404);
+  }
+
+  if (partner.partnershipRequestType !== 'operational') {
+    throw new AppError('Privileges can only be managed for operational partnerships', 400);
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      privileges: partner.privileges || {
+        director: true,
+        'partnership-division': true,
+        'law-service': true,
+        'law-research': true
+      }
+    }
+  });
+});
+
+export const setPartnershipPrivileges = catchAsync(async (req, res) => {
+  const { partnerId } = req.params;
+  const { privileges } = req.body;
+
+  if (!partnerId) {
+    throw new AppError('Partner ID is required', 400);
+  }
+
+  if (!isValidObjectId(partnerId)) {
+    throw new AppError('Invalid partner ID format', 400);
+  }
+
+  if (!privileges) {
+    throw new AppError('Privileges data is required', 400);
+  }
+
+  // Validate privileges
+  validatePrivileges(privileges);
+
+  const partner = await Partner.findById(partnerId);
+  if (!partner) {
+    throw new AppError('Partner not found', 404);
+  }
+
+  if (partner.partnershipRequestType !== 'operational') {
+    throw new AppError('Privileges can only be managed for operational partnerships', 400);
+  }
+
+  partner.privileges = privileges;
+  await partner.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      privileges: partner.privileges
+    }
+  });
+});

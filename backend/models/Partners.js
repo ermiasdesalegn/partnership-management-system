@@ -48,6 +48,16 @@ const PartnerSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Admin"
   },
+  privileges: {
+    type: Map,
+    of: Boolean,
+    default: () => new Map([
+      ['director', true],
+      ['partnership-division', true],
+      ['law-service', false],
+      ['law-research', false]
+    ])
+  },
   requestAttachments: [
     {
       path: String,

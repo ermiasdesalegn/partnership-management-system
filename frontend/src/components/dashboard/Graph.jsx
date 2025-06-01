@@ -1,87 +1,84 @@
-import { LineChart } from "@mui/x-charts/LineChart";
-import { Paper, Typography, Box } from "@mui/material";
+import React from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
-const usersData = [150, 200, 180, 220, 250, 300, 350, 330, 280, 290, 310, 360];
-const inProgressPartnersData = [14, 88, 4, 57, 52, 14, 14, 14, 14, 14, 14, 14];
-const partnersData = [10, 15, 12, 18, 20, 25, 30, 28, 22, 24, 26, 29];
+const SimpleLineChart = ({ monthlyStats }) => {
+  if (!monthlyStats) return null;
 
-const months = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "June",
-  "July",
-  "Aug",
-  "Sept",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-export default function MonthlyPartnersChart() {
   return (
-    <Paper
-      elevation={5}
-      sx={{
-        padding: 4,
-        backgroundColor: "#fff",
-        borderRadius: "12px",
-        boxShadow: "0 6px 20px rgba(0, 0, 0, 0.1)",
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart
+        data={monthlyStats}
+        margin={{
+          top: 5,
+          right: 30,
+          left: 20,
+          bottom: 5,
       }}
     >
-      <Typography
-        variant="h5"
-        color="textPrimary"
-        align="center"
-        fontWeight="600"
-        marginBottom={3}
-      >
-        Monthly Users & Partners Statistics 📊
-      </Typography>
-
-      <Box
-        sx={{
-          backgroundColor: "#f9f9f9",
-          borderRadius: "12px",
-          padding: 3,
-          boxShadow: 2,
-          overflowX: "auto",
+        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+        <XAxis 
+          dataKey="month" 
+          stroke="#666"
+          tick={{ fill: '#666' }}
+        />
+        <YAxis 
+          stroke="#666"
+          tick={{ fill: '#666' }}
+        />
+        <Tooltip 
+          contentStyle={{
+            backgroundColor: 'white',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}
-      >
-        <LineChart
-          width={700} // Increased width for better spacing
-          height={420}
-          series={[
-            {
-              data: usersData,
-              label: "Users",
-              color: "#1976D2",
-              curve: "monotoneX",
-            },
-            {
-              data: inProgressPartnersData,
-              label: "In-Progress Partners",
-              color: "#FFA726",
-              curve: "monotoneX",
-            },
-            {
-              data: partnersData,
-              label: "Partners",
-              color: "#388E3C",
-              curve: "monotoneX",
-            },
-          ]}
-          xAxis={[{ scaleType: "point", data: months }]}
-          yAxis={[{ label: "Count" }]}
-          sx={{
-            borderRadius: "8px",
-            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-            backgroundColor: "#fff",
+        />
+        <Legend 
+          wrapperStyle={{
+            paddingTop: '20px'
           }}
         />
-      </Box>
-    </Paper>
+        <Line
+          type="monotone"
+          dataKey="requests"
+          stroke="#8884d8"
+          name="Requests"
+          activeDot={{ r: 8 }}
+          strokeWidth={2}
+        />
+        <Line
+          type="monotone"
+          dataKey="signedPartners"
+          stroke="#82ca9d"
+          name="Signed Partners"
+          strokeWidth={2}
+        />
+        <Line
+          type="monotone"
+          dataKey="unsignedPartners"
+          stroke="#ffc658"
+          name="Unsigned Partners"
+          strokeWidth={2}
+        />
+        <Line
+          type="monotone"
+          dataKey="activePartners"
+          stroke="#ff8042"
+          name="Active Partners"
+          strokeWidth={2}
+        />
+      </LineChart>
+    </ResponsiveContainer>
   );
-}
+};
+
+export default SimpleLineChart;

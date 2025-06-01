@@ -14,7 +14,8 @@ import {
   FaCheckCircle,
   FaTimesCircle,
   FaClock,
-  FaFile
+  FaFile,
+  FaLock
 } from 'react-icons/fa';
 import { 
   fetchPartnerById, 
@@ -24,6 +25,7 @@ import {
   fetchCurrentAdmin 
 } from "../../api/adminApi";
 import PartnerActivities from "./PartnerActivities";
+import PartnerPrivileges from "./PartnerPrivileges";
 
 const PartnerDetail = () => {
   const { id } = useParams();
@@ -232,6 +234,19 @@ const PartnerDetail = () => {
                   Activities
                 </button>
               )}
+              {partner.isSigned && partner.partnershipRequestType === "operational" && isGeneralDirector && (
+                <button
+                  onClick={() => setActiveTab("privileges")}
+                  className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === "privileges"
+                      ? "border-[#3c8dbc] text-[#3c8dbc]"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <FaLock className="inline-block mr-2" />
+                  Privileges
+                </button>
+              )}
             </nav>
           </div>
 
@@ -268,6 +283,12 @@ const PartnerDetail = () => {
                   </p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === "privileges" && partner.partnershipRequestType === "operational" && isGeneralDirector && (
+            <div className="mt-4">
+              <PartnerPrivileges partnerId={partner._id} />
             </div>
           )}
 

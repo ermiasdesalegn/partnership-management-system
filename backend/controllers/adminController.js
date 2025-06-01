@@ -1,6 +1,7 @@
 import Admin from "../models/Admin.js";
 import User from "../models/User.js";
 import Request from "../models/Request.js";
+import Partners from "../models/Partners.js";
 
 import jwt from "jsonwebtoken";
 import { promisify } from "util";
@@ -626,6 +627,125 @@ export const getAllAdmins = async (req, res) => {
       });
     } catch (err) {
       res.status(500).json({ status: "fail", message: err.message });
+    }
+  };
+  
+export const getDashboardStatistics = async (req, res) => {
+  try {
+    console.log("Fetching dashboard statistics...");
+    
+    // Get total partnerships (signed + unsigned)
+    const totalPartners = await Partners.countDocuments();
+    const signedPartners = await Partners.countDocuments({ isSigned: true });
+    const unsignedPartners = await Partners.countDocuments({ isSigned: false });
+
+    // Get active partners (partners with status "Active")
+    const activePartners = await Partners.countDocuments({ status: "Active" });
+
+    // Get total requests
+    const totalRequests = await Request.countDocuments();
+
+    // Get new requests in the last year
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const newRequestsLastYear = await Request.countDocuments({
+      createdAt: { $gte: oneYearAgo }
+    });
+
+    console.log("Basic statistics:", {
+      totalPartners,
+      signedPartners,
+      unsignedPartners,
+      activePartners,
+      totalRequests,
+      newRequestsLastYear
+    });
+
+    // Get monthly statistics for the last year
+    const monthlyStats = await Request.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: oneYearAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 }
+      }
+    ]);
+
+    // Get monthly partner statistics
+    const monthlyPartnerStats = await Partners.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: oneYearAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" }
+          },
+          signed: {
+            $sum: { $cond: [{ $eq: ["$isSigned", true] }, 1, 0] }
+          },
+          unsigned: {
+            $sum: { $cond: [{ $eq: ["$isSigned", false] }, 1, 0] }
+          },
+          active: {
+            $sum: { $cond: [{ $eq: ["$status", "Active"] }, 1, 0] }
+          }
+        }
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 }
+      }
+    ]);
+
+    console.log("Monthly stats:", { monthlyStats, monthlyPartnerStats });
+
+    // Format monthly data for charts
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const formattedMonthlyStats = months.map((month, index) => {
+      const monthData = monthlyStats.find(m => m._id.month === index + 1);
+      const partnerData = monthlyPartnerStats.find(m => m._id.month === index + 1);
+      return {
+        month,
+        requests: monthData ? monthData.count : 0,
+        signedPartners: partnerData ? partnerData.signed : 0,
+        unsignedPartners: partnerData ? partnerData.unsigned : 0,
+        activePartners: partnerData ? partnerData.active : 0
+      };
+    });
+
+    console.log("Formatted monthly stats:", formattedMonthlyStats);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        statistics: {
+          totalPartners,
+          signedPartners,
+          unsignedPartners,
+          activePartners,
+          totalRequests,
+          newRequestsLastYear
+        },
+        monthlyStats: formattedMonthlyStats
+      }
+    });
+  } catch (err) {
+    console.error("Error in getDashboardStatistics:", err);
+    res.status(500).json({ status: "error", message: err.message });
     }
   };
   

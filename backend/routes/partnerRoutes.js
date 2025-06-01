@@ -11,7 +11,9 @@ import {
   removeApprovalAttachment,
   markPartnerAsSigned,
   getSignedPartners,
-  getUnsignedPartners
+  getUnsignedPartners,
+  getPartnerPrivileges,
+  updatePartnerPrivileges
 } from "../controllers/partnerController.js";
 import { protectAdmin, restrictToAdmin } from "../middleware/authMiddleware.js";
 import upload from "../utils/upload.js";
@@ -40,5 +42,9 @@ router.post("/:id/request-attachments", upload.single("file"), addRequestAttachm
 router.post("/:id/approval-attachments", upload.single("file"), addApprovalAttachment);
 router.delete("/:id/request-attachments/:attachmentId", removeRequestAttachment);
 router.delete("/:id/approval-attachments/:attachmentId", removeApprovalAttachment);
+
+// Privilege management routes - restricted to general-director only
+router.get("/:id/privileges", restrictToAdmin("general-director"), getPartnerPrivileges);
+router.put("/:id/privileges", restrictToAdmin("general-director"), updatePartnerPrivileges);
 
 export default router; 

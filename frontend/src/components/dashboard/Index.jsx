@@ -3,76 +3,114 @@ import { StatisticsCard } from "./StatisticCard";
 import {
   FaHandshake,
   FaChartPie,
-  FaDollarSign,
+  FaFileAlt,
   FaUserPlus,
-} from "react-icons/fa"; // Relevant icons for PMS
+} from "react-icons/fa";
 import SimpleLineChart from "./Graph";
 import TickPlacementBars from "./Bar";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-// Updated static data for PMS-related cards
+import { useQuery } from "@tanstack/react-query";
+import { getDashboardStatistics, logout } from "../../api/adminApi";
+
+const AdminDashboard = () => {
+  const navigate = useNavigate();
+
+  const { data: dashboardData, isLoading, error } = useQuery({
+    queryKey: ["dashboardStatistics"],
+    queryFn: getDashboardStatistics,
+  });
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/admin/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50 text-red-500">
+        Error: {error.message}
+      </div>
+    );
+  }
+
 const statisticsCardsData = [
   {
     color: "blue",
     icon: FaHandshake,
     title: "Total Partnerships",
-    value: "120",
+      value: dashboardData?.statistics.totalPartners.toString() || "0",
     footer: {
       color: "text-green-500",
-      value: "+15%",
-      label: "growth this quarter",
+        value: `${dashboardData?.statistics.signedPartners} signed`,
+        label: `${dashboardData?.statistics.unsignedPartners} unsigned`,
     },
   },
   {
     color: "green",
     icon: FaChartPie,
-    title: "Active Collaborations",
-    value: "78",
+      title: "Active Partners",
+      value: dashboardData?.statistics.activePartners.toString() || "0",
     footer: {
       color: "text-green-500",
-      value: "+10%",
-      label: "increase this month",
+        value: "Active",
+        label: "partnerships",
     },
   },
   {
     color: "orange",
-    icon: FaDollarSign,
-    title: "Revenue Generated",
-    value: "$350,000",
+      icon: FaFileAlt,
+      title: "Total Requests",
+      value: dashboardData?.statistics.totalRequests.toString() || "0",
     footer: {
-      color: "text-green-500",
-      value: "+8%",
-      label: "compared to last month",
+        color: "text-blue-500",
+        value: "All time",
+        label: "requests",
     },
   },
   {
     color: "purple",
     icon: FaUserPlus,
-    title: "New Partnerships",
-    value: "25",
+      title: "New Requests",
+      value: dashboardData?.statistics.newRequestsLastYear.toString() || "0",
     footer: {
       color: "text-blue-500",
-      value: "steady",
-      label: "compared to last quarter",
+        value: "Last year",
+        label: "requests",
     },
   },
 ];
 
-const AdminDashboard = () => {
-  const navigate = useNavigate();
-  const handleLogout = async () => {
-    try {
-      await axios.get("http://localhost:5000/api/v1/admin/logout", {
-        withCredentials: true,
-      });
-      navigate("/admin/login"); // 👈 redirects user after logout
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
   return (
-    <div className="py-1 px-2 mt-15">
-      <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
+    <div className="min-h-screen bg-gray-50 w-full">
+      <div className="w-full min-w-full px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Overview of partnerships and requests
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          >
+            Logout
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
         {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
           <StatisticsCard
             key={title}
@@ -90,11 +128,22 @@ const AdminDashboard = () => {
           />
         ))}
       </div>
-      <div className="grid grid-cols-2">
-        <SimpleLineChart />
-        <TickPlacementBars />
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-8">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Monthly Statistics</h2>
+            <div className="h-[400px] sm:h-[500px]">
+              <SimpleLineChart monthlyStats={dashboardData?.monthlyStats} />
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Performance Overview</h2>
+            <div className="h-[400px] sm:h-[500px]">
+              <TickPlacementBars monthlyStats={dashboardData?.monthlyStats} />
+            </div>
+          </div>
+        </div>
       </div>
-      <button className="" onClick={handleLogout}>Logout</button>
     </div>
   );
 };

@@ -18,11 +18,12 @@ import {
   getRequestsByRole,
   getSingleRequestInRoleList,
   getReviewedRequestsByAdmin,
-  getReviewedRequestById
+  getReviewedRequestById,
+  getDashboardStatistics
 } from "../controllers/adminController.js";
 import {addFeedbackAttachment, addRequestAttachment} from "../controllers/requestController.js"
 import {forwardToGeneralDirector} from "../controllers/forwardToGeneralDirector.js"
-import {generalDirectorDecision,getRequestsForGeneralDirector} from "../controllers/generalDirectorDecision.js"
+import {generalDirectorDecision,getRequestsForGeneralDirector, setPartnershipPrivileges, getPartnershipPrivileges, checkPartnerAccess} from "../controllers/generalDirectorDecision.js"
 import {lawServiceReviewRequest, lawResearchReviewRequest, getLawRelatedRequests, getLawRelatedRequestsForPartnership} from "../controllers/lawDepartmentReviewRequest.js"
 import {partnershipReviewRequest,getPartnershipReviewedRequests,getApprovedRequestsForPartnershipDivision,getDisapprovedRequestsForLawDepartment,getPendingRequests} from "../controllers/partnershipReviewRequest.js"
 import { protectAdmin, restrictToAdmin } from "../middleware/authMiddleware.js";
@@ -37,6 +38,9 @@ router.get("/logout", logout);
 
 // Protected routes (require JWT token)
 router.use(protectAdmin);
+
+// Dashboard route
+router.get("/dashboard", getDashboardStatistics);
 
 // Admin self-management
 router.get("/me", getMe);
@@ -184,6 +188,27 @@ router.post(
     { name: "feedbackAttachments", maxCount: 5 }
   ]),
   directorReview
+);
+
+// Partnership privileges routes (only accessible by general director)
+router.put(
+  "/partners/:partnerId/privileges",
+  protectAdmin,
+  restrictToAdmin("general-director"),
+  setPartnershipPrivileges
+);
+
+router.get(
+  "/partners/:partnerId/privileges",
+  protectAdmin,
+  restrictToAdmin("general-director"),
+  getPartnershipPrivileges
+);
+
+router.get(
+  "/partners/:partnerId/access",
+  protectAdmin,
+  checkPartnerAccess
 );
 
 export default router;

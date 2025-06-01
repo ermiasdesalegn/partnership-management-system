@@ -1,73 +1,79 @@
-import { BarChart } from "@mui/x-charts/BarChart";
-import { axisClasses } from "@mui/x-charts/ChartsAxis";
-import { dataset, valueFormatter } from "./weather";
-import { Paper } from "@mui/material";
+import React from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
-const chartSetting = {
-  yAxis: [
-    {
-      label: "Count",
-    },
-  ],
-  series: [
-    {
-      dataKey: "partnerships",
-      label: "Partnerships",
-      valueFormatter,
-      color: "#4CAF50", // Green
-    },
-    {
-      dataKey: "usersRegistered",
-      label: "Users Registered",
-      valueFormatter,
-      color: "#2196F3", // Blue
-    },
-    {
-      dataKey: "inprogress",
-      label: "In Progress",
-      valueFormatter,
-      color: "#FF9800", // Orange
-    },
-  ],
-  height: 450,
-  sx: {
-    borderRadius: "12px",
-    boxShadow: "0 5px 15px rgba(0, 0, 0, 0.15)",
-    backgroundColor: "#fff",
-    padding: 3,
-    [`& .${axisClasses.directionY} .${axisClasses.label}`]: {
-      transform: "translateX(-10px)",
-      fontSize: "14px",
-      fontWeight: "bold",
-    },
-    [`& .${axisClasses.directionX} .${axisClasses.label}`]: {
-      fontSize: "14px",
-      fontWeight: "bold",
-    },
-  },
-};
+const TickPlacementBars = ({ monthlyStats }) => {
+  if (!monthlyStats) return null;
 
-export default function EnhancedBarChart() {
   return (
-    <Paper
-      elevation={4}
-      sx={{ padding: 4, backgroundColor: "#f9f9f9", borderRadius: "12px" }}
-    >
-      <h2
-        style={{
-          textAlign: "center",
-          color: "#333",
-          marginBottom: "16px",
-          fontWeight: "600",
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        data={monthlyStats}
+        margin={{
+          top: 5,
+          right: 30,
+          left: 20,
+          bottom: 5,
         }}
       >
-        Performance Overview
-      </h2>
-      <BarChart
-        dataset={dataset}
-        xAxis={[{ scaleType: "band", dataKey: "month", label: "Month" }]}
-        {...chartSetting}
+        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+        <XAxis 
+          dataKey="month" 
+          stroke="#666"
+          tick={{ fill: '#666' }}
+        />
+        <YAxis 
+          stroke="#666"
+          tick={{ fill: '#666' }}
+        />
+        <Tooltip 
+          contentStyle={{
+            backgroundColor: 'white',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}
+        />
+        <Legend 
+          wrapperStyle={{
+            paddingTop: '20px'
+          }}
+        />
+        <Bar 
+          dataKey="requests" 
+          name="Requests" 
+          fill="#8884d8" 
+          radius={[4, 4, 0, 0]}
+        />
+        <Bar 
+          dataKey="signedPartners" 
+          name="Signed Partners" 
+          fill="#82ca9d" 
+          radius={[4, 4, 0, 0]}
+        />
+        <Bar 
+          dataKey="unsignedPartners" 
+          name="Unsigned Partners" 
+          fill="#ffc658" 
+          radius={[4, 4, 0, 0]}
+        />
+        <Bar 
+          dataKey="activePartners" 
+          name="Active Partners" 
+          fill="#ff8042" 
+          radius={[4, 4, 0, 0]}
       />
-    </Paper>
+      </BarChart>
+    </ResponsiveContainer>
   );
-}
+};
+
+export default TickPlacementBars;

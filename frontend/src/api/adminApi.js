@@ -1,3 +1,125 @@
+import axios from "axios";
+
+const API_URL = "http://localhost:5000/api/v1/admin";
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add request interceptor to include auth token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Auth functions
+export const login = async (credentials) => {
+  const response = await api.post("/login", credentials);
+  if (response.data.token) {
+    localStorage.setItem("token", response.data.token);
+  }
+  return response.data;
+};
+
+export const logout = async () => {
+  const response = await api.get("/logout");
+  localStorage.removeItem("token");
+  return response.data;
+};
+
+// Dashboard functions
+export const getDashboardStatistics = async () => {
+  const response = await api.get("/dashboard");
+  return response.data.data;
+};
+
+// User management functions
+export const getAllUsers = async () => {
+  const response = await api.get("/users");
+  return response.data.data;
+};
+
+export const getAllInternalUsers = async () => {
+  const response = await api.get("/users/internal");
+  return response.data.data;
+};
+
+export const getAllExternalUsers = async () => {
+  const response = await api.get("/users/external");
+  return response.data.data;
+};
+
+// Request management functions
+export const getAllRequests = async () => {
+  const response = await api.get("/requests");
+  return response.data.data;
+};
+
+export const getRequestsByRole = async () => {
+  const response = await api.get("/requests/role");
+  return response.data.data;
+};
+
+export const getSingleRequest = async (id) => {
+  const response = await api.get(`/requests/${id}`);
+  return response.data.data;
+};
+
+export const getReviewedRequests = async () => {
+  const response = await api.get("/requests/reviewed");
+  return response.data.data;
+};
+
+export const getReviewedRequestById = async (id) => {
+  const response = await api.get(`/requests/reviewed/${id}`);
+  return response.data.data;
+};
+
+// Alias for backward compatibility
+export const fetchReviewedRequestById = getReviewedRequestById;
+
+// Profile management functions
+export const getProfile = async () => {
+  const response = await api.get("/me");
+  return response.data.data;
+};
+
+export const updateProfile = async (data) => {
+  const response = await api.patch("/me", data);
+  return response.data.data;
+};
+
+export const updatePassword = async (data) => {
+  const response = await api.patch("/me/password", data);
+  return response.data.data;
+};
+
+export const uploadProfilePhoto = async (formData) => {
+  const response = await api.post("/me/photo", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data.data;
+};
+
+export const uploadCoverPhoto = async (formData) => {
+  const response = await api.post("/me/cover", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data.data;
+};
+
 export const fetchAdminUsers = async () => {
     const token = localStorage.getItem('token');
     const res = await fetch('http://localhost:5000/api/v1/admin/users', {
@@ -46,8 +168,6 @@ export const fetchCurrentAdmin = async () => {
   const data = await res.json();
   return data.data.admin; // Only return the admin object
 };
-
-import axios from "axios";
 
 // Adjust depending on who is logged in
 export const fetchRequestsForCurrentAdmin = async () => {
@@ -375,11 +495,40 @@ export const submitReview = async ({
   return response.data;
 };
 
-export const fetchReviewedRequestById = async (id) => {
-  const token = localStorage.getItem("token");
-  const res = await axios.get(`http://localhost:5000/api/v1/admin/my-reviewed-requests/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    withCredentials: true,
-  });
-  return res.data.data;
+// Partnership privileges management
+export const setPartnershipPrivileges = async (partnerId, privileges) => {
+  const response = await axios.put(
+    `${API_URL}/partners/${partnerId}/privileges`,
+    { privileges },
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }
+  );
+  return response.data;
+};
+
+export const getPartnershipPrivileges = async (partnerId) => {
+  const response = await axios.get(
+    `${API_URL}/partners/${partnerId}/privileges`,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }
+  );
+  return response.data;
+};
+
+export const checkPartnerAccess = async (partnerId) => {
+  const response = await axios.get(
+    `${API_URL}/partners/${partnerId}/access`,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }
+  );
+  return response.data;
 };
