@@ -86,7 +86,8 @@ export const partnershipReviewRequest = async (req, res) => {
         request.currentStage = "general-director";
       }
     } else {
-      request.status = "Disapproved";
+      request.status = "disapproved";
+      request.currentStage = "partnership-division";
     }
 
     request.lastReviewedBy = admin._id;

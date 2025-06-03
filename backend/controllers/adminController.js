@@ -404,23 +404,35 @@ export const getAllAdmins = async (req, res) => {
     let requests;
     switch (role) {
       case "partnership-division":
-        requests = await Request.find({ currentStage: "partnership-division" }).populate("userRef");
+        requests = await Request.find({ 
+          currentStage: "partnership-division",
+          status: { $ne: "approved" }
+        }).populate("userRef");
         break;
       case "law-service":
         requests = await Request.find({ 
           currentStage: "law-service",
-          isLawServiceRelated: true
+          isLawServiceRelated: true,
+          status: { $ne: "approved" }
         }).populate("userRef");
         break;
       case "law-research":
         requests = await Request.find({ 
           currentStage: "law-research",
-          isLawResearchRelated: true
+          isLawResearchRelated: true,
+          status: { $ne: "approved" }
         }).populate("userRef");
         break;
       case "director":
+        requests = await Request.find({ 
+          status: { $ne: "approved" }
+        }).populate("userRef");
+        break;
       case "general-director":
-        requests = await Request.find().populate("userRef");
+        requests = await Request.find({ 
+          currentStage: "general-director",
+          status: { $ne: "approved" }
+        }).populate("userRef");
         break;
       default:
         return next(new AppError("Role not found", 403));

@@ -103,9 +103,9 @@ const ToBeReviewed = () => {
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Company</th>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Email</th>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Type</th>
+                <th className="px-6 py-3 text-left text-sm font-bold uppercase">Partnership Type</th>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Requested By</th>
-                <th className="px-6 py-3 text-left text-sm font-bold uppercase">Current Stage</th>
                 <th className="px-6 py-3 text-left text-sm font-bold uppercase">Action</th>
               </tr>
             </thead>
@@ -129,6 +129,15 @@ const ToBeReviewed = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4">
+                    {req.partnershipRequestType ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#3c8dbc]/10 text-[#3c8dbc] capitalize">
+                        {req.partnershipRequestType}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
                         req.status === "Approved"
@@ -136,11 +145,15 @@ const ToBeReviewed = () => {
                           : req.status === "In Review"
                           ? "bg-yellow-100 text-yellow-800"
                           : req.status === "Disapproved"
-                          ? "bg-red-100 text-red-800"
+                          ? "bg-red-100 text-red-800 font-bold"
                           : "bg-[#3c8dbc]/10 text-[#3c8dbc]"
                       }`}
                     >
-                      {req.status}
+                      {req.status === "disapproved" ? (
+                        <span className="text-red-600">{req.status}</span>
+                      ) : (
+                        req.status
+                      )}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -151,11 +164,6 @@ const ToBeReviewed = () => {
                     <div className="text-xs text-gray-500">{req.userRef?.email || "—"}</div>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                      {req.currentStage?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <button

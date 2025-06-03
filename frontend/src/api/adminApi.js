@@ -79,7 +79,7 @@ export const getReviewedRequests = async () => {
 };
 
 export const getReviewedRequestById = async (id) => {
-  const response = await api.get(`/requests/reviewed/${id}`);
+  const response = await api.get(`/my-reviewed-requests/${id}`);
   return response.data.data;
 };
 

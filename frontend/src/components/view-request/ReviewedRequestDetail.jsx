@@ -2,7 +2,7 @@ import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchReviewedRequestById } from "../../api/adminApi";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import {
   FaBuilding,
   FaEnvelope,
@@ -14,7 +14,8 @@ import {
   FaCheckCircle,
   FaTimesCircle,
   FaClock,
-  FaArrowLeft
+  FaArrowLeft,
+  FaFileUpload
 } from 'react-icons/fa';
 
 const ReviewedRequestDetail = () => {
@@ -25,6 +26,32 @@ const ReviewedRequestDetail = () => {
     queryKey: ["reviewedRequest", id],
     queryFn: () => fetchReviewedRequestById(id)
   });
+
+  // Add console logging to debug date fields
+  React.useEffect(() => {
+    if (request) {
+      console.log('Request data:', request);
+      console.log('Created at:', request.createdAt);
+      console.log('Approvals:', request.approvals);
+      console.log('Attachments:', request.attachments);
+    }
+  }, [request]);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      // Try parsing as ISO string first
+      return format(parseISO(dateString), 'PPP');
+    } catch (error) {
+      try {
+        // If that fails, try parsing as regular date
+        return format(new Date(dateString), 'PPP');
+      } catch (error) {
+        console.error('Date parsing error:', error);
+        return 'Invalid Date';
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -105,7 +132,7 @@ const ReviewedRequestDetail = () => {
             <div className="text-right">
               {getStatusBadge(request.status)}
               <div className="mt-2 text-sm text-gray-600">
-                Requested on: {format(new Date(request.createdAt), "MMM d, yyyy")}
+                {/* Remove Requested on date */}
               </div>
             </div>
           </div>
@@ -138,6 +165,15 @@ const ReviewedRequestDetail = () => {
                 <FaFileAlt className="mr-2 text-[#3c8dbc]" />
                 <span className="font-medium">Framework Type:</span> {request.frameworkType}
               </p>
+              {request.partnershipRequestType && (
+                <p className="flex items-center text-gray-600">
+                  <FaFileAlt className="mr-2 text-[#3c8dbc]" />
+                  <span className="font-medium">Partnership Type:</span> 
+                  <span className="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-[#3c8dbc]/10 text-[#3c8dbc] capitalize">
+                    {request.partnershipRequestType}
+                  </span>
+                </p>
+              )}
               <p className="flex items-center text-gray-600">
                 <FaClock className="mr-2 text-[#3c8dbc]" />
                 <span className="font-medium">Duration:</span> {request.duration?.value} {request.duration?.type}
@@ -176,31 +212,64 @@ const ReviewedRequestDetail = () => {
                     )}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {format(new Date(approval.date), "MMM d, yyyy 'at' h:mm a")}
+                    {/* Remove approval date */}
                   </div>
                 </div>
 
                 {/* Attachments */}
-                {approval.attachments?.length > 0 && (
-                  <div className="mt-3">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Attachments:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {approval.attachments.map((attachment, idx) => (
-                        <a
-                          key={idx}
-                          href={`http://localhost:5000/public/uploads/${attachment.path.split(/[/\\]/).pop()}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 hover:bg-gray-200"
-                        >
-                          <FaFileAlt className="mr-2" />
-                          {attachment.originalName}
-                          <FaDownload className="ml-2" />
-                        </a>
-                      ))}
+                {approval.attachments?.map((attachment, index) => {
+                  const fileName = typeof attachment === 'string' 
+                    ? attachment.split(/[/\\]/).pop()
+                    : attachment.path.split(/[/\\]/).pop();
+                  
+                  return (
+                    <div key={index} className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                      <FaFileUpload className="text-blue-500" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          {typeof attachment === 'string' ? fileName : (attachment.originalName || fileName || 'Unnamed file')}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {/* Remove attachment date */}
+                        </p>
+                      </div>
+                      <a
+                        href={`http://localhost:5000/api/v1/files/${fileName}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <FaDownload />
+                      </a>
                     </div>
-                  </div>
-                )}
+                  );
+                })}
+
+                {/* Feedback Attachments */}
+                {approval.feedbackAttachments?.map((attachment, index) => {
+                  const fileName = typeof attachment === 'string' 
+                    ? attachment.split(/[/\\]/).pop()
+                    : attachment.path.split(/[/\\]/).pop();
+                  
+                  return (
+                    <div key={index} className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                      <FaFileUpload className="text-blue-500" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          {typeof attachment === 'string' ? fileName : (attachment.originalName || fileName || 'Unnamed file')}
+                        </p>
+                      </div>
+                      <a
+                        href={`http://localhost:5000/api/v1/files/${fileName}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <FaDownload />
+                      </a>
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>

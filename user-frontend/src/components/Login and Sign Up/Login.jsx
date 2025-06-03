@@ -66,6 +66,12 @@ export default function Login() {
         throw new Error(data.message || 'Login failed');
       }
 
+      // Check if the user is internal
+      if (data.data.role === 'internal') {
+        throw new Error('This login page is only for external users. Please use the internal login page.');
+      }
+
+      // Only proceed if user is external
       localStorage.setItem('token', data.token);
       if (formData.rememberMe) {
         localStorage.setItem('rememberMe', 'true');
@@ -75,12 +81,7 @@ export default function Login() {
       setTimeout(() => navigate('/user'), 1500);
 
     } catch (error) {
-      const errorMessage = error.message.includes('401') 
-        ? 'Invalid email or password' 
-        : 'Login failed. Please try again.';
-      
-      toast.error(errorMessage);
-      navigate('/user');
+      toast.error(error.message || 'Login failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

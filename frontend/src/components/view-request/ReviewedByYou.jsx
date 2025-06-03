@@ -182,6 +182,16 @@ const ReviewedByYou = () => {
                   </div>
                 )}
 
+                {/* Partnership Type */}
+                {req.partnershipRequestType && (
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-500 mb-1">Partnership Type:</p>
+                    <span className="inline-block bg-[#3c8dbc]/10 text-[#3c8dbc] text-xs font-medium px-2 py-1 rounded-full capitalize">
+                      {req.partnershipRequestType}
+                    </span>
+                  </div>
+                )}
+
                 {/* Admin-only Attachments */}
                 {myApproval.attachments && myApproval.attachments.length > 0 && (
                   <div className="mb-4 bg-blue-50 p-3 rounded-md border border-blue-100">

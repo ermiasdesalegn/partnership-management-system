@@ -96,6 +96,7 @@ export const generalDirectorDecision = async (req, res) => {
       });
     } else if (decision === "disapprove") {
       request.status = "disapproved";
+      request.currentStage = "partnership-division";
     }
 
     await request.save();

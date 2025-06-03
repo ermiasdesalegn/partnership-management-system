@@ -65,7 +65,8 @@ export const directorReview = catchAsync(async (req, res, next) => {
   if (decision === "approve") {
     request.currentStage = "general-director";
   } else {
-    request.status = "Disapproved";
+    request.status = "disapproved";
+    request.currentStage = "partnership-division";
   }
 
   await request.save();

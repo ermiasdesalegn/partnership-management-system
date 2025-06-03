@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { FaPlus, FaFileUpload, FaTrash, FaCheck, FaClock, FaSpinner, FaDownload, FaChartBar, FaCalendarAlt, FaExclamationTriangle } from "react-icons/fa";
+import { FaPlus, FaFileUpload, FaTrash, FaCheck, FaClock, FaSpinner, FaDownload, FaChartBar, FaCalendarAlt, FaExclamationTriangle, FaExclamationCircle } from "react-icons/fa";
 import axios from "axios";
 import { Doughnut, Bar } from "react-chartjs-2";
 import {
@@ -28,12 +28,98 @@ ChartJS.register(
 
 const API_BASE_URL = "http://localhost:5000";
 
+const DeleteConfirmationModal = ({ isOpen, onClose, activity, onConfirm, isDeleting }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all animate-slideUp">
+        <div className="relative">
+          {/* Modal Header with Warning Gradient */}
+          <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-t-2xl p-6">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-3">
+                <FaExclamationCircle className="text-white text-2xl" />
+                <h2 className="text-xl font-bold text-white">Delete Activity</h2>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-white/80 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div className="mb-6">
+              <div className="bg-red-50 border border-red-100 rounded-lg p-4 mb-4">
+                <p className="text-red-800 font-medium mb-2">Are you sure you want to delete this activity?</p>
+                <p className="text-red-600 text-sm">This action cannot be undone.</p>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-500">Activity Title</p>
+                  <p className="font-medium text-gray-900">{activity.title}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-500">Status</p>
+                  <p className="font-medium text-gray-900 capitalize">{activity.status}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-500">Deadline</p>
+                  <p className="font-medium text-gray-900">
+                    {new Date(activity.deadline).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+              <button
+                onClick={onClose}
+                disabled={isDeleting}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onConfirm}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none disabled:shadow-none"
+              >
+                {isDeleting ? (
+                  <span className="flex items-center">
+                    <FaSpinner className="animate-spin mr-2" />
+                    Deleting...
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <FaTrash className="mr-2" />
+                    Delete Activity
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PartnerActivities = ({ partnerId, canManageActivities }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [file, setFile] = useState(null);
   const [description, setDescription] = useState("");
   const queryClient = useQueryClient();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [activityToDelete, setActivityToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Get current admin data
   const { data: adminData } = useQuery({
@@ -312,8 +398,23 @@ const PartnerActivities = ({ partnerId, canManageActivities }) => {
   };
 
   const handleDeleteActivity = (activityId) => {
-    if (window.confirm("Are you sure you want to delete this activity?")) {
-      deleteActivityMutation.mutate(activityId);
+    const activity = activities.find(a => a._id === activityId);
+    setActivityToDelete(activity);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!activityToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteActivityMutation.mutateAsync(activityToDelete._id);
+      setDeleteModalOpen(false);
+      setActivityToDelete(null);
+    } catch (error) {
+      console.error("Error deleting activity:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -846,6 +947,18 @@ const PartnerActivities = ({ partnerId, canManageActivities }) => {
           </div>
         </div>
           )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setActivityToDelete(null);
+        }}
+        activity={activityToDelete}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+      />
         </>
       )}
     </div>

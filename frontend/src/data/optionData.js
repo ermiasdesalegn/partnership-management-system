@@ -9,7 +9,6 @@ import {
 } from "react-icons/fa";
 import { IoMdNotifications } from "react-icons/io";
 import { MdFeedback } from "react-icons/md";
-import Badge from "./../components/common/Badge";
 
 const optionsData = [
   {
@@ -29,7 +28,7 @@ const optionsData = [
   },
   {
     Icon: FaUsersCog,
-    title: "  Requests for you",
+    title: "Requests for you",
     link: "/admin/requests-in-progress",
   },
   {

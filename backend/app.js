@@ -27,7 +27,7 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/api/v1/files', express.static(path.join(__dirname, 'public/uploads')));
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "http://localhost:5174"],
     credentials: true,
   })
 );

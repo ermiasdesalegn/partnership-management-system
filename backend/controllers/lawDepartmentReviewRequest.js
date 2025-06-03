@@ -46,7 +46,8 @@ export const lawServiceReviewRequest = async (req, res) => {
         request.currentStage = "general-director";
       }
     } else {
-      request.status = "Disapproved";
+      request.status = "disapproved";
+      request.currentStage = "partnership-division";
     }
 
     await request.save();
@@ -98,6 +99,7 @@ export const lawResearchReviewRequest = async (req, res) => {
       }
     } else {
       request.status = "Disapproved";
+      request.currentStage = "partnership-division";
     }
 
     await request.save();
