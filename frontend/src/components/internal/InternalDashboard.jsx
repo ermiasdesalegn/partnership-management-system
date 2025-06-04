@@ -159,7 +159,7 @@ const InternalDashboard = () => {
                       <div 
                         key={request._id}
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/internal/requests/${request._id}`)}
+                        onClick={() => navigate(`/internal/request/${request._id}`)}
                       >
                         <div className="flex items-center space-x-4">
                           <div className={`p-2 rounded-lg ${getStatusColor(request.status)}`}>
