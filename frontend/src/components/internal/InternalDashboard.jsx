@@ -172,7 +172,11 @@ const InternalDashboard = () => {
                             )}
                           </div>
                           <div>
-                            <h3 className="font-medium text-gray-900">{request.companyDetails?.name || 'Untitled Request'}</h3>
+                            <h3 className="font-medium text-gray-900">
+                              {request.companyDetails?.name 
+                                ? `${request.companyDetails.name} - ${request.frameworkType || 'Request'}`
+                                : `Request #${request._id.slice(-6)}`}
+                            </h3>
                             <p className="text-sm text-gray-500">
                               {new Date(request.createdAt).toLocaleDateString()}
                             </p>

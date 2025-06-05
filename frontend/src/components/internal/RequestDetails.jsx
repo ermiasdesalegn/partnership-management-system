@@ -11,7 +11,8 @@ import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
-  DocumentCheckIcon
+  DocumentCheckIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 const RequestDetails = () => {
@@ -164,17 +165,6 @@ const RequestDetails = () => {
                   </Typography>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <ClockIcon className="h-6 w-6 text-blue-500" />
-                <div>
-                  <Typography variant="small" color="blue-gray" className="font-medium">
-                    Current Stage
-                  </Typography>
-                  <Typography variant="small" color="gray">
-                    {request.currentStage}
-                  </Typography>
-                </div>
-              </div>
             </div>
           </Card>
 
@@ -247,41 +237,134 @@ const RequestDetails = () => {
         </Card>
 
         {/* Attachments */}
-        {request.attachments && request.attachments.length > 0 && (
+        <Card className="p-6 mt-6">
+          <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center">
+            <DocumentTextIcon className="h-6 w-6 mr-2 text-blue-500" />
+            Request Attachments
+          </Typography>
+          <div className="space-y-4">
+            {request.attachments?.map((attachment) => (
+              <div key={attachment._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <DocumentTextIcon className="h-6 w-6 text-blue-500" />
+                  <div>
+                    <Typography variant="small" color="blue-gray" className="font-medium">
+                      {attachment.originalName}
+                    </Typography>
+                    <Typography variant="small" color="gray">
+                      Uploaded on {new Date(attachment.uploadedAt).toLocaleDateString()}
+                    </Typography>
+                  </div>
+                </div>
+                <a
+                  href={`http://localhost:5000/public/uploads/${attachment.path}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  Download
+                </a>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Admin Approval Attachments */}
+        {request.approvals && request.approvals.length > 0 && (
           <Card className="p-6 mt-6">
             <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center">
-              <DocumentIcon className="h-6 w-6 mr-2 text-blue-500" />
-              Attached Documents
+              <DocumentTextIcon className="h-6 w-6 mr-2 text-blue-500" />
+              Admin Approval Attachments
             </Typography>
-            <div className="space-y-4">
-              {request.attachments.map((file, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <DocumentIcon className="h-8 w-8 text-blue-500" />
-                    <div>
+            <div className="space-y-6">
+              {request.approvals.map((approval, index) => (
+                <div key={index} className="border-b border-gray-200 pb-4 last:border-b-0">
+                  <div className="mb-4">
+                    <Typography variant="small" color="blue-gray" className="font-medium">
+                      {approval.stage.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Review
+                    </Typography>
+                    <Typography variant="small" color="gray">
+                      {new Date(approval.date).toLocaleDateString()}
+                    </Typography>
+                  </div>
+                  
+                  {/* Approval Attachments */}
+                  {approval.attachments && approval.attachments.length > 0 && (
+                    <div className="space-y-2">
                       <Typography variant="small" color="blue-gray" className="font-medium">
-                        {file.originalName}
+                        Attachments:
                       </Typography>
-                      <Typography variant="small" color="gray">
-                        Uploaded on {new Date(file.uploadedAt).toLocaleDateString()}
+                      {approval.attachments.map((attachment, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <DocumentTextIcon className="h-5 w-5 text-blue-500" />
+                            <Typography variant="small" color="blue-gray">
+                              {attachment.split('/').pop()}
+                            </Typography>
+                          </div>
+                          <a
+                            href={`http://localhost:5000/public/uploads/${attachment}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-700"
+                          >
+                            Download
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Feedback Attachments */}
+                  {approval.feedbackAttachments && approval.feedbackAttachments.length > 0 && (
+                    <div className="space-y-2 mt-4">
+                      <Typography variant="small" color="blue-gray" className="font-medium">
+                        Feedback Attachments:
+                      </Typography>
+                      {approval.feedbackAttachments.map((attachment, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <DocumentTextIcon className="h-5 w-5 text-blue-500" />
+                            <Typography variant="small" color="blue-gray">
+                              {attachment.split('/').pop()}
+                            </Typography>
+                          </div>
+                          <a
+                            href={`http://localhost:5000/public/uploads/${attachment}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-700"
+                          >
+                            Download
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Approval Message */}
+                  {approval.message && (
+                    <div className="mt-4">
+                      <Typography variant="small" color="blue-gray" className="font-medium">
+                        Message:
+                      </Typography>
+                      <Typography variant="small" color="gray" className="mt-1">
+                        {approval.message}
                       </Typography>
                     </div>
-                  </div>
-                  <Button
-                    variant="text"
-                    className="p-2"
-                    onClick={() => {
-                      const link = document.createElement('a');
-                      const fileName = file.path.split('/').pop();
-                      link.href = `http://localhost:5000/public/uploads/${fileName}`;
-                      link.download = file.originalName;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    }}
-                  >
-                    <ArrowDownTrayIcon className="h-5 w-5" />
-                  </Button>
+                  )}
+
+                  {/* Feedback Message */}
+                  {approval.feedbackMessage && (
+                    <div className="mt-4">
+                      <Typography variant="small" color="blue-gray" className="font-medium">
+                        Feedback:
+                      </Typography>
+                      <Typography variant="small" color="gray" className="mt-1">
+                        {approval.feedbackMessage}
+                      </Typography>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

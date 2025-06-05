@@ -106,8 +106,6 @@ const InternalRequestForm = () => {
     else if (!/\S+@\S+\.\S+/.test(formData.companyDetails.email)) newErrors['companyDetails.email'] = "Invalid email format";
     if (!formData.companyDetails.address.trim()) newErrors['companyDetails.address'] = "Address is required";
     if (!formData.companyDetails.phone.trim()) newErrors['companyDetails.phone'] = "Phone number is required";
-    if (!formData.duration.value || formData.duration.value < 1) newErrors.duration = "Duration must be at least 1";
-    if (!formData.description.trim()) newErrors.description = "Description is required";
     if (files.length === 0) newErrors.files = "At least one attachment is required";
 
     setErrors(newErrors);
@@ -126,10 +124,9 @@ const InternalRequestForm = () => {
       // Create the request data object
       const requestData = {
         companyDetails: JSON.stringify(formData.companyDetails),
-        frameworkType: formData.frameworkType,
-        duration: JSON.stringify(formData.duration),
         description: formData.description,
-        files: files
+        files: files,
+        duration: JSON.stringify({ value: 1, type: 'years' }) // Add default duration
       };
 
       // Log the request data for debugging
@@ -277,68 +274,11 @@ const InternalRequestForm = () => {
               </div>
             </div>
 
-              {/* Partnership Details Section */}
-              <div className="space-y-6">
-                <h3 className="text-xl font-semibold text-gray-700 flex items-center gap-2">
-                  <FaFileAlt className="text-[#3c8dbc]" />
-                Partnership Details
-              </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Framework Type</label>
-                  <select
-                    name="frameworkType"
-                    value={formData.frameworkType}
-                    onChange={handleChange}
-                      className={`w-full px-4 py-2 rounded-lg border ${
-                        errors.frameworkType ? 'border-red-500' : 'border-gray-300'
-                      } focus:ring-2 focus:ring-[#3c8dbc] focus:border-transparent`}
-                  >
-                      <option value="MOU">MOU</option>
-                      <option value="MOA">MOA</option>
-                    <option value="Contract">Contract</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Duration</label>
-                  <div className="flex gap-4">
-                      <input
-                        type="number"
-                        name="durationValue"
-                        value={formData.duration.value}
-                        onChange={handleChange}
-                        min="1"
-                        className={`w-24 px-4 py-2 rounded-lg border ${
-                          errors.duration ? 'border-red-500' : 'border-gray-300'
-                        } focus:ring-2 focus:ring-[#3c8dbc] focus:border-transparent`}
-                      />
-                      <select
-                        name="durationType"
-                        value={formData.duration.type}
-                      onChange={handleChange}
-                        className={`w-32 px-4 py-2 rounded-lg border ${
-                        errors.duration ? 'border-red-500' : 'border-gray-300'
-                        } focus:ring-2 focus:ring-[#3c8dbc] focus:border-transparent`}
-                      >
-                        <option value="years">Years</option>
-                        <option value="months">Months</option>
-                      </select>
-                  </div>
-                  {errors.duration && (
-                    <p className="mt-1 text-sm text-red-600">{errors.duration}</p>
-                  )}
-                  </div>
-                </div>
-              </div>
-
               {/* Description Section */}
               <div className="space-y-6">
                 <h3 className="text-xl font-semibold text-gray-700 flex items-center gap-2">
                   <FaFileAlt className="text-[#3c8dbc]" />
-                  Description
+                  Description (Optional)
                 </h3>
                 <div className="space-y-2">
                 <textarea
@@ -346,14 +286,9 @@ const InternalRequestForm = () => {
                   value={formData.description}
                   onChange={handleChange}
                   rows={4}
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors.description ? 'border-red-500' : 'border-gray-300'
-                    } focus:ring-2 focus:ring-[#3c8dbc] focus:border-transparent`}
-                  placeholder="Describe the purpose and details of the partnership..."
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#3c8dbc] focus:border-transparent"
+                  placeholder="Describe the purpose and details of the request..."
                 />
-                {errors.description && (
-                  <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-                )}
               </div>
             </div>
 
