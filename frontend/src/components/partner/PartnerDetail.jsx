@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { 
@@ -26,14 +26,23 @@ import {
 } from "../../api/adminApi";
 import PartnerActivities from "./PartnerActivities";
 import PartnerPrivileges from "./PartnerPrivileges";
+import ActivityReport from "./ActivityReport";
 
 const PartnerDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("details");
   const [file, setFile] = useState(null);
   const [description, setDescription] = useState("");
+
+  // Set active tab from navigation state
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
 
   const { data: partner, isLoading, error } = useQuery({
     queryKey: ["partnerDetail", id],
@@ -234,6 +243,19 @@ const PartnerDetail = () => {
                   Activities
                 </button>
               )}
+              {partner.isSigned && canViewActivities && (
+                <button
+                  onClick={() => setActiveTab("report")}
+                  className={`pb-3 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === "report"
+                      ? "border-[#3c8dbc] text-[#3c8dbc]"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <FaFileAlt className="inline-block mr-1" />
+                  Activity Report
+                </button>
+              )}
               {partner.isSigned && partner.partnershipRequestType === "operational" && isGeneralDirector && (
                 <button
                   onClick={() => setActiveTab("privileges")}
@@ -402,6 +424,10 @@ const PartnerDetail = () => {
 
           {activeTab === "activities" && partner.isSigned && canViewActivities && (
             <PartnerActivities partnerId={partner._id} canManageActivities={canManageActivities} />
+          )}
+
+          {activeTab === "report" && partner.isSigned && canViewActivities && (
+            <ActivityReport partner={partner} />
           )}
         </div>
       </div>

@@ -102,13 +102,22 @@ const SignedPartners = () => {
                         {new Date(partner.signedAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <button
-                          onClick={() => navigate(`/admin/partners/${partner._id}`)}
-                          className="text-[#3c8dbc] hover:text-[#2c6a8f] flex items-center"
-                        >
-                          <FaEye className="mr-1" />
-                          View Details
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => navigate(`/admin/partners/${partner._id}`)}
+                            className="text-[#3c8dbc] hover:text-[#2c6a8f] flex items-center"
+                          >
+                            <FaEye className="mr-1" />
+                            View Details
+                          </button>
+                          <button
+                            onClick={() => navigate(`/admin/partners/${partner._id}`, { state: { activeTab: 'report' } })}
+                            className="text-green-600 hover:text-green-700 flex items-center"
+                          >
+                            <FaFileAlt className="mr-1" />
+                            Report
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -29,6 +29,7 @@ import {partnershipReviewRequest,getPartnershipReviewedRequests,getApprovedReque
 import { protectAdmin, restrictToAdmin } from "../middleware/authMiddleware.js";
 import upload from "../middleware/upload.js";   
 import { getDirectorRequests, directorReview } from "../controllers/directorController.js";
+import { getOverallPartnershipStatistics, getSignedPartnersActivityStatistics } from "../controllers/partnershipStatisticsController.js";
 
 const router = express.Router();
 
@@ -209,6 +210,21 @@ router.get(
   "/partners/:partnerId/access",
   protectAdmin,
   checkPartnerAccess
+);
+
+// Partnership Statistics routes
+router.get(
+  "/partnership-statistics/overall",
+  protectAdmin,
+  restrictToAdmin("partnership-division", "director", "general-director"),
+  getOverallPartnershipStatistics
+);
+
+router.get(
+  "/partnership-statistics/signed-activities",
+  protectAdmin,
+  restrictToAdmin("partnership-division", "director", "general-director"),
+  getSignedPartnersActivityStatistics
 );
 
 export default router;

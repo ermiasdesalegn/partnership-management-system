@@ -532,3 +532,99 @@ export const checkPartnerAccess = async (partnerId) => {
   );
   return response.data;
 };
+
+// Partnership Activity Management Functions
+export const fetchPartnerActivities = async (partnerId) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get(`http://localhost:5000/api/v1/partnership-activities/${partnerId}/activities`, {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+export const createPartnerActivity = async (partnerId, activityData) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.post(
+    `http://localhost:5000/api/v1/partnership-activities/${partnerId}/activities`,
+    activityData,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true
+    }
+  );
+  return response.data.data;
+};
+
+export const updateActivityStatus = async (activityId, status) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.patch(
+    `http://localhost:5000/api/v1/partnership-activities/activities/${activityId}/status`,
+    { status },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true
+    }
+  );
+  return response.data.data;
+};
+
+export const deleteActivity = async (activityId) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.delete(
+    `http://localhost:5000/api/v1/partnership-activities/activities/${activityId}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true
+    }
+  );
+  return response.data;
+};
+
+export const getActivityStatistics = async (partnerId) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get(`http://localhost:5000/api/v1/partnership-activities/${partnerId}/statistics`, {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+export const uploadActivityAttachment = async (activityId, file, description) => {
+  const token = localStorage.getItem("token");
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("description", description);
+
+  const response = await axios.post(
+    `http://localhost:5000/api/v1/partnership-activities/activities/${activityId}/attachments`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data"
+      },
+      withCredentials: true
+    }
+  );
+  return response.data;
+};
+
+// Overall Partnership Statistics Functions
+export const fetchOverallPartnershipStatistics = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get("http://localhost:5000/api/v1/admin/partnership-statistics/overall", {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+export const fetchSignedPartnersActivityStatistics = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get("http://localhost:5000/api/v1/admin/partnership-statistics/signed-activities", {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+  return response.data.data;
+};

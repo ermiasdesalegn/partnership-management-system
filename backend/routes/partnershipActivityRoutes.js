@@ -3,40 +3,30 @@ import {
   createActivity,
   getPartnerActivities,
   updateActivityStatus,
+  deleteActivity,
   addActivityAttachment,
   removeActivityAttachment,
-  getActivityStatistics,
-  deleteActivity
+  getActivityStatistics
 } from "../controllers/partnershipActivityController.js";
 import { protectAdmin, restrictToAdmin } from "../middleware/authMiddleware.js";
 import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
-// All routes require admin authentication
+// Protect all routes
 router.use(protectAdmin);
 
-// Get activities and statistics - accessible by all authorized roles
-router.get("/:partnerId/activities", restrictToAdmin("general-director", "partnership-division", "director"), getPartnerActivities);
-router.get("/:partnerId/statistics", restrictToAdmin("general-director", "partnership-division", "director"), getActivityStatistics);
+// Activity management routes - accessible by partnership-division, director and general-director
+router.post("/:partnerId/activities", restrictToAdmin("partnership-division", "director", "general-director"), createActivity);
+router.get("/:partnerId/activities", restrictToAdmin("partnership-division", "director", "general-director", "law-service", "law-research"), getPartnerActivities);
+router.get("/:partnerId/statistics", restrictToAdmin("partnership-division", "director", "general-director", "law-service", "law-research"), getActivityStatistics);
 
-// Management routes - accessible by general-director, partnership-division, and director
-router.use(restrictToAdmin("general-director", "partnership-division", "director"));
+// Individual activity management
+router.patch("/activities/:activityId/status", restrictToAdmin("partnership-division", "director", "general-director"), updateActivityStatus);
+router.delete("/activities/:activityId", restrictToAdmin("partnership-division", "director", "general-director"), deleteActivity);
 
-// Activity management routes
-router.post("/:partnerId/activities", createActivity);
-router.patch("/activities/:activityId/status", updateActivityStatus);
-router.delete("/activities/:activityId", deleteActivity);
-
-// Attachment management routes
-router.post(
-  "/activities/:activityId/attachments",
-  upload.single("file"),
-  addActivityAttachment
-);
-router.delete(
-  "/activities/:activityId/attachments/:attachmentId",
-  removeActivityAttachment
-);
+// Attachment routes
+router.post("/activities/:activityId/attachments", restrictToAdmin("partnership-division", "director", "general-director"), upload.single("file"), addActivityAttachment);
+router.delete("/activities/:activityId/attachments/:attachmentId", restrictToAdmin("partnership-division", "director", "general-director"), removeActivityAttachment);
 
 export default router; 

@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FaBuilding, FaEnvelope, FaFileAlt, FaEye, FaCheckCircle, FaClock } from "react-icons/fa";
+import { FaBuilding, FaEnvelope, FaFileAlt, FaEye, FaCheckCircle, FaClock, FaChartLine } from "react-icons/fa";
 import { fetchPartners } from "../../api/adminApi";
+import OverallStatisticsModal from "./OverallStatisticsModal";
 
 const PartnerReports = () => {
   const navigate = useNavigate();
+  const [showStatisticsModal, setShowStatisticsModal] = useState(false);
   const { data: partners, isLoading, error } = useQuery({
     queryKey: ["partners"],
     queryFn: fetchPartners
@@ -45,6 +47,13 @@ const PartnerReports = () => {
                 <p className="mt-1 text-sm text-gray-600">List of all active and inactive partnerships</p>
               </div>
               <div className="flex space-x-4">
+                <button
+                  onClick={() => setShowStatisticsModal(true)}
+                  className="px-4 py-2 bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors flex items-center"
+                >
+                  <FaChartLine className="mr-2" />
+                  Overall Report
+                </button>
                 <button
                   onClick={() => navigate('/admin/partners/signed')}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
@@ -163,6 +172,12 @@ const PartnerReports = () => {
           )}
         </div>
       </div>
+
+      {/* Overall Statistics Modal */}
+      <OverallStatisticsModal 
+        isOpen={showStatisticsModal} 
+        onClose={() => setShowStatisticsModal(false)} 
+      />
     </div>
   );
 };

@@ -24,6 +24,7 @@ import StrategicPartners from "../components/partner/StrategicPartners";
 import OperationalPartners from "../components/partner/OperationalPartners";
 import ProjectPartners from "../components/partner/ProjectPartners";
 import TacticalPartners from "../components/partner/TacticalPartners";
+import UserAnalytics from "../components/user-managment/UserAnalytics";
 
 const AdminRoute = [
   <Route key={"admin"} path="/admin" element={<AdminLayout />}>
@@ -33,6 +34,7 @@ const AdminRoute = [
     <Route path="requests-in-progress/request/:id" element={<RequestDetail />} />
     <Route path="internal-user" element={<InternalUsers />} />
     <Route path="external-user" element={<ExternalUsers />} />
+    <Route path="user/summary" element={<UserAnalytics />} />
     <Route path="in-progress" element={<InProgress />} />
     <Route path="in-progress/:id" element={<ProgressDetail />} />
     <Route path="notifications" element={<AdminNotification />} />

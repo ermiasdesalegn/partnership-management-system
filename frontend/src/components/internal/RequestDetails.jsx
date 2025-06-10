@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Typography, Button, Spinner } from '@material-tailwind/react';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import { fetchRequestDetails } from '../../api/userApi';
 import { 
   DocumentIcon, 
   CalendarIcon, 
@@ -18,43 +20,25 @@ import {
 const RequestDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [request, setRequest] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchRequestDetails = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          toast.error('Please login to view request details');
-          navigate('/internal/login');
-          return;
-        }
-
-        const response = await fetch(`http://localhost:5000/api/v1/internal/requests/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to fetch request details');
-        }
-
-        setRequest(data.data.request);
-      } catch (error) {
-        setError(error.message);
-        toast.error(error.message);
-      } finally {
-        setLoading(false);
+  const { 
+    data: requestData, 
+    isLoading, 
+    error, 
+    isError 
+  } = useQuery({
+    queryKey: ['requestDetails', id],
+    queryFn: () => fetchRequestDetails(id),
+    enabled: !!id,
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to fetch request details');
+      if (error.response?.status === 401) {
+        navigate('/internal/login');
       }
-    };
+    }
+  });
 
-    fetchRequestDetails();
-  }, [id, navigate]);
+  const request = requestData?.data?.request;
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -82,23 +66,49 @@ const RequestDetails = () => {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Spinner className="h-12 w-12" />
+        <div className="text-center">
+          <Spinner className="h-12 w-12 mb-4" />
+          <Typography color="gray">Loading request details...</Typography>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="p-8 text-center">
+        <Card className="p-8 text-center max-w-md">
           <Typography variant="h4" color="red" className="mb-4">
             Error
           </Typography>
           <Typography color="gray" className="mb-4">
-            {error}
+            {error?.response?.data?.message || error?.message || 'Failed to load request details'}
+          </Typography>
+          <div className="flex gap-4 justify-center">
+            <Button onClick={() => navigate('/internal/dashboard')} variant="outlined">
+              Back to Dashboard
+            </Button>
+            <Button onClick={() => window.location.reload()} color="blue">
+              Try Again
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!request) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="p-8 text-center">
+          <Typography variant="h4" color="gray" className="mb-4">
+            Request Not Found
+          </Typography>
+          <Typography color="gray" className="mb-4">
+            The requested details could not be found.
           </Typography>
           <Button onClick={() => navigate('/internal/dashboard')}>
             Back to Dashboard
@@ -269,15 +279,17 @@ const RequestDetails = () => {
           </div>
         </Card>
 
-        {/* Admin Approval Attachments */}
+        {/* Admin Feedback */}
         {request.approvals && request.approvals.length > 0 && (
           <Card className="p-6 mt-6">
             <Typography variant="h5" color="blue-gray" className="mb-4 flex items-center">
               <DocumentTextIcon className="h-6 w-6 mr-2 text-blue-500" />
-              Admin Approval Attachments
+              Admin Feedback
             </Typography>
             <div className="space-y-6">
-              {request.approvals.map((approval, index) => (
+              {request.approvals
+                .filter(approval => approval.feedbackMessage || (approval.feedbackAttachments && approval.feedbackAttachments.length > 0))
+                .map((approval, index) => (
                 <div key={index} className="border-b border-gray-200 pb-4 last:border-b-0">
                   <div className="mb-4">
                     <Typography variant="small" color="blue-gray" className="font-medium">
@@ -286,43 +298,27 @@ const RequestDetails = () => {
                     <Typography variant="small" color="gray">
                       {new Date(approval.date).toLocaleDateString()}
                     </Typography>
+                    <div className="mt-2">
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        approval.decision === 'approve' 
+                          ? 'bg-green-100 text-green-800' 
+                          : approval.decision === 'disapprove'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {approval.decision}
+                      </span>
+                    </div>
                   </div>
-                  
-                  {/* Approval Attachments */}
-                  {approval.attachments && approval.attachments.length > 0 && (
-                    <div className="space-y-2">
+
+                  {/* Feedback Attachments - Only show these to users */}
+                  {approval.feedbackAttachments && approval.feedbackAttachments.length > 0 && (
+                    <div className="space-y-2 mb-4">
                       <Typography variant="small" color="blue-gray" className="font-medium">
                         Attachments:
                       </Typography>
-                      {approval.attachments.map((attachment, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <DocumentTextIcon className="h-5 w-5 text-blue-500" />
-                            <Typography variant="small" color="blue-gray">
-                              {attachment.split('/').pop()}
-                            </Typography>
-                          </div>
-                          <a
-                            href={`http://localhost:5000/public/uploads/${attachment}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:text-blue-700"
-                          >
-                            Download
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Feedback Attachments */}
-                  {approval.feedbackAttachments && approval.feedbackAttachments.length > 0 && (
-                    <div className="space-y-2 mt-4">
-                      <Typography variant="small" color="blue-gray" className="font-medium">
-                        Feedback Attachments:
-                      </Typography>
                       {approval.feedbackAttachments.map((attachment, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div key={idx} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                           <div className="flex items-center space-x-3">
                             <DocumentTextIcon className="h-5 w-5 text-blue-500" />
                             <Typography variant="small" color="blue-gray">
@@ -333,41 +329,39 @@ const RequestDetails = () => {
                             href={`http://localhost:5000/public/uploads/${attachment}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-500 hover:text-blue-700"
+                            className="text-blue-500 hover:text-blue-700 flex items-center space-x-1"
                           >
-                            Download
+                            <ArrowDownTrayIcon className="h-4 w-4" />
+                            <span>Download</span>
                           </a>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Approval Message */}
-                  {approval.message && (
-                    <div className="mt-4">
-                      <Typography variant="small" color="blue-gray" className="font-medium">
-                        Message:
-                      </Typography>
-                      <Typography variant="small" color="gray" className="mt-1">
-                        {approval.message}
-                      </Typography>
-                    </div>
-                  )}
-
-                  {/* Feedback Message */}
+                  {/* Feedback Message - Only show this to users */}
                   {approval.feedbackMessage && (
                     <div className="mt-4">
                       <Typography variant="small" color="blue-gray" className="font-medium">
-                        Feedback:
+                        Message for you:
                       </Typography>
-                      <Typography variant="small" color="gray" className="mt-1">
-                        {approval.feedbackMessage}
-                      </Typography>
+                      <div className="mt-2 p-4 bg-blue-50 rounded-lg">
+                        <Typography variant="small" color="blue-gray" className="leading-relaxed">
+                          {approval.feedbackMessage}
+                        </Typography>
+                      </div>
                     </div>
                   )}
                 </div>
               ))}
             </div>
+            {request.approvals.filter(approval => approval.feedbackMessage || (approval.feedbackAttachments && approval.feedbackAttachments.length > 0)).length === 0 && (
+              <div className="text-center py-8">
+                <Typography variant="small" color="gray">
+                  No feedback messages or attachments available yet.
+                </Typography>
+              </div>
+            )}
           </Card>
         )}
       </div>

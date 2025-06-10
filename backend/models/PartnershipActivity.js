@@ -8,16 +8,19 @@ const PartnershipActivitySchema = new mongoose.Schema({
   },
   title: {
     type: String,
-    required: [true, "Title is required"]
+    required: true,
+    trim: true
   },
   description: {
     type: String,
-    required: [true, "Description is required"]
+    required: true,
+    trim: true
   },
   assignedTo: {
     type: String,
     enum: ["partner", "insa", "both"],
-    required: true
+    required: true,
+    default: "partner"
   },
   status: {
     type: String,
@@ -31,27 +34,44 @@ const PartnershipActivitySchema = new mongoose.Schema({
   completedAt: {
     type: Date
   },
-  attachments: [{
-    path: String,
-    originalName: String,
-    uploadedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: 'attachments.uploaderModel'
-    },
-    uploaderModel: {
-      type: String,
-      enum: ['User', 'Admin']
-    },
-    description: String,
-    uploadedAt: {
-      type: Date,
-      default: Date.now
+  attachments: [
+    {
+      path: {
+        type: String,
+        required: true
+      },
+      originalName: {
+        type: String,
+        required: true
+      },
+      uploadedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: 'attachments.uploaderModel',
+        required: true
+      },
+      uploaderModel: {
+        type: String,
+        required: true,
+        enum: ['Admin', 'User']
+      },
+      description: {
+        type: String,
+        trim: true
+      },
+      uploadedAt: {
+        type: Date,
+        default: Date.now
+      }
     }
-  }],
+  ],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Admin",
     required: true
+  },
+  updatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin"
   },
   createdAt: {
     type: Date,
@@ -63,10 +83,15 @@ const PartnershipActivitySchema = new mongoose.Schema({
   }
 });
 
-// Pre-save middleware to update the updatedAt timestamp
-PartnershipActivitySchema.pre("save", function(next) {
-  this.updatedAt = Date.now();
+// Update the updatedAt field before saving
+PartnershipActivitySchema.pre('save', function(next) {
+  this.updatedAt = new Date();
   next();
 });
+
+// Index for efficient queries
+PartnershipActivitySchema.index({ partnerRef: 1, status: 1 });
+PartnershipActivitySchema.index({ assignedTo: 1, status: 1 });
+PartnershipActivitySchema.index({ deadline: 1 });
 
 export default mongoose.model("PartnershipActivity", PartnershipActivitySchema); 

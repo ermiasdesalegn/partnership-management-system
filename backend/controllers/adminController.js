@@ -294,15 +294,16 @@ export const getAllAdmins = async (req, res) => {
           as: "userRequests", // Alias for the joined requests
         },
       },
-      {
-        $project: {
-          name: 1,
-          email: 1,
-          type: 1,
-          companyName: 1, // Ensure this is projected
-          requestCount: { $size: "$userRequests" }, // Count the number of requests for each user
+              {
+          $project: {
+            name: 1,
+            email: 1,
+            type: 1,
+            companyName: 1, // Ensure this is projected
+            createdAt: 1, // Include createdAt for analytics
+            requestCount: { $size: "$userRequests" }, // Count the number of requests for each user
+          },
         },
-      },
     ]);
 
     console.log('Users found:', users.length); // Debug log
@@ -340,6 +341,7 @@ export const getAllAdmins = async (req, res) => {
             email: 1,
             department: 1,
             role: 1,
+            createdAt: 1,
             requestCount: { $size: "$userRequests" }
           }
         }
@@ -377,6 +379,7 @@ export const getAllAdmins = async (req, res) => {
             email: 1,
             company: 1,
             role: 1,
+            createdAt: 1,
             requestCount: { $size: "$userRequests" }
           }
         }
