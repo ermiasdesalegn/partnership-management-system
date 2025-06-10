@@ -23,7 +23,7 @@ const Option = ({
 
   if (dropdown) {
     return (
-      <div className="w-full">
+      <div className="w-full mb-1">
         <motion.button
           layout
           onClick={toggleDropDown}
@@ -35,7 +35,7 @@ const Option = ({
         >
           <motion.div
             layout
-            className="grid h-full w-10 place-content-center text-lg"
+            className="grid h-full w-10 place-content-center text-lg flex-shrink-0"
           >
             <Icon />
           </motion.div>
@@ -45,23 +45,25 @@ const Option = ({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.125 }}
-              className="text-xs font-medium"
+              className="text-xs font-medium flex-1 text-left"
             >
               {title}
             </motion.span>
           )}
 
-          <motion.span
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5 }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-indigo-500"
-          >
-            {dropDownOpen ? <FaChevronUp /> : <FaChevronDown />}
-          </motion.span>
+          {open && (
+            <motion.span
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 }}
+              className="flex-shrink-0 mr-2 text-indigo-500"
+            >
+              {dropDownOpen ? <FaChevronUp /> : <FaChevronDown />}
+            </motion.span>
+          )}
         </motion.button>
 
-        {dropDownOpen && (
+        {dropDownOpen && open && (
           <motion.nav
             layout
             className="ml-6 mt-2 border-l border-gray-300 bg-gray-50 p-2 rounded-lg"
@@ -71,7 +73,7 @@ const Option = ({
                 <motion.button
                   layout
                   onClick={() => setSelected(link)}
-                  className={`relative flex h-10 w-full items-center rounded-md transition-colors px-4 ${
+                  className={`relative flex h-10 w-full items-center rounded-md transition-colors px-4 mb-1 ${
                     selected === link
                       ? "bg-indigo-100 text-indigo-800"
                       : "text-slate-500 hover:bg-slate-200"
@@ -79,28 +81,26 @@ const Option = ({
                 >
                   <motion.div
                     layout
-                    className="grid h-full w-10 place-content-center text-lg"
+                    className="grid h-full w-6 place-content-center text-sm flex-shrink-0"
                   >
                     <Icon />
                   </motion.div>
-                  {open && (
-                    <motion.span
-                      layout
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.125 }}
-                      className="text-xs font-medium"
-                    >
-                      {title}
-                    </motion.span>
-                  )}
+                  <motion.span
+                    layout
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.125 }}
+                    className="text-xs font-medium ml-2 flex-1 text-left"
+                  >
+                    {title}
+                  </motion.span>
 
                   {notifs && (
                     <motion.span
                       initial={{ scale: 0, opacity: 0 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.5 }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 size-4 rounded bg-indigo-500 text-xs text-white"
+                      className="flex-shrink-0 size-4 rounded bg-indigo-500 text-xs text-white flex items-center justify-center"
                     >
                       {notifs}
                     </motion.span>
@@ -115,7 +115,7 @@ const Option = ({
   }
 
   return (
-    <Link to={link.toLowerCase()} className="block">
+    <Link to={link.toLowerCase()} className="block mb-1">
       <motion.button
         layout
         onClick={() => setSelected(link)}
@@ -127,7 +127,7 @@ const Option = ({
       >
         <motion.div
           layout
-          className="grid h-full w-10 place-content-center text-lg"
+          className="grid h-full w-10 place-content-center text-lg flex-shrink-0"
         >
           <Icon />
         </motion.div>
@@ -137,18 +137,18 @@ const Option = ({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.125 }}
-            className="text-xs font-medium"
+            className="text-xs font-medium flex-1 text-left"
           >
             {title}
           </motion.span>
         )}
 
-        {notifs && (
+        {notifs && open && (
           <motion.span
             initial={{ scale: 0, opacity: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 size-4 rounded bg-indigo-500 text-xs text-white"
+            className="flex-shrink-0 mr-2 size-4 rounded bg-indigo-500 text-xs text-white flex items-center justify-center"
           >
             {notifs}
           </motion.span>
