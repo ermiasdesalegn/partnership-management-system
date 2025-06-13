@@ -19,7 +19,11 @@ import {
   getSingleRequestInRoleList,
   getReviewedRequestsByAdmin,
   getReviewedRequestById,
-  getDashboardStatistics
+  getDashboardStatistics,
+  getRequestStatusCounts,
+  getAllFeedback,
+  getFeedbackStats,
+  deleteFeedback
 } from "../controllers/adminController.js";
 import {addFeedbackAttachment, addRequestAttachment} from "../controllers/requestController.js"
 import {forwardToGeneralDirector} from "../controllers/forwardToGeneralDirector.js"
@@ -226,5 +230,13 @@ router.get(
   restrictToAdmin("partnership-division", "director", "general-director"),
   getSignedPartnersActivityStatistics
 );
+
+// Request status counts route
+router.get('/request-status-counts', getRequestStatusCounts);
+
+// Feedback routes
+router.get('/feedback', protectAdmin, getAllFeedback);
+router.get('/feedback/stats', protectAdmin, getFeedbackStats);
+router.delete('/feedback/:id', protectAdmin, deleteFeedback);
 
 export default router;

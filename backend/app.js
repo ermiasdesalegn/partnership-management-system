@@ -12,6 +12,7 @@ import superAdminRoutes from './routes/superAdminRoutes.js';
 import internalUserRoutes from './routes/internalUserRoutes.js';
 import partnerRoutes from './routes/partnerRoutes.js';
 import partnershipActivityRoutes from './routes/partnershipActivityRoutes.js';
+import feedbackRoutes from './routes/feedbackRoutes.js';
 
 dotenv.config();
 
@@ -39,5 +40,6 @@ app.use("/api/v1/user", userRouter);
 app.use('/api/v1/super-admin', superAdminRoutes);
 app.use('/api/v1/partners', partnerRoutes);
 app.use('/api/v1/partnership-activities', partnershipActivityRoutes);
+app.use('/api/v1/feedback', feedbackRoutes);
 
 export default app;

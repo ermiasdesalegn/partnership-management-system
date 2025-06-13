@@ -3,11 +3,11 @@ import { FaChevronDown, FaQuestion } from "react-icons/fa";
 import faqs from "../../services/static/faq";
 
 const FAQ = () => {
-  const [displayFAQ, setDisplayFAQ] = useState();
-  const [message, setMessage] = useState();
+  const [displayFAQ, setDisplayFAQ] = useState([]);
+  const [message, setMessage] = useState("");
 
   const [open, setOpen] = useState(null);
-  const [loadding, setLoadding] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const toggleAccordion = (index) => {
     setOpen(open === index ? null : index);
@@ -27,22 +27,23 @@ const FAQ = () => {
 
     if (!filteredFAQ.length) {
       setMessage("No FAQ found");
-      setDisplayFAQ(null);
+      setDisplayFAQ([]);
+    } else {
+      setMessage("");
+      setDisplayFAQ(filteredFAQ.slice(0, 5));
     }
-
-    setDisplayFAQ(filteredFAQ.slice(0, 5));
   };
 
   useEffect(() => {
     setDisplayFAQ(faqs.slice(0, 5));
-    setLoadding(false);
+    setLoading(false);
   }, []);
 
-  if (loadding)
+  if (loading)
     return <div className="flex justify-center items-center">Loading...</div>;
 
   return (
-    <div id="faq" className="font--poppins  mt-12 p-5 bg-bg-color rounded-lg shadow-md">
+    <div id="faq" className="font--poppins mt-12 p-5 bg-bg-color rounded-lg shadow-md">
       <div className="text-center py-8">
         <h1 className="text-3xl font-bold text-text-h1">
           Frequently Asked Questions
@@ -53,7 +54,7 @@ const FAQ = () => {
         <input
           type="text"
           placeholder="Search FAQ"
-          className="w-3/5  mx-auto mt-4 p-2 ps-6 border border-text-grey rounded-2xl"
+          className="w-3/5 mx-auto mt-4 p-2 ps-6 border border-text-grey rounded-2xl"
           onChange={searchFAQ}
         />
         {message && <p className="text-text-p text-center mt-2">{message}</p>}
@@ -67,9 +68,9 @@ const FAQ = () => {
             <button
               onClick={() => toggleAccordion(index)}
               className={`flex justify-between items-center w-full p-5 text-text-h2 font-medium bg-white transition-all duration-600 ease-in-out hover:bg-text-h2 hover:text-btn-text
-           ${open === index ? "bg--btn-disabled" : ""}`}
+               ${open === index ? "bg--btn-disabled" : ""}`}
             >
-              <span className="flex items-center ">
+              <span className="flex items-center">
                 <FaQuestion className="mr-2" />
                 {faq.question}
               </span>

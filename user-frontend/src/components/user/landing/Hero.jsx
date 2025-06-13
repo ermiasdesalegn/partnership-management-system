@@ -51,13 +51,6 @@ const HeroSection = () => {
               >
                 Request Form
               </Link>
-              <Link
-                to="/contact"
-                className="px-8 py-4 bg-white text-[#3c8dbc] border border-[#3c8dbc] rounded-md hover:bg-[#f5f5f5] transition-all duration-300 transform hover:scale-105 text-lg font-medium"
-                style={{ fontFamily: "'Inter', sans-serif" }}
-              >
-                Contact Us
-              </Link>
             </motion.div>
           </motion.div>
           <motion.div 

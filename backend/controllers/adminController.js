@@ -2,6 +2,7 @@ import Admin from "../models/Admin.js";
 import User from "../models/User.js";
 import Request from "../models/Request.js";
 import Partners from "../models/Partners.js";
+import Feedback from "../models/Feedback.js";
 
 import jwt from "jsonwebtoken";
 import { promisify } from "util";
@@ -294,16 +295,16 @@ export const getAllAdmins = async (req, res) => {
           as: "userRequests", // Alias for the joined requests
         },
       },
-              {
-          $project: {
-            name: 1,
-            email: 1,
-            type: 1,
-            companyName: 1, // Ensure this is projected
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          type: 1,
+          companyName: 1, // Ensure this is projected
             createdAt: 1, // Include createdAt for analytics
-            requestCount: { $size: "$userRequests" }, // Count the number of requests for each user
-          },
+          requestCount: { $size: "$userRequests" }, // Count the number of requests for each user
         },
+      },
     ]);
 
     console.log('Users found:', users.length); // Debug log
@@ -763,4 +764,99 @@ export const getDashboardStatistics = async (req, res) => {
     res.status(500).json({ status: "error", message: err.message });
     }
   };
+  
+export const getRequestStatusCounts = async (req, res) => {
+  try {
+    const counts = await Request.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Convert array to object with status as keys
+    const statusCounts = counts.reduce((acc, curr) => {
+      acc[curr._id] = curr.count;
+      return acc;
+    }, {});
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        inReview: statusCounts['In Review'] || 0,
+        pending: statusCounts['pending'] || 0,
+        approved: statusCounts['approved'] || 0,
+        disapproved: statusCounts['disapproved'] || 0
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Error fetching request status counts',
+      error: error.message
+    });
+  }
+};
+  
+// Feedback Management
+export const getAllFeedback = catchAsync(async (req, res) => {
+  const feedback = await Feedback.find()
+    .populate('user', 'name email')
+    .sort('-createdAt');
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      feedback
+    }
+  });
+});
+
+export const getFeedbackStats = catchAsync(async (req, res) => {
+  const stats = await Feedback.aggregate([
+    {
+      $group: {
+        _id: '$rating',
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { _id: 1 }
+    }
+  ]);
+
+  const totalFeedback = await Feedback.countDocuments();
+  const averageRating = await Feedback.aggregate([
+    {
+      $group: {
+        _id: null,
+        average: { $avg: '$rating' }
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      stats,
+      totalFeedback,
+      averageRating: averageRating[0]?.average || 0
+    }
+  });
+});
+
+export const deleteFeedback = catchAsync(async (req, res) => {
+  const feedback = await Feedback.findByIdAndDelete(req.params.id);
+
+  if (!feedback) {
+    return next(new AppError('No feedback found with that ID', 404));
+  }
+
+  res.status(204).json({
+    status: 'success',
+    data: null
+  });
+});
   

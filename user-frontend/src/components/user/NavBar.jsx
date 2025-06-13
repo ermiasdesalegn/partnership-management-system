@@ -85,10 +85,10 @@ const NavBar = () => {
                 FAQ
               </button>
               <button 
-                onClick={() => navigateTo("/user/support")} 
+                onClick={() => navigateTo("/user/feedback")} 
                 className="text-white hover:text-gray-100 transition-colors duration-300" style={{ fontFamily: "'Inter', sans-serif" }}
               >
-                Support
+                Feedback
               </button>
             </div>
 

@@ -628,3 +628,17 @@ export const fetchSignedPartnersActivityStatistics = async () => {
   });
   return response.data.data;
 };
+
+export const fetchRequestStatusCounts = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/request-status-counts`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      withCredentials: true
+    });
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

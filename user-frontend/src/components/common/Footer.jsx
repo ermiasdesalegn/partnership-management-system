@@ -60,11 +60,6 @@ const Footer = () => {
                   Partnership
                 </Link>
               </li>
-              <li>
-                <Link to="/support" className="text-gray-600 hover:text-[#3c8dbc] transition-colors duration-300" style={{ fontFamily: "'Inter', sans-serif" }}>
-                  Support
-                </Link>
-              </li>
             </ul>
           </div>
 

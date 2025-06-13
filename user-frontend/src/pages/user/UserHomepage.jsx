@@ -4,7 +4,7 @@ import Main from "../../components/user/landing/Main";
 import Partners from "../../components/user/landing/PartnerUse";
 import HowTo from "../../components/user/landing/HowTo";
 import FAQ from "../../components/support/FAQ";
-import Support from "../../components/user/landing/Support";
+import Feedback from "../../components/feedback/Feedback";
 
 const UserHomepage = () => {
   return (
@@ -14,7 +14,7 @@ const UserHomepage = () => {
       <Main/>
       {/* <HowTo /> */}
       {/* <FAQ /> */}
-      {/* <Support /> */}
+      {/* <Feedback /> */}
     </div>
   );
 };

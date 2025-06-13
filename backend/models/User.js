@@ -21,6 +21,14 @@ const userSchema = new mongoose.Schema({
     minlength: 8,
     select: false
   },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true // Allow null values but ensure uniqueness when present
+  },
+  picture: {
+    type: String // URL for Google profile picture
+  },
   role: {
     type: String,
     enum: ["external", "internal"],

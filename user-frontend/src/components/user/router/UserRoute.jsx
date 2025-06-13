@@ -6,7 +6,7 @@ import RequestForm from "../RequestForm";
 import Profile from "../Profile";
 import RequestStatus from "../RequestStatus";
 import ProtectedRoute from "./ProtectedRoute"; // Import ProtectedRoute
-import Support from "../landing/Support";
+import Feedback from "../../feedback/Feedback";
 import HowTo from "../landing/HowTo";
 import FAQ from "../../support/FAQ"; // Import the FAQ component
 import RequestDetails from "../RequestDetails";
@@ -22,7 +22,7 @@ const UserRoute = [
       <Route path="requests/:id" element={<RequestDetails />} />
       <Route path="howto" element={<HowTo />} />
       <Route path="faq" element={<FAQ />} /> {/* Added FAQ Route */}
-      <Route path="support" element={<Support />} />
+      <Route path="feedback" element={<Feedback />} />
     </Route>
    
   

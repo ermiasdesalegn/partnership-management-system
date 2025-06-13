@@ -30,31 +30,31 @@ const Sidebar = () => {
       style={{
         width: open ? "225px" : "fit-content",
       }}
-          >
+    >
         <div className="p-2 h-full flex flex-col">
-          <TitleSection open={open} />
+      <TitleSection open={open} />
 
           <div className="flex-1 overflow-y-auto pb-16">
-            {optionsData.map(({ Icon, title, link, Badge, notifs, dropdown }) => (
-              <Option
-                key={title}
-                Icon={Icon}
-                Badge={Badge}
-                notifs={notifs}
-                title={title}
-                link={link}
-                selected={selected}
-                setSelected={setSelected}
-                open={open}
-                dropdown={dropdown}
-              />
-            ))}
+      {optionsData.map(({ Icon, title, link, Badge, notifs, dropdown }) => (
+        <Option
+          key={title}
+          Icon={Icon}
+          Badge={Badge}
+          notifs={notifs}
+          title={title}
+          link={link}
+          selected={selected}
+          setSelected={setSelected}
+          open={open}
+          dropdown={dropdown}
+        />
+      ))}
           </div>
 
-          <ToggleClose open={open} setOpen={setOpen} />
+      <ToggleClose open={open} setOpen={setOpen} />
         </div>
-      </motion.nav>
-    );
-  };
+    </motion.nav>
+  );
+};
 
 export default Sidebar;

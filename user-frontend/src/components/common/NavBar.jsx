@@ -28,9 +28,6 @@ const NavBar = () => {
             <Link to="/partnership" className="text-white hover:text-gray-100 transition-colors duration-300" style={{ fontFamily: "'Inter', sans-serif" }}>
               Partnership
             </Link>
-            <Link to="/support" className="text-white hover:text-gray-100 transition-colors duration-300" style={{ fontFamily: "'Inter', sans-serif" }}>
-              Support
-            </Link>
             <Link
               to="/signup"
               className="px-6 py-2 bg-white text-[#3c8dbc] rounded-lg hover:bg-gray-100 transition-colors duration-300" style={{ fontFamily: "'Inter', sans-serif" }}
@@ -89,13 +86,6 @@ const NavBar = () => {
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               Partnership
-            </Link>
-            <Link
-              to="/support"
-              className="block text-white hover:text-gray-100 transition-colors duration-300 pl-2 border-l-2 border-transparent hover:border-white"
-              style={{ fontFamily: "'Inter', sans-serif" }}
-            >
-              Support
             </Link>
             <Link
               to="/signup"

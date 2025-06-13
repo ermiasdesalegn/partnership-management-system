@@ -3,6 +3,7 @@ import express from "express";
 import { 
   registerUser, 
   loginUser,
+  googleSignup,
   createRequest,
   // logout,
   getMe,
@@ -19,6 +20,7 @@ const router = express.Router();
 
 // Public routes
 router.post("/signup", registerUser);
+router.post("/google-signup", googleSignup);
 router.post("/login", loginUser);
 // router.get("/logout", logout);
 

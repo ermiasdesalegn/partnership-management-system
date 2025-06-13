@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, Input, Button, Typography, Checkbox } from '@material-tailwind/react';
 import toast, { Toaster } from 'react-hot-toast';
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -87,6 +89,55 @@ export default function Login() {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Decode the Google JWT token to get user info
+      const decoded = jwtDecode(credentialResponse.credential);
+      
+      // Try to login with Google data (will create account if doesn't exist)
+      const response = await fetch('http://localhost:5000/api/v1/user/google-signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          name: decoded.name,
+          email: decoded.email,
+          googleId: decoded.sub,
+          picture: decoded.picture
+        }),
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Google login failed');
+      }
+
+      localStorage.setItem('token', data.token);
+      if (formData.rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
+      }
+
+      toast.success('Google login successful! Redirecting...');
+      setTimeout(() => navigate('/user'), 1500);
+
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast.error(error.message || 'Google login failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error('Google login failed. Please try again.');
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-white via-[#3c8dbc]/5 to-white">
       <Toaster position="top-center" reverseOrder={false} />
@@ -99,7 +150,27 @@ export default function Login() {
           Sign in to continue to your account
         </Typography>
 
-        <form className="mt-8 mb-2 w-80 max-w-screen-lg sm:w-96" onSubmit={handleSubmit}>
+        {/* Google OAuth Button */}
+        <div className="mb-6">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="outline"
+            size="large"
+            text="signin_with"
+            shape="rectangular"
+            logo_alignment="left"
+          />
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center mb-6">
+          <hr className="flex-1 border-gray-300" />
+          <span className="px-4 text-gray-500 text-sm">or</span>
+          <hr className="flex-1 border-gray-300" />
+        </div>
+
+        <form className="mb-2 w-80 max-w-screen-lg sm:w-96" onSubmit={handleSubmit}>
           <div className="mb-6">
             <Input
               size="lg"

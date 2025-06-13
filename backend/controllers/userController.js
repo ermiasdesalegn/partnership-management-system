@@ -56,6 +56,82 @@ export const registerUser = async (req, res) => {
   }
 };
 
+export const googleSignup = async (req, res) => {
+  try {
+    const { name, email, googleId, picture } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !googleId) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Missing required Google authentication data"
+      });
+    }
+
+    // Check if user already exists with this email
+    let existingUser = await User.findOne({ email });
+    
+    if (existingUser) {
+      // If user exists but doesn't have Google ID, update it
+      if (!existingUser.googleId) {
+        existingUser.googleId = googleId;
+        existingUser.picture = picture;
+        await existingUser.save();
+      }
+      
+      const token = signToken(existingUser._id);
+      
+      return res.status(200).json({
+        status: "success",
+        token,
+        data: { 
+          user: {
+            id: existingUser._id,
+            name: existingUser.name,
+            email: existingUser.email,
+            role: existingUser.role,
+            picture: existingUser.picture
+          }
+        }
+      });
+    }
+
+    // Create new user with Google data
+    const newUser = await User.create({
+      name,
+      email,
+      googleId,
+      picture,
+      role: "external",
+      password: Math.random().toString(36).slice(-8) + 'Aa1!' // Generate random password since it's required
+    });
+
+    const token = signToken(newUser._id);
+    newUser.password = undefined;
+
+    res.status(201).json({
+      status: "success",
+      token,
+      data: { 
+        user: {
+          id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+          picture: newUser.picture
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Google signup error:', error);
+    res.status(400).json({
+      status: "fail",
+      message: error.message || "Google signup failed"
+    });
+  }
+};
+
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;

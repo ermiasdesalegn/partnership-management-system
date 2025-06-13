@@ -137,13 +137,13 @@ const TacticalPartners = () => {
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <div className="flex space-x-2">
-                          <button
-                            onClick={() => navigate(`/admin/partners/${partner._id}`)}
-                            className="text-[#3c8dbc] hover:text-[#2c6a8f] flex items-center"
-                          >
-                            <FaEye className="mr-1" />
-                            View Details
-                          </button>
+                        <button
+                          onClick={() => navigate(`/admin/partners/${partner._id}`)}
+                          className="text-[#3c8dbc] hover:text-[#2c6a8f] flex items-center"
+                        >
+                          <FaEye className="mr-1" />
+                          View Details
+                        </button>
                           {partner.isSigned && (
                             <button
                               onClick={() => navigate(`/admin/partners/${partner._id}`, { state: { activeTab: 'report' } })}

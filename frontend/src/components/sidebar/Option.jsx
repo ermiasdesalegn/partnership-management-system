@@ -52,14 +52,14 @@ const Option = ({
           )}
 
           {open && (
-            <motion.span
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5 }}
+          <motion.span
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 }}
               className="flex-shrink-0 mr-2 text-indigo-500"
-            >
-              {dropDownOpen ? <FaChevronUp /> : <FaChevronDown />}
-            </motion.span>
+          >
+            {dropDownOpen ? <FaChevronUp /> : <FaChevronDown />}
+          </motion.span>
           )}
         </motion.button>
 
@@ -85,15 +85,15 @@ const Option = ({
                   >
                     <Icon />
                   </motion.div>
-                  <motion.span
-                    layout
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.125 }}
+                    <motion.span
+                      layout
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.125 }}
                     className="text-xs font-medium ml-2 flex-1 text-left"
-                  >
-                    {title}
-                  </motion.span>
+                    >
+                      {title}
+                    </motion.span>
 
                   {notifs && (
                     <motion.span

@@ -33,10 +33,10 @@ const RequestDetails = () => {
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to fetch request details');
       if (error.response?.status === 401) {
-        navigate('/internal/login');
+          navigate('/internal/login');
       }
-    }
-  });
+          }
+        });
 
   const request = requestData?.data?.request;
 
@@ -310,7 +310,7 @@ const RequestDetails = () => {
                       </span>
                     </div>
                   </div>
-
+                  
                   {/* Feedback Attachments - Only show these to users */}
                   {approval.feedbackAttachments && approval.feedbackAttachments.length > 0 && (
                     <div className="space-y-2 mb-4">
@@ -347,8 +347,8 @@ const RequestDetails = () => {
                       </Typography>
                       <div className="mt-2 p-4 bg-blue-50 rounded-lg">
                         <Typography variant="small" color="blue-gray" className="leading-relaxed">
-                          {approval.feedbackMessage}
-                        </Typography>
+                        {approval.feedbackMessage}
+                      </Typography>
                       </div>
                     </div>
                   )}
