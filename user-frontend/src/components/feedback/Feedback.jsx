@@ -49,15 +49,15 @@ const Feedback = () => {
       
       const response = await feedbackService.create(formData);
       
-      if (response.data.success) {
-        toast.success(response.data.message || "Thank you for your feedback!");
+      if (response.status === 'success') {
+        toast.success("Thank you for your feedback!");
         reset();
         setRating(0);
         setTimeout(() => {
-          navigate(-1);
+          navigate('/user');
         }, 2000);
       } else {
-        toast.error(response.data.message || "Failed to submit feedback. Please try again.");
+        toast.error(response.message || "Failed to submit feedback. Please try again.");
       }
     } catch (error) {
       console.error('Feedback submission error:', error);
