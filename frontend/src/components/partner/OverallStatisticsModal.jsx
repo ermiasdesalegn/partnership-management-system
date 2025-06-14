@@ -9,29 +9,107 @@ import {
   FaExclamationTriangle
 } from 'react-icons/fa';
 import { fetchOverallPartnershipStatistics, fetchSignedPartnersActivityStatistics } from '../../api/adminApi';
+import { format } from 'date-fns';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 const OverallStatisticsModal = ({ isOpen, onClose }) => {
   const printRef = useRef();
 
   const { data: overallStats, isLoading: overallLoading, error: overallError } = useQuery({
-    queryKey: ['overallPartnershipStatistics'],
+    queryKey: ['overallStatistics'],
     queryFn: fetchOverallPartnershipStatistics,
-    enabled: isOpen,
-    retry: false,
-    staleTime: 0
+    enabled: isOpen
   });
 
-  const { data: activityStats, isLoading: activityLoading, error: activityError } = useQuery({
-    queryKey: ['signedPartnersActivityStatistics'],
+  const { data: signedPartnersStats, isLoading: signedPartnersLoading, error: signedPartnersError } = useQuery({
+    queryKey: ['signedPartnersStatistics'],
     queryFn: fetchSignedPartnersActivityStatistics,
-    enabled: isOpen,
-    retry: false,
-    staleTime: 0
+    enabled: isOpen
   });
 
   const generateReport = () => {
     const printWindow = window.open('', '_blank');
-    const reportContent = printRef.current.innerHTML;
+    
+    // Get the partner analysis data
+    const partners = overallStats?.partnerDetailedAnalysis || [];
+    
+    // Create the partner table HTML
+    const partnerTableHtml = partners.length > 0 ? `
+      <div class="section">
+        <div class="section-title">Partner Analysis</div>
+        <table class="partner-table">
+          <thead>
+            <tr>
+              <th>Partner</th>
+              <th>Type</th>
+              <th>Total Activities</th>
+              <th>Pending</th>
+              <th>In Progress</th>
+              <th>Completed</th>
+              <th>Partner Tasks</th>
+              <th>INSA Tasks</th>
+              <th>Both Tasks</th>
+              <th>Overall Rate</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${partners.map(partner => `
+              <tr>
+                <td>${partner.companyName}</td>
+                <td class="text-center">${partner.partnershipType}</td>
+                <td class="text-center">${partner.totalActivities || 0}</td>
+                <td class="text-center">${partner.pending || 0}</td>
+                <td class="text-center">${partner.in_progress || 0}</td>
+                <td class="text-center">${partner.completed || 0}</td>
+                <td class="text-center">
+                  <div>${partner.workloadBreakdown?.partner?.completed || 0}/${partner.workloadBreakdown?.partner?.total || 0}</div>
+                  <div><strong>${partner.workloadBreakdown?.partner?.completionRate || 0}%</strong></div>
+                </td>
+                <td class="text-center">
+                  <div>${partner.workloadBreakdown?.insa?.completed || 0}/${partner.workloadBreakdown?.insa?.total || 0}</div>
+                  <div><strong>${partner.workloadBreakdown?.insa?.completionRate || 0}%</strong></div>
+                </td>
+                <td class="text-center">
+                  <div>${partner.workloadBreakdown?.both?.completed || 0}/${partner.workloadBreakdown?.both?.total || 0}</div>
+                  <div><strong>${partner.workloadBreakdown?.both?.completionRate || 0}%</strong></div>
+                </td>
+                <td class="text-center"><strong>${Math.round(partner.completionRate || 0)}%</strong></td>
+                <td class="text-center">${partner.status}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    ` : '';
+
+    // Get the content without the partner analysis section
+    const contentDiv = printRef.current.cloneNode(true);
+    const partnerAnalysisSection = contentDiv.querySelector('.bg-white.rounded-lg.shadow-md.p-6:nth-child(3)');
+    if (partnerAnalysisSection) {
+      partnerAnalysisSection.remove();
+    }
+    const reportContent = contentDiv.innerHTML;
     
     printWindow.document.write(`
       <html>
@@ -79,6 +157,7 @@ const OverallStatisticsModal = ({ isOpen, onClose }) => {
             <div class="report-subtitle">Comprehensive Analysis of Partnership Activities & Performance</div>
             <div class="report-date">Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</div>
           </div>
+          ${partnerTableHtml}
           ${reportContent}
         </body>
       </html>
@@ -90,27 +169,65 @@ const OverallStatisticsModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  if (overallLoading || activityLoading) {
+  if (overallLoading || signedPartnersLoading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#3c8dbc]"></div>
-            <span className="ml-3">Loading comprehensive statistics...</span>
+        <div className="bg-white rounded-lg p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Loading Statistics...</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
           </div>
         </div>
       </div>
     );
   }
 
-  if (overallError || activityError) {
+  if (overallError || signedPartnersError) {
+    console.error('Statistics Error:', { overallError, signedPartnersError });
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-6 max-w-md">
           <div className="text-center">
             <div className="text-red-500 text-xl mb-4">⚠️ Error Loading Statistics</div>
             <div className="text-gray-700 mb-4">
-              {overallError?.message || activityError?.message || 'Failed to load statistics'}
+              {overallError?.response?.data?.message || 
+               signedPartnersError?.response?.data?.message || 
+               overallError?.message || 
+               signedPartnersError?.message || 
+               'Failed to load statistics'}
+            </div>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!overallStats || !signedPartnersStats) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md">
+          <div className="text-center">
+            <div className="text-yellow-500 text-xl mb-4">⚠️ No Data Available</div>
+            <div className="text-gray-700 mb-4">
+              There are no partners or activities in the system yet.
             </div>
             <button
               onClick={onClose}
@@ -136,272 +253,324 @@ const OverallStatisticsModal = ({ isOpen, onClose }) => {
     return 'good';
   };
 
+  const renderWorkloadDistribution = (data) => {
+    const chartData = {
+      labels: ['Partner', 'INSA', 'Both'],
+      datasets: [
+        {
+          label: 'Total Activities',
+          data: [
+            data.workloadDistribution.partner.total,
+            data.workloadDistribution.insa.total,
+            data.workloadDistribution.both.total
+          ],
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(75, 192, 192, 0.6)'
+          ],
+          borderColor: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 99, 132, 1)',
+            'rgba(75, 192, 192, 1)'
+          ],
+          borderWidth: 1
+        }
+      ]
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-      <div className="bg-white rounded-lg max-w-7xl w-full max-h-[95vh] overflow-auto">
-        {/* Modal Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-          <h2 className="text-2xl font-bold text-[#3c8dbc] flex items-center">
-            <FaChartLine className="mr-3" />
-            Partnership Performance Analysis (Strategic, Project & Tactical)
-          </h2>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={generateReport}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
-            >
-              <FaFileDownload className="mr-2" />
-              Generate Full Report
-            </button>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2"
-            >
-              <FaTimes size={20} />
-            </button>
-          </div>
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4">Workload Distribution</h3>
+        <div className="h-64">
+          <Doughnut data={chartData} options={{ maintainAspectRatio: false }} />
         </div>
-
-        {/* Modal Content */}
-        <div className="p-6">
-          <div ref={printRef}>
-            {/* Executive Summary */}
-            <div className="section">
-              <div className="section-title">Executive Summary (Excluding Operational Partnerships)</div>
-              <table className="overview-table">
-                <thead>
-                  <tr>
-                    <th>Partnership Overview</th>
-                    <th>Activity Performance</th>
-                    <th>Workload Distribution</th>
-                    <th>Attention Required</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <div className="stat-highlight">{overallStats?.overview?.totalPartners || 0}</div>
-                      Total Partners<br/>
-                      <div className="text-green-600 font-bold">{overallStats?.overview?.signedPartners || 0}</div>
-                      Signed & Active
-                    </td>
-                    <td>
-                      <div className="stat-highlight">{activityStats?.overview?.totalActivities || 0}</div>
-                      Total Activities<br/>
-                      <div className="text-blue-600 font-bold">{activityStats?.overview?.averageActivitiesPerPartner || 0}</div>
-                      Avg per Partner
-                    </td>
-                    <td>
-                      Partner: <span className="text-purple-600 font-bold">{activityStats?.insights?.workloadDistribution?.partner?.total || 0}</span><br/>
-                      INSA: <span className="text-green-600 font-bold">{activityStats?.insights?.workloadDistribution?.insa?.total || 0}</span><br/>
-                      Joint: <span className="text-blue-600 font-bold">{activityStats?.insights?.workloadDistribution?.both?.total || 0}</span>
-                    </td>
-                    <td>
-                      <div className="text-red-600 font-bold">{activityStats?.insights?.overdueActivitiesTotal || 0}</div>
-                      Overdue Tasks<br/>
-                      <div className="text-yellow-600 font-bold">{activityStats?.insights?.upcomingDeadlinesTotal || 0}</div>
-                      Upcoming Deadlines
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+        <div className="mt-4 grid grid-cols-3 gap-4">
+          {Object.entries(data.workloadDistribution).map(([key, value]) => (
+            <div key={key} className="text-center">
+              <p className="font-medium capitalize">{key}</p>
+              <p className="text-2xl font-bold">{value.total}</p>
+              <p className="text-sm text-gray-600">
+                {value.completionRate}% completed
+              </p>
+              <p className="text-sm text-gray-600">
+                Avg. {value.averagePerPartner} per partner
+              </p>
             </div>
+          ))}
+                  </div>
+                </div>
+    );
+  };
 
-            {/* Workload Analysis */}
-            <div className="section">
-              <div className="section-title">Partner vs INSA Workload Analysis</div>
-              <div className="workload-comparison">
-                <div className="workload-card">
-                  <div className="workload-title">Partner Activities</div>
-                  <div className="text-2xl font-bold text-purple-600">{activityStats?.insights?.workloadDistribution?.partner?.total || 0}</div>
-                  <div className="text-sm text-gray-600">
-                    Completed: {activityStats?.insights?.workloadDistribution?.partner?.completed || 0}<br/>
-                    Rate: {activityStats?.insights?.workloadDistribution?.partner?.completionRate || 0}%<br/>
-                    Avg/Partner: {activityStats?.insights?.workloadDistribution?.partner?.averagePerPartner || 0}
+  const renderActivityStatus = (data) => {
+    // Add null check and default value for activityStats
+    const activityStats = data?.activities || {
+      completed: 0,
+      in_progress: 0,
+      pending: 0,
+      overdue: 0,
+      upcoming: 0
+    };
+
+    const hasActivities = Object.values(activityStats).some(value => value > 0);
+
+    if (!hasActivities) {
+      return (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold mb-4">Activity Status Distribution</h3>
+          <div className="text-center text-gray-500 py-8">
+            No activities found
                   </div>
                 </div>
-                <div className="workload-card">
-                  <div className="workload-title">INSA Activities</div>
-                  <div className="text-2xl font-bold text-green-600">{activityStats?.insights?.workloadDistribution?.insa?.total || 0}</div>
-                  <div className="text-sm text-gray-600">
-                    Completed: {activityStats?.insights?.workloadDistribution?.insa?.completed || 0}<br/>
-                    Rate: {activityStats?.insights?.workloadDistribution?.insa?.completionRate || 0}%<br/>
-                    Avg/Partner: {activityStats?.insights?.workloadDistribution?.insa?.averagePerPartner || 0}
+      );
+    }
+
+    const chartData = {
+      labels: ['Completed', 'In Progress', 'Pending', 'Overdue', 'Upcoming'],
+      datasets: [
+        {
+          label: 'Activities',
+          data: [
+            activityStats.completed || 0,
+            activityStats.in_progress || 0,
+            activityStats.pending || 0,
+            activityStats.overdue || 0,
+            activityStats.upcoming || 0
+          ],
+          backgroundColor: [
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(255, 206, 86, 0.6)',
+            'rgba(153, 102, 255, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(54, 162, 235, 0.6)'
+          ],
+          borderColor: [
+            'rgba(75, 192, 192, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)'
+          ],
+          borderWidth: 1
+        }
+      ]
+    };
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4">Activity Status Distribution</h3>
+        <div className="h-64">
+          <Doughnut data={chartData} options={{ maintainAspectRatio: false }} />
+        </div>
+        <div className="mt-4 grid grid-cols-5 gap-4">
+          {Object.entries(activityStats).map(([key, value]) => (
+            <div key={key} className="text-center">
+              <p className="font-medium capitalize">{key.replace('_', ' ')}</p>
+              <p className="text-2xl font-bold">{value || 0}</p>
+            </div>
+          ))}
                   </div>
                 </div>
-                <div className="workload-card">
-                  <div className="workload-title">Joint Activities</div>
-                  <div className="text-2xl font-bold text-blue-600">{activityStats?.insights?.workloadDistribution?.both?.total || 0}</div>
-                  <div className="text-sm text-gray-600">
-                    Completed: {activityStats?.insights?.workloadDistribution?.both?.completed || 0}<br/>
-                    Rate: {activityStats?.insights?.workloadDistribution?.both?.completionRate || 0}%<br/>
-                    Avg/Partner: {activityStats?.insights?.workloadDistribution?.both?.averagePerPartner || 0}
-                  </div>
-                </div>
+    );
+  };
+
+  const renderPartnerAnalysis = (data) => {
+    if (!data.partnerDetailedAnalysis || data.partnerDetailedAnalysis.length === 0) {
+      return (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold mb-4">Partner Analysis</h3>
+          <div className="text-center text-gray-500 py-8">
+            No partners found
               </div>
             </div>
+      );
+    }
 
-            {/* Detailed Partner Performance Table */}
-            <div className="section">
-              <div className="section-title">Detailed Partner Performance Analysis</div>
-              <table className="partner-table">
-                <thead>
-                  <tr>
-                    <th>Partner Details</th>
-                    <th className="text-center">Partnership<br/>Duration</th>
-                    <th className="text-center">Total<br/>Activities</th>
-                    <th className="text-center">Partner Tasks<br/>(Completed/Total)</th>
-                    <th className="text-center">INSA Tasks<br/>(Completed/Total)</th>
-                    <th className="text-center">Joint Tasks<br/>(Completed/Total)</th>
-                    <th className="text-center">Overall<br/>Completion</th>
-                    <th className="text-center">Upcoming<br/>Deadlines</th>
-                    <th className="text-center">Overdue<br/>Tasks</th>
-                    <th className="text-center">Status</th>
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4">Partner Analysis</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partner</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Activities</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Progress</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partner Tasks</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INSA Tasks</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Both Tasks</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Overall Rate</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {activityStats?.partnerDetailedAnalysis?.map((partner, index) => (
-                    <tr key={partner.partnerId} className={getStatusClass(partner.upcomingDeadlines, partner.overdueActivities)}>
-                      <td>
-                        <div className="font-bold text-gray-800">{partner.companyName}</div>
-                        <div className="text-xs text-gray-600">
-                          {partner.partnershipType} - {partner.frameworkType}<br/>
-                          Signed: {new Date(partner.signedAt).toLocaleDateString()}
+            <tbody className="bg-white divide-y divide-gray-200">
+              {data.partnerDetailedAnalysis.map((partner) => (
+                <tr key={partner.partnerId}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{partner.companyName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{partner.partnershipType}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{partner.totalActivities}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{partner.pending || 0}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{partner.in_progress || 0}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{partner.completed || 0}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="text-center">
+                      <div className="text-xs text-gray-400">{partner.workloadBreakdown?.partner?.completed || 0}/{partner.workloadBreakdown?.partner?.total || 0}</div>
+                      <div className={getCompletionRateClass(partner.workloadBreakdown?.partner?.completionRate || 0)}>
+                        {partner.workloadBreakdown?.partner?.completionRate || 0}%
+                      </div>
                         </div>
                       </td>
-                      <td className="text-center">
-                        {partner.daysUntilPartnershipEnd !== null ? (
-                          partner.daysUntilPartnershipEnd > 0 ? 
-                            `${partner.daysUntilPartnershipEnd} days left` : 
-                            'Expired'
-                        ) : 'N/A'}
-                      </td>
-                      <td className="text-center font-bold">{partner.totalActivities}</td>
-                      <td className="text-center">
-                        <div className="font-bold">{partner.partnerActivities.completed}/{partner.partnerActivities.total}</div>
-                        <div className={`text-xs ${getCompletionRateClass(partner.partnerCompletionRate)}`}>
-                          {partner.partnerCompletionRate}%
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="text-center">
+                      <div className="text-xs text-gray-400">{partner.workloadBreakdown?.insa?.completed || 0}/{partner.workloadBreakdown?.insa?.total || 0}</div>
+                      <div className={getCompletionRateClass(partner.workloadBreakdown?.insa?.completionRate || 0)}>
+                        {partner.workloadBreakdown?.insa?.completionRate || 0}%
+                        </div>
                         </div>
                       </td>
-                      <td className="text-center">
-                        <div className="font-bold">{partner.insaActivities.completed}/{partner.insaActivities.total}</div>
-                        <div className={`text-xs ${getCompletionRateClass(partner.insaCompletionRate)}`}>
-                          {partner.insaCompletionRate}%
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="text-center">
+                      <div className="text-xs text-gray-400">{partner.workloadBreakdown?.both?.completed || 0}/{partner.workloadBreakdown?.both?.total || 0}</div>
+                      <div className={getCompletionRateClass(partner.workloadBreakdown?.both?.completionRate || 0)}>
+                        {partner.workloadBreakdown?.both?.completionRate || 0}%
+                        </div>
                         </div>
                       </td>
-                      <td className="text-center">
-                        <div className="font-bold">{partner.bothActivities.completed}/{partner.bothActivities.total}</div>
-                        <div className="text-xs text-gray-600">
-                          {partner.bothActivities.total > 0 ? 
-                            Math.round((partner.bothActivities.completed / partner.bothActivities.total) * 100) : 0}%
-                        </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className={getCompletionRateClass(partner.completionRate)}>
+                      {Math.round(partner.completionRate)}%
+                    </span>
                       </td>
-                      <td className="text-center">
-                        <div className={`font-bold text-lg ${getCompletionRateClass(partner.overallCompletionRate)}`}>
-                          {partner.overallCompletionRate}%
-                        </div>
-                      </td>
-                      <td className="text-center">
-                        <div className="font-bold text-yellow-600">{partner.upcomingDeadlines}</div>
-                        {partner.upcomingDeadlines > 0 && (
-                          <div className="text-xs text-gray-600">
-                            Next: {partner.upcomingDeadlinesList[0]?.daysUntilDeadline} days
-                          </div>
-                        )}
-                      </td>
-                      <td className="text-center">
-                        <div className="font-bold text-red-600">{partner.overdueActivities}</div>
-                        {partner.overdueActivities > 0 && (
-                          <div className="text-xs text-gray-600">
-                            Max: {Math.max(...partner.overdueActivitiesList.map(a => a.daysOverdue))} days
-                          </div>
-                        )}
-                      </td>
-                      <td className="text-center">
-                        {partner.overdueActivities > 0 ? (
-                          <FaExclamationTriangle className="text-red-500 mx-auto" title="Urgent Attention Required" />
-                        ) : partner.upcomingDeadlines > 0 ? (
-                          <FaClock className="text-yellow-500 mx-auto" title="Monitor Progress" />
-                        ) : (
-                          <FaCheckCircle className="text-green-500 mx-auto" title="On Track" />
-                        )}
-                      </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{partner.status}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+                </div>
+    );
+  };
 
-            {/* Key Insights & Recommendations */}
-            <div className="section">
-              <div className="notes-section">
-                <div className="notes-title">📊 Key Insights & Performance Notes</div>
-                
-                <div className="note-item">
-                  <strong>Partnership Portfolio:</strong> Currently managing {activityStats?.insights?.totalPartnersAnalyzed || 0} signed partnerships 
-                  with {activityStats?.insights?.totalActivitiesTracked || 0} total activities tracked across all partnerships.
+  const renderInsights = (data) => {
+    if (!data.insights || !data.insights.topPerformers || data.insights.topPerformers.length === 0) {
+      return (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold mb-4">Insights</h3>
+          <div className="text-center text-gray-500 py-8">
+            No insights available
                 </div>
-                
-                <div className="note-item">
-                  <strong>Workload Distribution Analysis:</strong> 
-                  Partners handle {activityStats?.insights?.workloadDistribution?.partner?.total || 0} activities 
-                  ({activityStats?.insights?.workloadDistribution?.partner?.completionRate || 0}% completion rate), 
-                  while INSA manages {activityStats?.insights?.workloadDistribution?.insa?.total || 0} activities 
-                  ({activityStats?.insights?.workloadDistribution?.insa?.completionRate || 0}% completion rate). 
-                  Joint activities total {activityStats?.insights?.workloadDistribution?.both?.total || 0} 
-                  ({activityStats?.insights?.workloadDistribution?.both?.completionRate || 0}% completion rate).
                 </div>
-                
-                <div className="note-item">
-                  <strong>Performance Leaders:</strong> 
-                  {activityStats?.insights?.topPerformers?.map((performer, index) => 
-                    `${index + 1}. ${performer.name} (${performer.completionRate}%)`
-                  ).join(', ') || 'No performance data available'}
-                </div>
-                
-                <div className="note-item">
-                  <strong>⚠️ Attention Required:</strong> {activityStats?.insights?.urgentAttentionNeeded || 0} partners have overdue activities. 
-                  {activityStats?.insights?.overdueActivitiesTotal || 0} total overdue tasks need immediate attention. 
-                  Additionally, {activityStats?.insights?.upcomingDeadlinesTotal || 0} activities have upcoming deadlines requiring monitoring.
-                </div>
-                
-                <div className="note-item">
-                  <strong>Performance Improvement Needed:</strong> {activityStats?.insights?.needsImprovementPartners || 0} partners 
-                  have completion rates below 50% and may require additional support or intervention.
-                </div>
-                
-                <div className="note-item">
-                  <strong>Partnership Type Analysis:</strong> 
-                  {Object.entries(overallStats?.partnershipByType || {})
-                    .filter(([type]) => type !== 'operational')
-                    .map(([type, count]) => 
-                      `${type.charAt(0).toUpperCase() + type.slice(1)}: ${count} partnerships`
-                    ).join(' | ')}
-                </div>
-                
-                <div className="note-item">
-                  <strong>📈 Recommendations:</strong>
-                  <ul className="ml-5 mt-2 list-disc">
-                    <li>Focus immediate attention on partners with overdue activities</li>
-                    <li>Provide additional support to partners with completion rates below 50%</li>
-                    <li>Monitor upcoming deadlines closely to prevent future delays</li>
-                    <li>Consider workload rebalancing if INSA completion rates significantly differ from partner rates</li>
-                    <li>Establish regular check-ins with underperforming partnerships</li>
+      );
+    }
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4">Insights</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="text-md font-medium mb-3">Top Performers</h4>
+            <ul className="space-y-2">
+              {data.insights.topPerformers.map((performer, index) => (
+                <li key={index} className="flex items-center justify-between">
+                  <span className="text-gray-700">{performer.name}</span>
+                  <span className={getCompletionRateClass(performer.completionRate)}>
+                    {performer.completionRate}%
+                  </span>
+                </li>
+              ))}
                   </ul>
                 </div>
-                
-                <div className="note-item bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
-                  <strong>📋 Report Scope:</strong> This report includes Strategic, Project, and Tactical partnerships only. 
-                  Operational partnerships are excluded and will have their own dedicated report.
+          <div>
+            <h4 className="text-md font-medium mb-3">Areas Needing Improvement</h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">Partners Below 50% Completion</span>
+                <span className="text-red-600 font-bold">{data.insights.needsImprovement}</span>
                 </div>
-                
-                <div className="note-item">
-                  <strong>Report Generated:</strong> {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()} 
-                  | Data reflects real-time partnership performance metrics
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">Average Completion Rate</span>
+                <span className={getCompletionRateClass(data.insights.averageCompletionRate)}>
+                  {data.insights.averageCompletionRate}%
+                </span>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderOverview = (data) => {
+    // Check if data exists and has the required properties
+    if (!data || !data.partnerDetailedAnalysis) {
+      return (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold mb-4">Overview</h3>
+          <div className="text-center text-gray-500 py-8">
+            No data available
+          </div>
+        </div>
+      );
+    }
+
+    // Calculate statistics from partnerDetailedAnalysis
+    const partners = data.partnerDetailedAnalysis;
+    const totalPartners = partners.length;
+    const signedPartners = partners.filter(p => p.isSigned).length;
+    const totalActivities = partners.reduce((sum, partner) => sum + (partner.totalActivities || 0), 0);
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4">Overview</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <p className="text-gray-500 mb-1">Total Partners</p>
+            <p className="text-3xl font-bold text-gray-900">{totalPartners}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-gray-500 mb-1">Signed Partners</p>
+            <p className="text-3xl font-bold text-gray-900">{signedPartners}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-gray-500 mb-1">Total Activities</p>
+            <p className="text-3xl font-bold text-gray-900">{totalActivities}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Partnership Statistics</h2>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={generateReport}
+              className="flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              <FaFileDownload className="mr-2" />
+              Download Report
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <FaTimes className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        <div ref={printRef} className="space-y-6">
+          {renderOverview(overallStats)}
+          {renderActivityStatus(overallStats)}
+          {renderPartnerAnalysis(overallStats)}
+          {renderInsights(overallStats)}
         </div>
       </div>
     </div>

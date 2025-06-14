@@ -612,19 +612,15 @@ export const uploadActivityAttachment = async (activityId, file, description) =>
 
 // Overall Partnership Statistics Functions
 export const fetchOverallPartnershipStatistics = async () => {
-  const token = localStorage.getItem("token");
-  const response = await axios.get("http://localhost:5000/api/v1/admin/partnership-statistics/overall", {
-    headers: { Authorization: `Bearer ${token}` },
-    withCredentials: true
+  const response = await api.get("/partnership-statistics/overall", {
+    baseURL: "http://localhost:5000/api/v1"
   });
   return response.data.data;
 };
 
 export const fetchSignedPartnersActivityStatistics = async () => {
-  const token = localStorage.getItem("token");
-  const response = await axios.get("http://localhost:5000/api/v1/admin/partnership-statistics/signed-activities", {
-    headers: { Authorization: `Bearer ${token}` },
-    withCredentials: true
+  const response = await api.get("/partnership-statistics/signed-partners", {
+    baseURL: "http://localhost:5000/api/v1"
   });
   return response.data.data;
 };

@@ -23,6 +23,27 @@ import {
   uploadActivityAttachment 
 } from '../../api/adminApi';
 import { toast } from 'react-toastify';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 const ActivityModal = ({ isOpen, onClose, partnerId, activity = null, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -177,22 +198,115 @@ const ActivityReport = ({ partner }) => {
 
   const generateReport = () => {
     const printWindow = window.open('', '_blank');
-    const reportContent = printRef.current.innerHTML;
     
+    // Calculate statistics for charts
+    const statusCounts = {
+      pending: activities?.filter(a => a.status === 'pending').length || 0,
+      in_progress: activities?.filter(a => a.status === 'in_progress').length || 0,
+      completed: activities?.filter(a => a.status === 'completed').length || 0
+    };
+
+    const workloadCounts = {
+      partner: activities?.filter(a => a.assignedTo === 'partner').length || 0,
+      insa: activities?.filter(a => a.assignedTo === 'insa').length || 0,
+      both: activities?.filter(a => a.assignedTo === 'both').length || 0
+    };
+
+    // Create chart images
+    const statusChartImage = `
+      <div class="chart-container">
+        <h3 class="section-title">Activity Status Distribution</h3>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <span class="legend-color" style="background: #fef3c7;"></span>
+            <span>Pending: ${statusCounts.pending}</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #dbeafe;"></span>
+            <span>In Progress: ${statusCounts.in_progress}</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #d1fae5;"></span>
+            <span>Completed: ${statusCounts.completed}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const workloadChartImage = `
+      <div class="chart-container">
+        <h3 class="section-title">Workload Distribution</h3>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <span class="legend-color" style="background: #f3e8ff;"></span>
+            <span>Partner: ${workloadCounts.partner}</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #ecfccb;"></span>
+            <span>INSA: ${workloadCounts.insa}</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #fef3c7;"></span>
+            <span>Both: ${workloadCounts.both}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Create activities table
+    const activitiesTable = activities?.length ? `
+      <div class="section">
+        <h3 class="section-title">Activities Overview</h3>
+        <table class="activity-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Assigned To</th>
+              <th>Deadline</th>
+              <th>Attachments</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${activities.map(activity => `
+              <tr>
+                <td>${activity.title}</td>
+                <td>${activity.description}</td>
+                <td>
+                  <span class="status status-${activity.status}">
+                    ${activity.status.replace('_', ' ')}
+                  </span>
+                </td>
+                <td>
+                  <span class="assignee assignee-${activity.assignedTo}">
+                    ${activity.assignedTo === 'both' ? 'Partner & INSA' : activity.assignedTo.toUpperCase()}
+                  </span>
+                </td>
+                <td>${new Date(activity.deadline).toLocaleDateString()}</td>
+                <td>${activity.attachments?.length || 0} files</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    ` : '<p class="text-center text-gray-500">No activities found</p>';
+
     printWindow.document.write(`
       <html>
         <head>
           <title>Activity Report - ${partner.companyName}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #3c8dbc; padding-bottom: 20px; }
-            .company-name { color: #3c8dbc; font-size: 24px; font-weight: bold; }
-            .report-date { color: #666; font-size: 14px; }
-            .section { margin: 20px 0; }
-            .section-title { color: #3c8dbc; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-            .activity { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
-            .activity-title { font-weight: bold; color: #333; }
-            .activity-meta { color: #666; font-size: 12px; margin: 5px 0; }
+            body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #3c8dbc; padding-bottom: 20px; }
+            .company-name { color: #3c8dbc; font-size: 28px; font-weight: bold; }
+            .report-subtitle { color: #666; font-size: 16px; margin-top: 5px; }
+            .report-date { color: #666; font-size: 14px; margin-top: 10px; }
+            .section { margin: 25px 0; page-break-inside: avoid; }
+            .section-title { color: #3c8dbc; font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
+            .activity-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            .activity-table th, .activity-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .activity-table th { background-color: #f8f9fa; font-weight: bold; color: #333; }
             .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
             .status-pending { background: #fef3c7; color: #92400e; }
             .status-in_progress { background: #dbeafe; color: #1e40af; }
@@ -201,6 +315,10 @@ const ActivityReport = ({ partner }) => {
             .assignee-partner { background: #f3e8ff; color: #7c3aed; }
             .assignee-insa { background: #ecfccb; color: #365314; }
             .assignee-both { background: #fef3c7; color: #92400e; }
+            .chart-container { margin: 20px 0; text-align: center; }
+            .chart-legend { display: flex; justify-content: center; gap: 20px; margin-top: 10px; }
+            .legend-item { display: flex; align-items: center; gap: 5px; }
+            .legend-color { width: 12px; height: 12px; border-radius: 2px; }
             .summary { background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; }
             .summary-item { display: inline-block; margin: 10px 20px; text-align: center; }
             .summary-number { font-size: 24px; font-weight: bold; color: #3c8dbc; }
@@ -214,9 +332,32 @@ const ActivityReport = ({ partner }) => {
         <body>
           <div class="header">
             <div class="company-name">${partner.companyName} - Activity Report</div>
-            <div class="report-date">Generated on ${new Date().toLocaleDateString()}</div>
+            <div class="report-subtitle">Comprehensive Analysis of Activities & Performance</div>
+            <div class="report-date">Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</div>
           </div>
-          ${reportContent}
+
+          <div class="summary">
+            <div class="summary-item">
+              <div class="summary-number">${activities?.length || 0}</div>
+              <div class="summary-label">Total Activities</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-number">${statusCounts.completed}</div>
+              <div class="summary-label">Completed</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-number">${statusCounts.in_progress}</div>
+              <div class="summary-label">In Progress</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-number">${statusCounts.pending}</div>
+              <div class="summary-label">Pending</div>
+            </div>
+          </div>
+
+          ${statusChartImage}
+          ${workloadChartImage}
+          ${activitiesTable}
         </body>
       </html>
     `);
@@ -273,20 +414,6 @@ const ActivityReport = ({ partner }) => {
     );
   }
 
-  // Categorize activities
-  const categorizedActivities = {
-    pending: activities?.filter(a => a.status === 'pending') || [],
-    in_progress: activities?.filter(a => a.status === 'in_progress') || [],
-    completed: activities?.filter(a => a.status === 'completed') || [],
-    byAssignee: {
-      partner: activities?.filter(a => a.assignedTo === 'partner') || [],
-      insa: activities?.filter(a => a.assignedTo === 'insa') || [],
-      both: activities?.filter(a => a.assignedTo === 'both') || []
-    }
-  };
-
-  const totalActivities = activities?.length || 0;
-
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <div className="flex justify-between items-center mb-6">
@@ -305,113 +432,137 @@ const ActivityReport = ({ partner }) => {
         </div>
       </div>
 
-      {/* Activity Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-50 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-[#3c8dbc]">{totalActivities}</div>
-          <div className="text-sm text-gray-600">Total Activities</div>
+      <div ref={printRef} className="space-y-6">
+        {/* Activity Status Chart */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold mb-4">Activity Status Distribution</h3>
+          <div className="h-64">
+            <Doughnut 
+              data={{
+                labels: ['Pending', 'In Progress', 'Completed'],
+                datasets: [{
+                  data: [
+                    activities?.filter(a => a.status === 'pending').length || 0,
+                    activities?.filter(a => a.status === 'in_progress').length || 0,
+                    activities?.filter(a => a.status === 'completed').length || 0
+                  ],
+                  backgroundColor: [
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(75, 192, 192, 0.6)'
+                  ],
+                  borderColor: [
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(75, 192, 192, 1)'
+                  ],
+                  borderWidth: 1
+                }]
+              }} 
+              options={{ maintainAspectRatio: false }} 
+            />
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-4">
+            {['pending', 'in_progress', 'completed'].map(status => (
+              <div key={status} className="text-center">
+                <p className="font-medium capitalize">{status.replace('_', ' ')}</p>
+                <p className="text-2xl font-bold">
+                  {activities?.filter(a => a.status === status).length || 0}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="bg-yellow-50 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-yellow-600">{categorizedActivities.pending.length}</div>
-          <div className="text-sm text-gray-600">Pending</div>
-        </div>
-        <div className="bg-blue-50 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-blue-600">{categorizedActivities.in_progress.length}</div>
-          <div className="text-sm text-gray-600">In Progress</div>
-        </div>
-        <div className="bg-green-50 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-green-600">{categorizedActivities.completed.length}</div>
-          <div className="text-sm text-gray-600">Completed</div>
-        </div>
-      </div>
 
-      {/* Printable Report Content */}
-      <div ref={printRef}>
-        {/* Summary Section */}
-        <div className="summary">
-          <div className="section-title">Activity Summary</div>
-          <div className="summary-item">
-            <div className="summary-number">{totalActivities}</div>
-            <div className="summary-label">Total Activities</div>
+        {/* Workload Distribution Chart */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold mb-4">Workload Distribution</h3>
+          <div className="h-64">
+            <Doughnut 
+              data={{
+                labels: ['Partner', 'INSA', 'Both'],
+                datasets: [{
+                  data: [
+                    activities?.filter(a => a.assignedTo === 'partner').length || 0,
+                    activities?.filter(a => a.assignedTo === 'insa').length || 0,
+                    activities?.filter(a => a.assignedTo === 'both').length || 0
+                  ],
+                  backgroundColor: [
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(75, 192, 192, 0.6)'
+                  ],
+                  borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(75, 192, 192, 1)'
+                  ],
+                  borderWidth: 1
+                }]
+              }} 
+              options={{ maintainAspectRatio: false }} 
+            />
           </div>
-          <div className="summary-item">
-            <div className="summary-number">{categorizedActivities.pending.length}</div>
-            <div className="summary-label">Pending</div>
-          </div>
-          <div className="summary-item">
-            <div className="summary-number">{categorizedActivities.in_progress.length}</div>
-            <div className="summary-label">In Progress</div>
-          </div>
-          <div className="summary-item">
-            <div className="summary-number">{categorizedActivities.completed.length}</div>
-            <div className="summary-label">Completed</div>
+          <div className="mt-4 grid grid-cols-3 gap-4">
+            {['partner', 'insa', 'both'].map(assignee => (
+              <div key={assignee} className="text-center">
+                <p className="font-medium capitalize">{assignee}</p>
+                <p className="text-2xl font-bold">
+                  {activities?.filter(a => a.assignedTo === assignee).length || 0}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Activities by Status */}
-        {['pending', 'in_progress', 'completed'].map(status => (
-          <div key={status} className="section">
-            <div className="section-title">
-              {status.replace('_', ' ').toUpperCase()} Activities ({categorizedActivities[status].length})
-            </div>
-            {categorizedActivities[status].length === 0 ? (
-              <p className="text-gray-500 italic">No {status.replace('_', ' ')} activities</p>
-            ) : (
-              categorizedActivities[status].map(activity => (
-                <div key={activity._id} className="activity">
-                  <div className="activity-title">{activity.title}</div>
-                  <p className="text-gray-600 mt-2">{activity.description}</p>
-                  <div className="activity-meta">
-                    <span className={`status status-${activity.status}`}>
-                      {activity.status.replace('_', ' ')}
-                    </span>
-                    <span className={`assignee assignee-${activity.assignedTo} ml-2`}>
-                      {activity.assignedTo === 'both' ? 'Partner & INSA' : activity.assignedTo.toUpperCase()}
-                    </span>
-                    <span className="ml-2">
-                      Deadline: {new Date(activity.deadline).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        ))}
-
-        {/* Activities by Assignee */}
-        <div className="section">
-          <div className="section-title">Activities by Assignee</div>
-          {Object.entries(categorizedActivities.byAssignee).map(([assignee, activityList]) => (
-            <div key={assignee} className="mb-4">
-              <h4 className="font-semibold text-gray-800 mb-2">
-                {assignee === 'both' ? 'Partner & INSA' : assignee.toUpperCase()} ({activityList.length})
-              </h4>
-              {activityList.length === 0 ? (
-                <p className="text-gray-500 italic ml-4">No activities assigned</p>
-              ) : (
-                activityList.map(activity => (
-                  <div key={activity._id} className="activity ml-4">
-                    <div className="activity-title">{activity.title}</div>
-                    <div className="activity-meta">
-                      <span className={`status status-${activity.status}`}>
+        {/* Activities Table */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold mb-4">Activities Overview</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attachments</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {activities?.map((activity) => (
+                  <tr key={activity._id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{activity.title}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{activity.description}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(activity.status)}`}>
                         {activity.status.replace('_', ' ')}
                       </span>
-                      <span className="ml-2">
-                        Deadline: {new Date(activity.deadline).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getAssigneeColor(activity.assignedTo)}`}>
+                        {activity.assignedTo === 'both' ? 'Partner & INSA' : activity.assignedTo.toUpperCase()}
                       </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          ))}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(activity.deadline).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {activity.attachments?.length || 0} files
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       {/* Interactive Activities Table (not printed) */}
       <div className="no-print mt-8">
         <h4 className="text-lg font-semibold mb-4">Manage Activities</h4>
-        {totalActivities === 0 ? (
+        {activities?.length === 0 ? (
           <div className="text-center py-8 bg-gray-50 rounded-lg">
             <FaFileAlt className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <p className="text-gray-500">No activities found. Create the first activity to get started.</p>
@@ -477,7 +628,6 @@ const ActivityReport = ({ partner }) => {
           </div>
         )}
       </div>
-
     </div>
   );
 };

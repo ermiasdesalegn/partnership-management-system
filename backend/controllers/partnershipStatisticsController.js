@@ -3,220 +3,249 @@ import PartnershipActivity from "../models/PartnershipActivity.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
 
-// Get overall partnership statistics (excluding operational partnerships)
-export const getOverallPartnershipStatistics = catchAsync(async (req, res, next) => {
-  try {
-    // Get all partners excluding operational ones
-    const allPartners = await Partner.find({ 
-      partnershipRequestType: { $ne: 'operational' } 
-    }).populate('requestRef');
-    
-    // Basic partnership statistics
-    const totalPartners = allPartners.length;
-    const signedPartners = allPartners.filter(p => p.isSigned).length;
-    const unsignedPartners = totalPartners - signedPartners;
-    const activePartners = allPartners.filter(p => p.status === 'Active').length;
-    
-    // Partnership by type (excluding operational partnerships)
-    const partnershipByType = {
-      strategic: allPartners.filter(p => p.partnershipRequestType === 'strategic').length,
-      project: allPartners.filter(p => p.partnershipRequestType === 'project').length,
-      tactical: allPartners.filter(p => p.partnershipRequestType === 'tactical').length
-    };
-    
-    // Framework distribution
-    const frameworkDistribution = {};
-    allPartners.forEach(partner => {
-      const framework = partner.frameworkType;
-      frameworkDistribution[framework] = (frameworkDistribution[framework] || 0) + 1;
-    });
-    
-    // Company type distribution
-    const companyTypeDistribution = {};
-    allPartners.forEach(partner => {
-      const type = partner.companyType;
-      companyTypeDistribution[type] = (companyTypeDistribution[type] || 0) + 1;
-    });
-    
-    // Monthly partnership creation (last 12 months)
-    const twelveMonthsAgo = new Date();
-    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
-    
-    const monthlyData = await Partner.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: twelveMonthsAgo },
-          partnershipRequestType: { $ne: 'operational' }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" }
-          },
-          total: { $sum: 1 },
-          signed: { $sum: { $cond: [{ $eq: ["$isSigned", true] }, 1, 0] } }
-        }
-      },
-      {
-        $sort: { "_id.year": 1, "_id.month": 1 }
-      }
-    ]);
+// Get overall partnership statistics
+export const getOverallPartnershipStatistics = catchAsync(async (req, res) => {
+  console.log('Fetching overall partnership statistics...');
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        overview: {
-          totalPartners,
-          signedPartners,
-          unsignedPartners,
-          activePartners
+  // Get all partners except operational ones
+  const partners = await Partner.find({
+      partnershipRequestType: { $ne: 'operational' } 
+  });
+  console.log('Found partners:', partners.length);
+  console.log('Partner types:', partners.map(p => p.partnershipRequestType));
+
+  // Get all activities for these partners
+  const activities = await PartnershipActivity.find({
+    partnerRef: { $in: partners.map(p => p._id) }
+  });
+  console.log('Found activities:', activities.length);
+  console.log('Activity statuses:', activities.map(a => a.status));
+
+  // Calculate basic stats
+  const basicStats = {
+    totalPartners: partners.length,
+    signedPartners: partners.filter(p => p.isSigned).length,
+    unsignedPartners: partners.filter(p => !p.isSigned).length,
+    totalActivities: activities.length
+  };
+  console.log('Basic stats:', basicStats);
+
+  // Calculate partnership by type
+  const partnershipByType = partners.reduce((acc, partner) => {
+    const type = partner.partnershipRequestType;
+    if (!acc[type]) {
+      acc[type] = { total: 0, signed: 0, unsigned: 0 };
+    }
+    acc[type].total++;
+    if (partner.isSigned) {
+      acc[type].signed++;
+    } else {
+      acc[type].unsigned++;
+    }
+    return acc;
+  }, {});
+  console.log('Partnership by type:', partnershipByType);
+
+  // Calculate partner analysis
+  const partnerAnalysis = partners.map(partner => {
+    const partnerActivities = activities.filter(a => 
+      a.partnerRef.toString() === partner._id.toString()
+    );
+    const completedActivities = partnerActivities.filter(a => a.status === 'completed').length;
+    const pendingActivities = partnerActivities.filter(a => a.status === 'pending').length;
+    const inProgressActivities = partnerActivities.filter(a => a.status === 'in_progress').length;
+    const completionRate = partnerActivities.length > 0 
+      ? (completedActivities / partnerActivities.length) * 100 
+      : 0;
+
+    // Calculate workload breakdown by assignee
+    const partnerTasks = partnerActivities.filter(a => a.assignedTo === 'partner');
+    const insaTasks = partnerActivities.filter(a => a.assignedTo === 'insa');
+    const bothTasks = partnerActivities.filter(a => a.assignedTo === 'both');
+
+    const partnerTasksCompleted = partnerTasks.filter(a => a.status === 'completed').length;
+    const insaTasksCompleted = insaTasks.filter(a => a.status === 'completed').length;
+    const bothTasksCompleted = bothTasks.filter(a => a.status === 'completed').length;
+
+    return {
+      partnerId: partner._id,
+      companyName: partner.companyName,
+      partnershipType: partner.partnershipRequestType,
+      totalActivities: partnerActivities.length,
+      completed: completedActivities,
+      pending: pendingActivities,
+      in_progress: inProgressActivities,
+      completionRate,
+      status: partner.status,
+      isSigned: partner.isSigned,
+      workloadBreakdown: {
+        partner: {
+          total: partnerTasks.length,
+          completed: partnerTasksCompleted,
+          completionRate: partnerTasks.length > 0 ? Math.round((partnerTasksCompleted / partnerTasks.length) * 100) : 0
         },
-        partnershipByType,
-        frameworkDistribution,
-        companyTypeDistribution,
-        monthlyData
+        insa: {
+          total: insaTasks.length,
+          completed: insaTasksCompleted,
+          completionRate: insaTasks.length > 0 ? Math.round((insaTasksCompleted / insaTasks.length) * 100) : 0
+        },
+        both: {
+          total: bothTasks.length,
+          completed: bothTasksCompleted,
+          completionRate: bothTasks.length > 0 ? Math.round((bothTasksCompleted / bothTasks.length) * 100) : 0
+        }
       }
-    });
-  } catch (error) {
-    return next(new AppError("Failed to fetch partnership statistics", 500));
-  }
-});
+    };
+  });
+  console.log('Partner analysis:', partnerAnalysis);
 
-// Get signed partners' activity statistics (excluding operational partnerships)
-export const getSignedPartnersActivityStatistics = catchAsync(async (req, res, next) => {
-  try {
-    // Get all signed partners excluding operational ones
-    const signedPartners = await Partner.find({ 
-      isSigned: true, 
-      partnershipRequestType: { $ne: 'operational' } 
-    }).populate('requestRef');
-    
-    if (signedPartners.length === 0) {
-      return res.status(200).json({
+  // Calculate insights
+  const insights = {
+    topPerformers: partnerAnalysis
+      .filter(p => p.totalActivities > 0 && p.completionRate >= 80)
+      .sort((a, b) => b.completionRate - a.completionRate)
+      .slice(0, 3),
+    needsImprovement: partnerAnalysis.filter(p => p.completionRate < 50).length,
+    averageCompletionRate: partnerAnalysis.length > 0
+      ? partnerAnalysis.reduce((sum, p) => sum + p.completionRate, 0) / partnerAnalysis.length
+      : 0
+  };
+  console.log('Insights:', insights);
+
+  // Calculate workload distribution
+  const workloadDistribution = {
+    partner: {
+      total: activities.filter(a => a.assignedTo === 'partner').length,
+      completed: activities.filter(a => a.assignedTo === 'partner' && a.status === 'completed').length,
+      completionRate: 0,
+      averagePerPartner: 0
+    },
+    insa: {
+      total: activities.filter(a => a.assignedTo === 'insa').length,
+      completed: activities.filter(a => a.assignedTo === 'insa' && a.status === 'completed').length,
+      completionRate: 0,
+      averagePerPartner: 0
+    },
+    both: {
+      total: activities.filter(a => a.assignedTo === 'both').length,
+      completed: activities.filter(a => a.assignedTo === 'both' && a.status === 'completed').length,
+      completionRate: 0,
+      averagePerPartner: 0
+    }
+  };
+
+  // Calculate completion rates and averages
+  Object.keys(workloadDistribution).forEach(key => {
+    const stats = workloadDistribution[key];
+    stats.completionRate = stats.total > 0 ? (stats.completed / stats.total) * 100 : 0;
+    stats.averagePerPartner = partners.length > 0 ? stats.total / partners.length : 0;
+  });
+
+  const response = {
         status: "success",
         data: {
-          message: "No signed partners found",
-          statistics: null
-        }
-      });
+      partners: {
+        total: basicStats.totalPartners,
+        signed: basicStats.signedPartners,
+        unsigned: basicStats.unsignedPartners,
+        byType: partnershipByType
+      },
+      activities: {
+        total: activities.length,
+        completed: activities.filter(a => a.status === 'completed').length,
+        in_progress: activities.filter(a => a.status === 'in_progress').length,
+        pending: activities.filter(a => a.status === 'pending').length,
+        overdue: activities.filter(a => a.status === 'overdue').length,
+        upcoming: activities.filter(a => a.status === 'upcoming').length
+      },
+      workloadDistribution,
+      partnerDetailedAnalysis: partnerAnalysis,
+      insights
     }
+  };
+
+  console.log('Sending response:', JSON.stringify(response, null, 2));
+  res.status(200).json(response);
+});
+
+// Get signed partners activity statistics
+export const getSignedPartnersActivityStatistics = catchAsync(async (req, res) => {
+  // Get all signed partners
+  const partners = await Partner.find({
+    isSigned: true
+  });
+
+  // Get all activities for these partners
+  const activities = await PartnershipActivity.find({
+    partnerRef: { $in: partners.map(p => p._id) }
+  });
+
+  // Calculate statistics similar to overall statistics but only for signed partners
+  const totalPartners = partners.length;
+  const totalActivities = activities.length;
+
+  // Calculate workload distribution
+  const workloadDistribution = {
+    partner: {
+      total: activities.filter(a => a.assignedTo === 'partner').length,
+      completed: activities.filter(a => a.assignedTo === 'partner' && a.status === 'completed').length
+    },
+    insa: {
+      total: activities.filter(a => a.assignedTo === 'insa').length,
+      completed: activities.filter(a => a.assignedTo === 'insa' && a.status === 'completed').length
+    },
+    both: {
+      total: activities.filter(a => a.assignedTo === 'both').length,
+      completed: activities.filter(a => a.assignedTo === 'both' && a.status === 'completed').length
+    }
+  };
+
+  // Calculate completion rates
+  Object.keys(workloadDistribution).forEach(key => {
+    const { total, completed } = workloadDistribution[key];
+    workloadDistribution[key].completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    workloadDistribution[key].averagePerPartner = total > 0 ? Math.round((total / totalPartners) * 10) / 10 : 0;
+  });
+
+  // Calculate partner-specific statistics
+  const partnerDetailedAnalysis = await Promise.all(partners.map(async partner => {
+    const partnerActivities = activities.filter(a => a.partnerRef.toString() === partner._id.toString());
+    const totalPartnerActivities = partnerActivities.length;
     
-    // Get all activities for signed partners
-    const partnerIds = signedPartners.map(p => p._id);
-    const allActivities = await PartnershipActivity.find({ 
-      partnerRef: { $in: partnerIds } 
-    }).populate('partnerRef');
-    
-    // Calculate activity statistics
-    const totalActivities = allActivities.length;
-    const averageActivitiesPerPartner = totalActivities / signedPartners.length;
-    
-    const activityStatusDistribution = {
-      pending: allActivities.filter(a => a.status === 'pending').length,
-      in_progress: allActivities.filter(a => a.status === 'in_progress').length,
-      completed: allActivities.filter(a => a.status === 'completed').length
-    };
-    
-    const activityAssignmentDistribution = {
-      partner: allActivities.filter(a => a.assignedTo === 'partner').length,
-      insa: allActivities.filter(a => a.assignedTo === 'insa').length,
-      both: allActivities.filter(a => a.assignedTo === 'both').length
-    };
-    
-    // Activities by partnership type
-    const activitiesByPartnershipType = {};
-    signedPartners.forEach(partner => {
-      const type = partner.partnershipRequestType;
-      const partnerActivities = allActivities.filter(a => 
-        a.partnerRef._id.toString() === partner._id.toString()
-      );
-      activitiesByPartnershipType[type] = {
-        partners: (activitiesByPartnershipType[type]?.partners || 0) + 1,
-        activities: (activitiesByPartnershipType[type]?.activities || 0) + partnerActivities.length
-      };
+    const partnerTasks = partnerActivities.filter(a => a.assignedTo === 'partner');
+    const insaTasks = partnerActivities.filter(a => a.assignedTo === 'insa');
+    const bothTasks = partnerActivities.filter(a => a.assignedTo === 'both');
+
+    const partnerCompletionRate = partnerTasks.length > 0 
+      ? Math.round((partnerTasks.filter(t => t.status === 'completed').length / partnerTasks.length) * 100)
+      : 0;
+
+    const insaCompletionRate = insaTasks.length > 0
+      ? Math.round((insaTasks.filter(t => t.status === 'completed').length / insaTasks.length) * 100)
+      : 0;
+
+    const overallCompletionRate = totalPartnerActivities > 0
+      ? Math.round((partnerActivities.filter(a => a.status === 'completed').length / totalPartnerActivities) * 100)
+      : 0;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const upcomingDeadlines = partnerActivities.filter(a => {
+      if (a.status === 'completed') return false;
+      const deadline = new Date(a.deadline);
+      deadline.setHours(0, 0, 0, 0);
+      const diffTime = deadline - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays <= 7 && diffDays > 0;
     });
-    
-    // Calculate averages for each partnership type
-    Object.keys(activitiesByPartnershipType).forEach(type => {
-      const data = activitiesByPartnershipType[type];
-      data.averageActivitiesPerPartner = data.partners > 0 ? data.activities / data.partners : 0;
+
+    const overdueActivities = partnerActivities.filter(a => {
+      if (a.status === 'completed') return false;
+      const deadline = new Date(a.deadline);
+      deadline.setHours(0, 0, 0, 0);
+      return deadline < today;
     });
-    
-    // Enhanced partner analysis with detailed breakdown
-    const currentDate = new Date();
-    const partnerDetailedAnalysis = signedPartners.map(partner => {
-      const partnerActivities = allActivities.filter(a => 
-        a.partnerRef._id.toString() === partner._id.toString()
-      );
-      
-      // Activity breakdown by assignee
-      const partnerAssignedActivities = partnerActivities.filter(a => a.assignedTo === 'partner');
-      const insaAssignedActivities = partnerActivities.filter(a => a.assignedTo === 'insa');
-      const bothAssignedActivities = partnerActivities.filter(a => a.assignedTo === 'both');
-      
-      // Status breakdown for each assignee
-      const partnerActivitiesBreakdown = {
-        total: partnerAssignedActivities.length,
-        completed: partnerAssignedActivities.filter(a => a.status === 'completed').length,
-        inProgress: partnerAssignedActivities.filter(a => a.status === 'in_progress').length,
-        pending: partnerAssignedActivities.filter(a => a.status === 'pending').length
-      };
-      
-      const insaActivitiesBreakdown = {
-        total: insaAssignedActivities.length,
-        completed: insaAssignedActivities.filter(a => a.status === 'completed').length,
-        inProgress: insaAssignedActivities.filter(a => a.status === 'in_progress').length,
-        pending: insaAssignedActivities.filter(a => a.status === 'pending').length
-      };
-      
-      const bothActivitiesBreakdown = {
-        total: bothAssignedActivities.length,
-        completed: bothAssignedActivities.filter(a => a.status === 'completed').length,
-        inProgress: bothAssignedActivities.filter(a => a.status === 'in_progress').length,
-        pending: bothAssignedActivities.filter(a => a.status === 'pending').length
-      };
-      
-      // Deadline analysis
-      const upcomingDeadlines = partnerActivities.filter(a => 
-        a.status !== 'completed' && a.deadline && new Date(a.deadline) > currentDate
-      );
-      const overdueActivities = partnerActivities.filter(a => 
-        a.status !== 'completed' && a.deadline && new Date(a.deadline) <= currentDate
-      );
-      
-      // Calculate partnership end date for deadline context
-      let partnershipEndDate = null;
-      if (partner.signedAt && partner.requestRef?.duration) {
-        const signedDate = new Date(partner.signedAt);
-        partnershipEndDate = new Date(signedDate);
-        
-        const duration = partner.requestRef.duration;
-        if (typeof duration === 'object' && duration.type) {
-          if (duration.type === "months") {
-            partnershipEndDate.setMonth(partnershipEndDate.getMonth() + parseInt(duration.value));
-          } else {
-            partnershipEndDate.setFullYear(partnershipEndDate.getFullYear() + parseInt(duration.value));
-          }
-        } else {
-          partnershipEndDate.setFullYear(partnershipEndDate.getFullYear() + parseInt(duration));
-        }
-      }
-      
-      // Calculate days until partnership ends
-      const daysUntilPartnershipEnd = partnershipEndDate ? 
-        Math.ceil((partnershipEndDate - currentDate) / (1000 * 60 * 60 * 24)) : null;
-      
-      // Calculate completion rates
-      const totalPartnerActivities = partnerActivities.length;
-      const completedActivities = partnerActivities.filter(a => a.status === 'completed').length;
-      const overallCompletionRate = totalPartnerActivities > 0 ? (completedActivities / totalPartnerActivities) * 100 : 0;
-      
-      const partnerCompletionRate = partnerActivitiesBreakdown.total > 0 ? 
-        (partnerActivitiesBreakdown.completed / partnerActivitiesBreakdown.total) * 100 : 0;
-      const insaCompletionRate = insaActivitiesBreakdown.total > 0 ? 
-        (insaActivitiesBreakdown.completed / insaActivitiesBreakdown.total) * 100 : 0;
       
       return {
         partnerId: partner._id,
@@ -224,115 +253,71 @@ export const getSignedPartnersActivityStatistics = catchAsync(async (req, res, n
         partnershipType: partner.partnershipRequestType,
         frameworkType: partner.frameworkType,
         signedAt: partner.signedAt,
-        partnershipEndDate,
-        daysUntilPartnershipEnd,
-        
-        // Overall activity summary
+      daysUntilPartnershipEnd: partner.duration && partner.signedAt ? 
+        Math.ceil((new Date(partner.signedAt.getTime() + partner.duration * 24 * 60 * 60 * 1000) - today) / (1000 * 60 * 60 * 24)) : 
+        null,
         totalActivities: totalPartnerActivities,
-        completedActivities,
-        overallCompletionRate: Math.round(overallCompletionRate * 100) / 100,
-        
-        // Detailed breakdown by assignee
-        partnerActivities: partnerActivitiesBreakdown,
-        insaActivities: insaActivitiesBreakdown,
-        bothActivities: bothActivitiesBreakdown,
-        
-        // Completion rates by assignee
-        partnerCompletionRate: Math.round(partnerCompletionRate * 100) / 100,
-        insaCompletionRate: Math.round(insaCompletionRate * 100) / 100,
-        
-        // Deadline analysis
-        upcomingDeadlines: upcomingDeadlines.length,
-        overdueActivities: overdueActivities.length,
-        activitiesNeedingAttention: upcomingDeadlines.length + overdueActivities.length,
-        
-        // Detailed deadline breakdown
-        upcomingDeadlinesList: upcomingDeadlines.map(a => ({
-          title: a.title,
-          deadline: a.deadline,
-          assignedTo: a.assignedTo,
-          status: a.status,
-          daysUntilDeadline: Math.ceil((new Date(a.deadline) - currentDate) / (1000 * 60 * 60 * 24))
-        })).sort((a, b) => a.daysUntilDeadline - b.daysUntilDeadline),
-        
-        overdueActivitiesList: overdueActivities.map(a => ({
-          title: a.title,
-          deadline: a.deadline,
-          assignedTo: a.assignedTo,
-          status: a.status,
-          daysOverdue: Math.ceil((currentDate - new Date(a.deadline)) / (1000 * 60 * 60 * 24))
-        })).sort((a, b) => b.daysOverdue - a.daysOverdue)
-      };
-    });
-    
-    // Sort by overall completion rate (descending)
-    partnerDetailedAnalysis.sort((a, b) => b.overallCompletionRate - a.overallCompletionRate);
-    
-    // Calculate overall averages and totals for partner vs INSA
-    const totalPartnerActivities = allActivities.filter(a => a.assignedTo === 'partner').length;
-    const totalInsaActivities = allActivities.filter(a => a.assignedTo === 'insa').length;
-    const totalBothActivities = allActivities.filter(a => a.assignedTo === 'both').length;
-    
-    const completedPartnerActivities = allActivities.filter(a => a.assignedTo === 'partner' && a.status === 'completed').length;
-    const completedInsaActivities = allActivities.filter(a => a.assignedTo === 'insa' && a.status === 'completed').length;
-    const completedBothActivities = allActivities.filter(a => a.assignedTo === 'both' && a.status === 'completed').length;
-    
-    // Generate insights and notes
-    const insights = {
-      totalPartnersAnalyzed: signedPartners.length,
-      totalActivitiesTracked: totalActivities,
-      averageActivitiesPerPartner: Math.round(averageActivitiesPerPartner * 100) / 100,
-      
-      workloadDistribution: {
-        partner: {
-          total: totalPartnerActivities,
-          completed: completedPartnerActivities,
-          completionRate: totalPartnerActivities > 0 ? Math.round((completedPartnerActivities / totalPartnerActivities) * 10000) / 100 : 0,
-          averagePerPartner: Math.round((totalPartnerActivities / signedPartners.length) * 100) / 100
-        },
-        insa: {
-          total: totalInsaActivities,
-          completed: completedInsaActivities,
-          completionRate: totalInsaActivities > 0 ? Math.round((completedInsaActivities / totalInsaActivities) * 10000) / 100 : 0,
-          averagePerPartner: Math.round((totalInsaActivities / signedPartners.length) * 100) / 100
-        },
-        both: {
-          total: totalBothActivities,
-          completed: completedBothActivities,
-          completionRate: totalBothActivities > 0 ? Math.round((completedBothActivities / totalBothActivities) * 10000) / 100 : 0,
-          averagePerPartner: Math.round((totalBothActivities / signedPartners.length) * 100) / 100
-        }
+      partnerActivities: {
+        total: partnerTasks.length,
+        completed: partnerTasks.filter(t => t.status === 'completed').length
       },
-      
+      insaActivities: {
+        total: insaTasks.length,
+        completed: insaTasks.filter(t => t.status === 'completed').length
+      },
+      bothActivities: {
+        total: bothTasks.length,
+        completed: bothTasks.filter(t => t.status === 'completed').length
+      },
+      partnerCompletionRate,
+      insaCompletionRate,
+      overallCompletionRate,
+        upcomingDeadlines: upcomingDeadlines.length,
+        upcomingDeadlinesList: upcomingDeadlines.map(a => ({
+        activityId: a._id,
+          title: a.title,
+          deadline: a.deadline,
+        daysUntilDeadline: Math.ceil((new Date(a.deadline) - today) / (1000 * 60 * 60 * 24))
+      })),
+      overdueActivities: overdueActivities.length,
+        overdueActivitiesList: overdueActivities.map(a => ({
+        activityId: a._id,
+          title: a.title,
+          deadline: a.deadline,
+        daysOverdue: Math.ceil((today - new Date(a.deadline)) / (1000 * 60 * 60 * 24))
+      }))
+    };
+  }));
+
+  // Calculate insights
+    const insights = {
+    totalPartnersAnalyzed: totalPartners,
+      totalActivitiesTracked: totalActivities,
+    workloadDistribution,
+    overdueActivitiesTotal: partnerDetailedAnalysis.reduce((sum, p) => sum + p.overdueActivities, 0),
+    upcomingDeadlinesTotal: partnerDetailedAnalysis.reduce((sum, p) => sum + p.upcomingDeadlines, 0),
       urgentAttentionNeeded: partnerDetailedAnalysis.filter(p => p.overdueActivities > 0).length,
-      upcomingDeadlinesTotal: partnerDetailedAnalysis.reduce((sum, p) => sum + p.upcomingDeadlines, 0),
-      overdueActivitiesTotal: partnerDetailedAnalysis.reduce((sum, p) => sum + p.overdueActivities, 0),
-      
-      topPerformers: partnerDetailedAnalysis.slice(0, 3).map(p => ({
+    needsImprovementPartners: partnerDetailedAnalysis.filter(p => p.overallCompletionRate < 50).length,
+    topPerformers: partnerDetailedAnalysis
+      .filter(p => p.totalActivities > 0)
+      .sort((a, b) => b.overallCompletionRate - a.overallCompletionRate)
+      .slice(0, 3)
+      .map(p => ({
         name: p.companyName,
         completionRate: p.overallCompletionRate
-      })),
-      
-      needsImprovementPartners: partnerDetailedAnalysis.filter(p => p.overallCompletionRate < 50).length
+      }))
     };
 
     res.status(200).json({
-      status: "success",
+    status: 'success',
       data: {
         overview: {
-          totalSignedPartners: signedPartners.length,
+        totalPartners,
           totalActivities,
-          averageActivitiesPerPartner: Math.round(averageActivitiesPerPartner * 100) / 100
+        averageActivitiesPerPartner: totalPartners > 0 ? Math.round((totalActivities / totalPartners) * 10) / 10 : 0
         },
-        activityStatusDistribution,
-        activityAssignmentDistribution,
-        activitiesByPartnershipType,
-        partnerDetailedAnalysis,
         insights,
-        generatedAt: new Date().toISOString()
+      partnerDetailedAnalysis
       }
     });
-  } catch (error) {
-    return next(new AppError("Failed to fetch signed partners activity statistics", 500));
-  }
 }); 
