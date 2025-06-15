@@ -9,6 +9,7 @@ import Feedback from "../components/feedback/Feedback";
 import UserRoute from "../components/user/router/UserRoute"; // Import User Routes
 import { useAuth } from "../context/AuthContext";
 import RequestDetails from "../components/user/RequestDetails";
+import SetupPassword from "../components/Login and Sign Up/SetupPassword";
 // import AdminRoute from '../Admin/router/AdminRoute'
 const RouteConfig = () => {
   const { isAuthenticated } = useAuth();
@@ -24,6 +25,9 @@ const RouteConfig = () => {
         <Route path="partnership" element={<Partnership />} />
         <Route path="feedback" element={<Feedback />} />
       </Route>
+      
+      {/* Setup Password Route - Available to everyone */}
+      <Route path="/setup-password" element={<SetupPassword />} />
       
       {UserRoute.map((route) => route)}
 

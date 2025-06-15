@@ -32,21 +32,50 @@ const UserAnalytics = () => {
   const { data: allUsers = [], isLoading: isLoadingAllUsers, error: allUsersError } = useQuery({
     queryKey: ["allUsers"],
     queryFn: getAllUsers,
+    onSuccess: (data) => {
+      console.log('UserAnalytics - getAllUsers success:', data);
+    },
+    onError: (error) => {
+      console.error('UserAnalytics - getAllUsers error:', error);
+    }
   });
 
   const { data: internalUsers = [], isLoading: isLoadingInternal, error: internalError } = useQuery({
     queryKey: ["internalUsers"],
     queryFn: getAllInternalUsers,
+    onSuccess: (data) => {
+      console.log('UserAnalytics - getAllInternalUsers success:', data);
+    },
+    onError: (error) => {
+      console.error('UserAnalytics - getAllInternalUsers error:', error);
+    }
   });
 
   const { data: externalUsers = [], isLoading: isLoadingExternal, error: externalError } = useQuery({
     queryKey: ["externalUsers"],
     queryFn: getAllExternalUsers,
+    onSuccess: (data) => {
+      console.log('UserAnalytics - getAllExternalUsers success:', data);
+    },
+    onError: (error) => {
+      console.error('UserAnalytics - getAllExternalUsers error:', error);
+    }
   });
 
   // Calculate analytics using useMemo for performance
   const analytics = useMemo(() => {
-    if (!allUsers.length || !internalUsers.length || !externalUsers.length) {
+    // Debug logging
+    console.log('UserAnalytics - Analytics calculation:');
+    console.log('allUsers:', allUsers);
+    console.log('internalUsers:', internalUsers);
+    console.log('externalUsers:', externalUsers);
+    console.log('allUsers.length:', allUsers.length);
+    console.log('internalUsers.length:', internalUsers.length);
+    console.log('externalUsers.length:', externalUsers.length);
+
+    // If no users at all, return empty analytics
+    if (!allUsers.length && !internalUsers.length && !externalUsers.length) {
+      console.log('UserAnalytics - No users found, returning empty analytics');
       return {
         totalUsers: 0,
         internalUsers: 0,
@@ -120,7 +149,7 @@ const UserAnalytics = () => {
     
     console.log('Recent registrations count:', recentRegistrations);
 
-    return {
+    const analyticsResult = {
       totalUsers: allUsers.length,
       internalUsers: internalUsers.length,
       externalUsers: externalUsers.length,
@@ -130,11 +159,29 @@ const UserAnalytics = () => {
       topDepartments,
       recentRegistrations
     };
+
+    console.log('UserAnalytics - Final analytics result:', analyticsResult);
+    return analyticsResult;
   }, [allUsers, internalUsers, externalUsers]);
 
   // Handle loading states
   const isLoading = isLoadingAllUsers || isLoadingInternal || isLoadingExternal;
   const error = allUsersError || internalError || externalError;
+
+  // Debug loading and error states
+  console.log('UserAnalytics - Loading states:', {
+    isLoadingAllUsers,
+    isLoadingInternal,
+    isLoadingExternal,
+    isLoading
+  });
+
+  console.log('UserAnalytics - Error states:', {
+    allUsersError,
+    internalError,
+    externalError,
+    error
+  });
 
   // Chart configurations
   const userTypeChartData = {

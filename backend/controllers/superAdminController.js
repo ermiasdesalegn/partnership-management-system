@@ -79,7 +79,7 @@ export const createInternalUser = async (req, res, next) => {
 
     // In a real application, you would send an email here
     // For testing, we'll return the setup link
-    const setupLink = `http://localhost:5173/setup-password?token=${setupToken}`;
+    const setupLink = `http://localhost:5174/setup-password?token=${setupToken}`;
 
     res.status(201).json({
       status: 'success',
