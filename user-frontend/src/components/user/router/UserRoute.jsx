@@ -1,7 +1,6 @@
 import { Route } from "react-router-dom";
 import UserLayout from "../../../layouts/UserLayout";
 import UserHomepage from "../../../pages/user/UserHomepage";
-import Notifications from "../Notifications";
 import RequestForm from "../RequestForm";
 import Profile from "../Profile";
 import RequestStatus from "../RequestStatus";
@@ -15,7 +14,6 @@ const UserRoute = [
   // <Route key="user" element={<ProtectedRoute />}> {/* Protect all user routes */}
     <Route path="user" element={<UserLayout />}>
       <Route index element={<UserHomepage />} />
-      <Route path="notification" element={<Notifications />} />
       <Route path="request" element={<RequestForm />} />
       <Route path="profile" element={<Profile />} />
       <Route path="request-status" element={<RequestStatus />} />

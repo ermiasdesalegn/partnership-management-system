@@ -209,138 +209,138 @@ const ReportModal = ({ partner, onClose }) => {
 
           {/* Attachments Section */}
           <div className="mb-8">
-            <div className="flex space-x-4 mb-6">
+          <div className="flex space-x-4 mb-6">
+            <button
+              onClick={() => setActiveTab("request")}
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                activeTab === "request"
+                  ? "bg-[var(--color-btn-default)] text-white"
+                  : "bg-[var(--color-text-50)] text-[var(--color-text-700)] hover:bg-[var(--color-text-100)]"
+              }`}
+            >
+              Request Attachments
+            </button>
+            <button
+              onClick={() => setActiveTab("approval")}
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                activeTab === "approval"
+                  ? "bg-[var(--color-btn-default)] text-white"
+                  : "bg-[var(--color-text-50)] text-[var(--color-text-700)] hover:bg-[var(--color-text-100)]"
+              }`}
+            >
+              Approval Attachments
+            </button>
+          </div>
+
+          <form onSubmit={handleUpload} className="mb-6 bg-[var(--color-text-50)] p-4 rounded-lg">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-700)] mb-1">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-3 py-2 border border-[var(--color-text-200)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-btn-default)]"
+                  placeholder="Enter file description"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-700)] mb-1">
+                  File
+                </label>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className="w-full px-3 py-2 border border-[var(--color-text-200)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-btn-default)]"
+                />
+              </div>
               <button
-                onClick={() => setActiveTab("request")}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  activeTab === "request"
-                    ? "bg-[var(--color-btn-default)] text-white"
-                    : "bg-[var(--color-text-50)] text-[var(--color-text-700)] hover:bg-[var(--color-text-100)]"
-                }`}
+                type="submit"
+                disabled={loading}
+                className="w-full px-4 py-2 bg-[var(--color-btn-default)] text-white rounded-md hover:bg-[var(--color-btn-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-btn-default)] transition-colors disabled:opacity-50"
               >
-                Request Attachments
-              </button>
-              <button
-                onClick={() => setActiveTab("approval")}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                  activeTab === "approval"
-                    ? "bg-[var(--color-btn-default)] text-white"
-                    : "bg-[var(--color-text-50)] text-[var(--color-text-700)] hover:bg-[var(--color-text-100)]"
-                }`}
-              >
-                Approval Attachments
+                {loading ? "Uploading..." : "Upload File"}
               </button>
             </div>
+          </form>
 
-            <form onSubmit={handleUpload} className="mb-6 bg-[var(--color-text-50)] p-4 rounded-lg">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-700)] mb-1">
+          <div className="overflow-x-auto">
+            <table className="w-full divide-y divide-[var(--color-text-100)]">
+              <thead>
+                <tr className="bg-[var(--color-text-50)]">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
+                    File Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
                     Description
-                  </label>
-                  <input
-                    type="text"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-3 py-2 border border-[var(--color-text-200)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-btn-default)]"
-                    placeholder="Enter file description"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-700)] mb-1">
-                    File
-                  </label>
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    className="w-full px-3 py-2 border border-[var(--color-text-200)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-btn-default)]"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full px-4 py-2 bg-[var(--color-btn-default)] text-white rounded-md hover:bg-[var(--color-btn-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-btn-default)] transition-colors disabled:opacity-50"
-                >
-                  {loading ? "Uploading..." : "Upload File"}
-                </button>
-              </div>
-            </form>
-
-            <div className="overflow-x-auto">
-              <table className="w-full divide-y divide-[var(--color-text-100)]">
-                <thead>
-                  <tr className="bg-[var(--color-text-50)]">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
-                      File Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
-                      Uploaded By
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
-                      Upload Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
-                      Actions
-                    </th>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
+                    Uploaded By
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
+                    Upload Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-700)] uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-text-100)]">
+                {(activeTab === "request" ? partner.requestAttachments : partner.approvalAttachments)?.map((attachment) => (
+                  <tr key={attachment._id} className="hover:bg-[var(--color-text-50)]">
+                    <td className="px-6 py-4 text-sm text-[var(--color-text-700)]">
+                      <div className="flex items-center space-x-2">
+                        <svg className="w-5 h-5 text-[var(--color-text-500)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        <span>{attachment.originalName}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[var(--color-text-700)]">
+                      {attachment.description || "—"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[var(--color-text-700)]">
+                      {attachment.uploadedBy?.name || "Unknown"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[var(--color-text-700)]">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        attachment.uploaderModel === 'Admin' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {attachment.uploaderModel}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[var(--color-text-700)]">
+                      {new Date(attachment.uploadedAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <div className="flex space-x-2">
+                        <a
+                          href={`http://localhost:5000/public/uploads/${attachment.path.split('uploads/').pop()}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[var(--color-btn-default)] hover:text-[var(--color-btn-hover)]"
+                        >
+                          Download
+                        </a>
+                        <button
+                          onClick={() => handleRemoveAttachment(attachment._id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--color-text-100)]">
-                  {(activeTab === "request" ? partner.requestAttachments : partner.approvalAttachments)?.map((attachment) => (
-                    <tr key={attachment._id} className="hover:bg-[var(--color-text-50)]">
-                      <td className="px-6 py-4 text-sm text-[var(--color-text-700)]">
-                        <div className="flex items-center space-x-2">
-                          <svg className="w-5 h-5 text-[var(--color-text-500)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                          <span>{attachment.originalName}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[var(--color-text-700)]">
-                        {attachment.description || "—"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[var(--color-text-700)]">
-                        {attachment.uploadedBy?.name || "Unknown"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[var(--color-text-700)]">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          attachment.uploaderModel === 'Admin' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {attachment.uploaderModel}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[var(--color-text-700)]">
-                        {new Date(attachment.uploadedAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex space-x-2">
-                          <a
-                            href={`http://localhost:5000/public/uploads/${attachment.path.split('uploads/').pop()}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[var(--color-btn-default)] hover:text-[var(--color-btn-hover)]"
-                          >
-                            Download
-                          </a>
-                          <button
-                            onClick={() => handleRemoveAttachment(attachment._id)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
             </div>
           </div>
         </div>

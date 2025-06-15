@@ -28,7 +28,7 @@ const externalSchema = yup.object().shape({
     address: yup.string().required("Address is required"),
     email: yup.string().email("Invalid company email format").required("Company email is required"),
     phone: yup.string()
-      .matches(/^9\d{8}$/, "Phone must start with 9 and have 9 digits")
+      .matches(/^\d{10}$/, "Phone must be 10 digits")
       .required("Phone is required"),
   }),
 });
@@ -40,7 +40,7 @@ export default function RequestForm() {
     defaultValues: {
       companyDetails: { 
         type: 'Private',
-        phone: '9'
+        phone: ''
       }
     }
   });
@@ -118,7 +118,7 @@ export default function RequestForm() {
       setValue('companyDetails.name', '');
       setValue('companyDetails.address', '');
       setValue('companyDetails.email', '');
-      setValue('companyDetails.phone', '9');
+      setValue('companyDetails.phone', '');
       setValue('companyDetails.type', 'Private');
 
       // Navigate to request status page

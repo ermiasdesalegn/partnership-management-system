@@ -1,42 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Menu, Transition } from "@headlessui/react";
-import { BellIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
-import Notifications from "./Notifications";
 
 const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const navigateTo = useNavigate();
-
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      const data = [
-        { id: 1, message: "New request received!", read: false },
-        { id: 2, message: "Request status updated.", read: true },
-        { id: 3, message: "Your profile has been updated.", read: true },
-        { id: 4, message: "Welcome to PMS!", read: false },
-        { id: 5, message: "Your request has been processed", read: false },
-      ];
-      setNotifications(data);
-    };
-
-    fetchNotifications();
-  }, []);
-
-  useEffect(() => {
-    const unread = notifications.filter((n) => !n.read).length;
-    setUnreadCount(unread);
-  }, [notifications]);
-
-  const toggleNotifications = () => {
-    setIsNotificationsOpen(!isNotificationsOpen);
-    if (!isNotificationsOpen) {
-      setNotifications(notifications.map((n) => ({ ...n, read: true })));
-    }
-  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -94,19 +63,6 @@ const NavBar = () => {
 
             {/* Right Side Icons */}
             <div className="flex items-center space-x-4">
-              {/* Notifications */}
-              <button 
-                onClick={toggleNotifications} 
-                className="relative text-white hover:text-gray-100 transition-colors duration-300"
-              >
-                <BellIcon className="h-6 w-6" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-2 animate-pulse">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-
               {/* User Menu */}
               <Menu as="div" className="relative">
                 <Menu.Button className="flex text-sm rounded-full focus:outline-none">
@@ -183,7 +139,6 @@ const NavBar = () => {
           </div>
         </div>
       </nav>
-      {isNotificationsOpen && <Notifications notifications={notifications} onClose={toggleNotifications} />}
     </div>
   );
 };

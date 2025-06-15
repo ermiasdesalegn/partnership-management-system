@@ -69,7 +69,16 @@ export const generalDirectorDecision = async (req, res) => {
 
     if (decision === "approve" && approvedStages >= requiredApprovals) {
       request.status = "approved";
-      // Automatically create a Partner record
+      
+      // Check if a partner with this request ID already exists
+      const existingPartner = await Partner.findOne({ requestRef: request._id });
+      if (existingPartner) {
+        return res.status(400).json({ 
+          message: "A partner record already exists for this request. Please refresh the page to see the updated status." 
+        });
+      }
+
+      // Create new partner only if one doesn't exist
       await Partner.create({
         requestRef: request._id,
         companyName: request.companyDetails?.name,

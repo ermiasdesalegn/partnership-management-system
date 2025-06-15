@@ -291,7 +291,7 @@ const ActivityReport = ({ partner }) => {
         </table>
       </div>
     ` : '<p class="text-center text-gray-500">No activities found</p>';
-
+    
     printWindow.document.write(`
       <html>
         <head>
@@ -461,7 +461,7 @@ const ActivityReport = ({ partner }) => {
               }} 
               options={{ maintainAspectRatio: false }} 
             />
-          </div>
+        </div>
           <div className="mt-4 grid grid-cols-3 gap-4">
             {['pending', 'in_progress', 'completed'].map(status => (
               <div key={status} className="text-center">
@@ -469,10 +469,10 @@ const ActivityReport = ({ partner }) => {
                 <p className="text-2xl font-bold">
                   {activities?.filter(a => a.status === status).length || 0}
                 </p>
-              </div>
-            ))}
-          </div>
         </div>
+            ))}
+        </div>
+      </div>
 
         {/* Workload Distribution Chart */}
         <div className="bg-white rounded-lg shadow-md p-6">
@@ -510,7 +510,7 @@ const ActivityReport = ({ partner }) => {
                 <p className="text-2xl font-bold">
                   {activities?.filter(a => a.assignedTo === assignee).length || 0}
                 </p>
-              </div>
+          </div>
             ))}
           </div>
         </div>
@@ -555,7 +555,7 @@ const ActivityReport = ({ partner }) => {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
         </div>
       </div>
 

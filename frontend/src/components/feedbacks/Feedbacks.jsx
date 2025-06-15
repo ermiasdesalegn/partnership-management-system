@@ -3,7 +3,6 @@ import { fetchAllFeedback } from "../../services/feedback-service"
 import {
   FaSearch,
   FaStar,
-  FaTrash,
   FaChevronLeft,
   FaChevronRight,
   FaTimes,
@@ -47,7 +46,6 @@ const Feedbacks = () => {
       (item.message || "").toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // ==============================================
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
   const currentFeedback = filteredFeedback.slice(
@@ -56,8 +54,6 @@ const Feedbacks = () => {
   )
 
   const handlePageChange = (pageNumber) => setCurrentPage(pageNumber)
-  const handleDeleteFeedback = (id) =>
-    setFeedback((prev) => prev.filter((item) => item._id !== id))
   const handleRowClick = (item) => setSelectedFeedback(item)
   const closeDetails = () => setSelectedFeedback(null)
 
@@ -114,9 +110,6 @@ const Feedbacks = () => {
                 <th className='px-4 py-3 text-left text-sm font-medium text-gray-700'>
                   Date
                 </th>
-                <th className='px-4 py-3 text-left text-sm font-medium text-gray-700'>
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className='divide-y divide-gray-200'>
@@ -150,17 +143,6 @@ const Feedbacks = () => {
                   </td>
                   <td className='px-4 py-4 text-sm text-gray-800'>
                     {new Date(item.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className='px-4 py-4 text-sm text-gray-800'>
-                    <button
-                      className='text-red-500 hover:text-red-700'
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeleteFeedback(item._id)
-                      }}
-                    >
-                      <FaTrash />
-                    </button>
                   </td>
                 </tr>
               ))}
@@ -250,11 +232,11 @@ const Feedbacks = () => {
                     {[...Array(5)].map((_, i) => (
                       <FaStar
                         key={i}
-                        className={`${
+                        className={
                           i < selectedFeedback.rating
                             ? "text-yellow-400"
                             : "text-gray-300"
-                        }`}
+                        }
                       />
                     ))}
                   </div>
@@ -288,18 +270,6 @@ const Feedbacks = () => {
                   </p>
                 </div>
               </div>
-            </div>
-
-            <div className='mt-6 flex justify-end space-x-4'>
-              <button
-                onClick={() => {
-                  handleDeleteFeedback(selectedFeedback._id)
-                  closeDetails()
-                }}
-                className='flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-300'
-              >
-                <FaTrash className='mr-2' /> Delete
-              </button>
             </div>
           </div>
         </div>

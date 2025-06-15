@@ -59,44 +59,44 @@ const statisticsCardsData = [
     color: "blue",
     icon: FaHandshake,
     title: "Total Partnerships",
-    value: dashboardData?.statistics.totalPartners.toString() || "0",
+      value: dashboardData?.statistics.totalPartners.toString() || "0",
     footer: {
       color: "text-green-500",
-      value: `${dashboardData?.statistics.signedPartners} signed`,
-      label: `${dashboardData?.statistics.unsignedPartners} unsigned`,
+        value: `${dashboardData?.statistics.signedPartners} signed`,
+        label: `${dashboardData?.statistics.unsignedPartners} unsigned`,
     },
   },
   {
     color: "green",
     icon: FaChartPie,
-    title: "Active Partners",
-    value: dashboardData?.statistics.activePartners.toString() || "0",
+      title: "Active Partners",
+      value: dashboardData?.statistics.activePartners.toString() || "0",
     footer: {
       color: "text-green-500",
-      value: "Active",
-      label: "partnerships",
+        value: "Active",
+        label: "partnerships",
     },
   },
   {
     color: "orange",
-    icon: FaFileAlt,
-    title: "Total Requests",
-    value: dashboardData?.statistics.totalRequests.toString() || "0",
+      icon: FaFileAlt,
+      title: "Total Requests",
+      value: dashboardData?.statistics.totalRequests.toString() || "0",
     footer: {
-      color: "text-blue-500",
-      value: "All time",
-      label: "requests",
+        color: "text-blue-500",
+        value: "All time",
+        label: "requests",
     },
   },
   {
     color: "purple",
     icon: FaUserPlus,
-    title: "New Requests",
-    value: dashboardData?.statistics.newRequestsLastYear.toString() || "0",
+      title: "New Requests",
+      value: dashboardData?.statistics.newRequestsLastYear.toString() || "0",
     footer: {
       color: "text-blue-500",
-      value: "Last year",
-      label: "requests",
+        value: "Last year",
+        label: "requests",
     },
   },
 ];
@@ -188,22 +188,22 @@ const requestStatusCardsData = [
         {/* New row for request status cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           {requestStatusCardsData.map(({ icon, title, footer, ...rest }) => (
-            <StatisticsCard
-              key={title}
-              {...rest}
-              title={title}
-              icon={React.createElement(icon, {
-                className: "w-6 h-6 text-white",
-              })}
-              footer={
-                <p className="font-normal text-blue-gray-600">
-                  <strong className={footer.color}>{footer.value}</strong>
-                  &nbsp;{footer.label}
-                </p>
-              }
-            />
-          ))}
-        </div>
+          <StatisticsCard
+            key={title}
+            {...rest}
+            title={title}
+            icon={React.createElement(icon, {
+              className: "w-6 h-6 text-white",
+            })}
+            footer={
+              <p className="font-normal text-blue-gray-600">
+                <strong className={footer.color}>{footer.value}</strong>
+                &nbsp;{footer.label}
+              </p>
+            }
+          />
+        ))}
+      </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-8">
           <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
