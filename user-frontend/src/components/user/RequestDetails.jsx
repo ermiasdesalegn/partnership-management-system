@@ -12,13 +12,16 @@ import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
-  DocumentCheckIcon
+  DocumentCheckIcon,
+  PencilIcon,
+  TrashIcon
 } from "@heroicons/react/24/outline";
 
 const RequestDetails = () => {
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -104,6 +107,44 @@ const RequestDetails = () => {
     }
   };
 
+  const confirmDeleteRequest = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please login to delete request');
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.delete(`http://localhost:5000/api/v1/user/requests/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.data.status === 'success') {
+        toast.success('Request deleted successfully');
+        navigate('/user/profile');
+      }
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again');
+        navigate('/login');
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data.message || 'Cannot delete this request');
+      } else {
+        toast.error('Failed to delete request. Please try again.');
+      }
+    } finally {
+      setShowDeleteModal(false);
+    }
+  };
+
+  const cancelDeleteRequest = () => {
+    setShowDeleteModal(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -162,7 +203,27 @@ const RequestDetails = () => {
             <ArrowLeftIcon className="h-5 w-5 mr-2" />
             Back to Profile
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Request Details</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold text-gray-900">Request Details</h1>
+            {request?.status?.toLowerCase().trim() === 'pending' && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate(`/user/requests/${request._id}/edit`)}
+                  className="flex items-center px-4 py-2 bg-[#3c8dbc] text-white rounded-lg hover:bg-[#2c6a8f] transition-colors duration-300 group"
+                >
+                  <PencilIcon className="h-5 w-5 mr-2" />
+                  Edit Request
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-300 group"
+                >
+                  <TrashIcon className="h-5 w-5 mr-2" />
+                  Delete Request
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Status Card */}
@@ -343,6 +404,59 @@ const RequestDetails = () => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Minimalist Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden border border-gray-200"
+            >
+              {/* Modal Header */}
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gray-100 rounded-full">
+                    <TrashIcon className="h-5 w-5 text-gray-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900">Delete Request</h3>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className="px-6 py-6">
+                <div className="text-center">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-4">
+                    <TrashIcon className="h-6 w-6 text-gray-500" />
+                  </div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">
+                    Delete this request?
+                  </h4>
+                  <p className="text-sm text-gray-500 mb-6">
+                    This action cannot be undone. All files and data will be permanently removed.
+                  </p>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-6 py-4 flex space-x-3 justify-end border-t border-gray-200">
+                <button
+                  onClick={cancelDeleteRequest}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteRequest}
+                  className="px-4 py-2 text-sm font-medium text-white bg-gray-800 border border-transparent rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
       </div>

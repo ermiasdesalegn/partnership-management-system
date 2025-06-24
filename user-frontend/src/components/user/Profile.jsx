@@ -10,7 +10,9 @@ import {
   CheckCircleIcon, 
   XCircleIcon,
   ArrowRightIcon,
-  PlusIcon
+  PlusIcon,
+  PencilIcon,
+  TrashIcon
 } from "@heroicons/react/24/outline";
 
 const Profile = () => {
@@ -18,6 +20,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState([]);
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -96,6 +100,54 @@ const Profile = () => {
       default:
         return <DocumentTextIcon className="h-6 w-6 text-gray-500" />;
     }
+  };
+
+  const handleDeleteRequest = (requestId) => {
+    setRequestToDelete(requestId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteRequest = async () => {
+    if (!requestToDelete) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please login to delete request');
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.delete(`http://localhost:5000/api/v1/user/requests/${requestToDelete}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.data.status === 'success') {
+        toast.success('Request deleted successfully');
+        // Remove the deleted request from the local state
+        setRequests(requests.filter(req => req._id !== requestToDelete));
+      }
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again');
+        navigate('/login');
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data.message || 'Cannot delete this request');
+      } else {
+        toast.error('Failed to delete request. Please try again.');
+      }
+    } finally {
+      setShowDeleteModal(false);
+      setRequestToDelete(null);
+    }
+  };
+
+  const cancelDeleteRequest = () => {
+    setShowDeleteModal(false);
+    setRequestToDelete(null);
   };
 
   if (loading) {
@@ -249,7 +301,33 @@ const Profile = () => {
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.status)}`}>
                       {request.status}
                     </span>
-                    <ArrowRightIcon className="h-5 w-5 text-gray-400" />
+                    <div className="flex items-center space-x-2">
+                      {request.status?.toLowerCase().trim() === 'pending' && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/user/requests/${request._id}/edit`);
+                            }}
+                            className="p-2 text-[#3c8dbc] hover:text-[#2c6a8f] hover:bg-[#3c8dbc]/5 rounded-lg transition-all duration-200"
+                            title="Edit request"
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteRequest(request._id);
+                            }}
+                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
+                            title="Delete request"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
+                      <ArrowRightIcon className="h-5 w-5 text-gray-400" />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -267,6 +345,59 @@ const Profile = () => {
             </div>
           )}
         </div>
+
+        {/* Minimalist Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden border border-gray-200"
+            >
+              {/* Modal Header */}
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gray-100 rounded-full">
+                    <TrashIcon className="h-5 w-5 text-gray-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900">Delete Request</h3>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className="px-6 py-6">
+                <div className="text-center">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-4">
+                    <TrashIcon className="h-6 w-6 text-gray-500" />
+                  </div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">
+                    Delete this request?
+                  </h4>
+                  <p className="text-sm text-gray-500 mb-6">
+                    This action cannot be undone. All files and data will be permanently removed.
+                  </p>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-6 py-4 flex space-x-3 justify-end border-t border-gray-200">
+                <button
+                  onClick={cancelDeleteRequest}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteRequest}
+                  className="px-4 py-2 text-sm font-medium text-white bg-gray-800 border border-transparent rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </motion.div>
   );

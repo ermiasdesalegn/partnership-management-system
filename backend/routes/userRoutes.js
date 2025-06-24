@@ -5,6 +5,8 @@ import {
   loginUser,
   googleSignup,
   createRequest,
+  updateRequest,
+  deleteRequest,
   // logout,
   getMe,
   // updateMe,
@@ -28,6 +30,8 @@ router.post("/login", loginUser);
 router.use(protect);
 router.get("/me", getMe);
 router.post("/requests", upload.array('files'), createRequest);
+router.patch("/requests/:id", upload.array('files'), updateRequest);
+router.delete("/requests/:id", deleteRequest);
 router.get("/requests/status", getRequestStatus);
 router.get("/requests/:id", getRequestById);
 
