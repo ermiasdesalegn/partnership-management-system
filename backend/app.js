@@ -3,6 +3,9 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+
 import adminRouter from "./routes/adminRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import path from "path";
@@ -18,6 +21,20 @@ import partnershipStatisticsRoutes from './routes/partnershipStatisticsRoutes.js
 dotenv.config();
 
 const app = express();
+
+// Set security HTTP headers
+app.use(helmet({
+  crossOriginResourcePolicy: false, // Allows images/resources to be loaded from localhost on different ports
+}));
+
+// Limit requests from same API
+const limiter = rateLimit({
+  max: 1000, // 1000 requests per hour
+  windowMs: 60 * 60 * 1000,
+  message: "Too many requests from this IP, please try again in an hour!"
+});
+app.use('/api', limiter);
+
 app.use(express.json());
 app.use(cookieParser());
 
